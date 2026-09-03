@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useFinancial } from '../store/FinancialStore';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -10,8 +11,17 @@ const TYPE_COLORS: Record<string, string> = {
   positive: 'text-positive bg-positive-light',
 };
 
+const TYPE_ROUTES: Record<string, string> = {
+  risk: '/app/intelligence',
+  anomaly: '/app/intelligence',
+  opportunity: '/app/analytics',
+  trend: '/app/analytics',
+  positive: '/app/intelligence',
+};
+
 export default function ActionCenter() {
   const { actions } = useFinancial();
+  const navigate = useNavigate();
   if (!actions.length) return null;
 
   return (
@@ -38,8 +48,9 @@ export default function ActionCenter() {
               <p className="text-xs font-medium text-brand-700 mt-1.5">{action.impact}</p>
             </div>
             <button
+              onClick={() => navigate(TYPE_ROUTES[action.insight_type] ?? '/app/intelligence')}
               className={clsx(
-                'shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors',
+                'shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer',
                 TYPE_COLORS[action.insight_type] ?? 'bg-surface-100 text-surface-600',
               )}
             >

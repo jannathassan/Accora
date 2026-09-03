@@ -24,11 +24,12 @@ export default function SettingsPage() {
   if (!form) return null;
 
   const handleSave = async () => {
+    if (saving) return;
     setSaving(true);
     try {
       await updateSettings(form);
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => setSaved(false), 2500);
     } catch { /* silent */ }
     finally { setSaving(false); }
   };
@@ -50,7 +51,7 @@ export default function SettingsPage() {
             <RotateCcw className="w-3.5 h-3.5" /> Reset
           </button>
           <button onClick={handleSave} disabled={saving}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors">
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed transition-all">
             {saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
             {saved ? 'Saved' : saving ? 'Saving...' : 'Save'}
           </button>
@@ -177,7 +178,11 @@ function Toggle({ label, description, checked, onChange }: { label: string; desc
         <p className="text-sm font-medium text-surface-800">{label}</p>
         <p className="text-xs text-surface-400">{description}</p>
       </div>
-      <button onClick={() => onChange(!checked)}
+      <button
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        onClick={() => onChange(!checked)}
         className={clsx('relative w-10 h-5.5 rounded-full transition-colors',
           checked ? 'bg-brand-600' : 'bg-surface-300')}>
         <span className={clsx('absolute top-0.5 w-4.5 h-4.5 rounded-full bg-surface-50 shadow transition-transform',

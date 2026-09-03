@@ -7,7 +7,7 @@ export default function NextBestMoveCard() {
   if (!nextBestMove) return null;
 
   return (
-    <div className="bg-gradient-to-br from-brand-50 to-brand-100/40 rounded-[var(--radius-card)] shadow-[var(--shadow-card)] border border-brand/10 p-6">
+    <div className="bg-gradient-to-br from-brand-50 to-brand-100/40 rounded-[var(--radius-card)] shadow-[var(--shadow-card)] border border-brand-200 p-6">
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
         <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-brand text-white">
@@ -51,7 +51,7 @@ export default function NextBestMoveCard() {
 
       {/* Secondary recommendations */}
       {nextBestMove.secondary.length > 0 && (
-        <div className="mt-5 pt-4 border-t border-brand/10">
+        <div className="mt-5 pt-4 border-t border-brand-200">
           <span className="text-xs font-semibold text-surface-500 uppercase tracking-wide mb-2 block">
             Also consider
           </span>

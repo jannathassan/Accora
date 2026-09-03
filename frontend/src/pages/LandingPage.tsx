@@ -27,9 +27,9 @@ export default function LandingPage() {
             </span>
           </div>
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-surface-600">
-            <a href="#features" className="hover:text-surface-900 transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-surface-900 transition-colors">How It Works</a>
-            <a href="#use-cases" className="hover:text-surface-900 transition-colors">Use Cases</a>
+            <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-surface-900 transition-colors cursor-pointer">Features</a>
+            <a href="#how-it-works" onClick={(e) => { e.preventDefault(); document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-surface-900 transition-colors cursor-pointer">How It Works</a>
+            <a href="#use-cases" onClick={(e) => { e.preventDefault(); document.getElementById('use-cases')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-surface-900 transition-colors cursor-pointer">Use Cases</a>
           </nav>
           <Link
             to="/app"
@@ -66,7 +66,8 @@ export default function LandingPage() {
             </Link>
             <a
               href="#features"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-surface-100 text-surface-700 font-medium rounded-lg hover:bg-surface-200 transition-colors"
+              onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); }}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-surface-100 text-surface-700 font-medium rounded-lg hover:bg-surface-200 transition-colors cursor-pointer"
             >
               See Features
             </a>

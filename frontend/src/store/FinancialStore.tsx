@@ -98,7 +98,7 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       setError(null);
-      const [b, u, txns, m, l, h, ins, acts, cf, fc, invs, invSum, notifs, sett, nbm] = await Promise.all([
+      const results = await Promise.allSettled([
         api.getBusiness(),
         api.getUser(),
         api.getTransactions(),
@@ -115,21 +115,34 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
         api.getSettings(),
         api.getNextBestMove(),
       ]);
-      setBusiness(b);
-      setUser(u);
-      setTransactions(txns);
-      setMetrics(m);
-      setLatest(l);
-      setHealth(h);
-      setInsights(ins);
-      setActions(acts);
-      setCashFlow(cf);
-      setForecast(fc);
-      setInvoices(invs);
-      setInvoiceSummary(invSum);
-      setNotifications(notifs);
-      setSettings(sett);
-      setNextBestMove(nbm);
+
+      const val = <T,>(i: number, fallback: T): T =>
+        results[i].status === 'fulfilled' ? (results[i] as PromiseFulfilledResult<T>).value : fallback;
+
+      const errors: string[] = [];
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          const labels = ['business', 'user', 'transactions', 'metrics', 'latest metrics', 'health', 'insights', 'actions', 'cash flow', 'forecast', 'invoices', 'invoice summary', 'notifications', 'settings', 'next best move'];
+          errors.push(`${labels[i]}: ${r.reason instanceof Error ? r.reason.message : 'Failed'}`);
+        }
+      });
+      if (errors.length) console.warn('[FinancialStore] Partial load errors:', errors);
+
+      setBusiness(val<Business | null>(0, null));
+      setUser(val<User | null>(1, null));
+      setTransactions(val<Transaction[]>(2, []));
+      setMetrics(val<FinancialMetrics[]>(3, []));
+      setLatest(val<FinancialMetrics | null>(4, null));
+      setHealth(val<BusinessHealthScore | null>(5, null));
+      setInsights(val<AIInsight[]>(6, []));
+      setActions(val<SmartAction[]>(7, []));
+      setCashFlow(val<CashFlowStatus | null>(8, null));
+      setForecast(val<Forecast[]>(9, []));
+      setInvoices(val<Invoice[]>(10, []));
+      setInvoiceSummary(val<InvoiceSummary | null>(11, null));
+      setNotifications(val<AppNotification[]>(12, []));
+      setSettings(val<AppSettings | null>(13, null));
+      setNextBestMove(val<NextBestMove | null>(14, null));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load data');
     } finally {
@@ -184,6 +197,11 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
   const updateSettingsAction = useCallback(async (s: AppSettings) => {
     await api.updateSettings(s);
     setSettings(s);
+    // Refresh business data in case name/currency changed
+    try {
+      const updated = await api.getBusiness();
+      setBusiness(updated);
+    } catch { /* non-critical */ }
   }, []);
 
   const updateInsightStatus = useCallback(async (id: string, status: string) => {
@@ -191,7 +209,19 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const askAI = useCallback(async (message: string): Promise<ChatResponse> => {
-    return api.chatWithAI({ message });
+    try {
+      return await api.chatWithAI({ message });
+    } catch (e) {
+      return {
+        answer: e instanceof Error
+          ? `Unable to reach Accora AI: ${e.message}. Please ensure the backend is running and try again.`
+          : 'Something went wrong while connecting to Accora AI. Please try again in a moment.',
+        evidence: [],
+        interpretation: 'The AI service is currently unavailable.',
+        recommendation: 'Check your connection and try again.',
+        follow_ups: ['What are my top expenses?', 'How is my cash flow?'],
+      };
+    }
   }, []);
 
   const value: FinancialContext = {

@@ -30,7 +30,16 @@ import type {
   WhatIfResult,
 } from '../types';
 
-const BASE = '/api/v1';
+/** Resolve API base URL — works in both browser and Electron contexts. */
+function resolveBase(): string {
+  // Electron loads from file:// where relative paths cannot reach the backend.
+  if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
+    return 'http://localhost:8000/api/v1';
+  }
+  return '/api/v1';
+}
+
+const BASE = resolveBase();
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {

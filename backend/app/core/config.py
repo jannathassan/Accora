@@ -15,7 +15,12 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # CORS
-    cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    cors_origins: list[str] = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "file://",
+    ]
 
     # AI Provider (Alibaba Cloud)
     ai_provider: str = "mock"  # "alibaba" | "mock"

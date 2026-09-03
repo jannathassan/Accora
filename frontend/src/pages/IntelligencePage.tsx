@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useFinancial } from '../store/FinancialStore';
 import InsightCard from '../components/InsightCard';
 import NextBestMoveCard from '../components/NextBestMoveCard';
+import * as api from '../services/api';
 import { clsx } from 'clsx';
 import { AlertTriangle, CheckCircle2, Lightbulb, TrendingUp, Sparkles, Filter } from 'lucide-react';
 
@@ -25,6 +26,12 @@ export default function IntelligencePage() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    api.getInsightStatuses().then((statuses) => {
+      setLocalStatuses((prev) => ({ ...statuses, ...prev }));
+    }).catch(() => { /* non-critical */ });
+  }, []);
 
   const getStatus = (id: string) => localStatuses[id] ?? 'new';
 
@@ -95,8 +102,10 @@ export default function IntelligencePage() {
 
       {/* Insights Grid */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-sm text-surface-400">
-          No insights match the current filters.
+        <div className="text-center py-16">
+          <Sparkles className="w-10 h-10 text-surface-300 mx-auto mb-3" />
+          <p className="text-sm text-surface-500 font-medium">No insights match the current filters</p>
+          <p className="text-xs text-surface-400 mt-1">Try changing the type or status filter to see more results.</p>
         </div>
       ) : (
         <div className="space-y-4">

@@ -195,3 +195,12 @@ body {
 [data-theme="dark"] .shadow-\[var\(--shadow-card\)\] {
   border: 1px solid var(--color-surface-200);
 }
+
+/* Toast slide-in animation */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.toast-enter {
+  animation: toast-in 0.2s ease-out;
+}

@@ -8,7 +8,8 @@ import {
 import { Brain, ArrowRight } from 'lucide-react';
 
 export default function ForecastSection() {
-  const { forecast } = useFinancial();
+  const { forecast, business } = useFinancial();
+  const currency = business?.currency ?? 'PKR';
   const { theme } = useTheme();
   if (!forecast.length) return null;
 
@@ -60,7 +61,7 @@ export default function ForecastSection() {
                   <XAxis dataKey="period" tick={{ fontSize: 10, fill: chartText }} />
                   <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={fmtCurrency} />
                   <Tooltip
-                    formatter={(v: number) => `PKR ${v.toLocaleString()}`}
+                    formatter={(v: number) => `${currency} ${v.toLocaleString()}`}
                     contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }}
                   />
                   <Area

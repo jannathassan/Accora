@@ -10,8 +10,7 @@ import NextBestMoveCard from '../components/NextBestMoveCard';
 import BusinessSnapshot from '../components/BusinessSnapshot';
 import ForecastSection from '../components/ForecastSection';
 import CopilotPanel from '../components/CopilotPanel';
-import { fmtCurrency } from '../utils/format';
-import { periodLabel } from '../utils/format';
+import { fmtCurrency, periodLabel } from '../utils/format';
 import { useTheme } from '../store/ThemeProvider';
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart,
@@ -77,7 +76,8 @@ export default function DashboardPage() {
           </div>
           <button
             onClick={() => setCopilotOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-ai text-white text-sm font-medium rounded-lg hover:bg-ai/90 transition-colors shadow-sm"
+            title="Ask Accora AI anything about your business"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-ai text-white text-sm font-medium rounded-lg hover:bg-ai/90 active:scale-[0.97] transition-all shadow-sm"
           >
             <Sparkles className="w-4 h-4" />
             <span className="hidden sm:inline">Ask Accora</span>
@@ -92,13 +92,15 @@ export default function DashboardPage() {
 
         {/* ── Financial Snapshot ─────────────────────────────────── */}
         {latest && (
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
             <MetricCard
               label="Revenue"
               value={fmtCurrency(latest.revenue, currency)}
               changePct={latest.revenue_change_pct}
               icon={<CircleDollarSign className="w-4 h-4" />}
               prefix={`${currency} `}
+              iconBg="bg-brand-50"
+              iconText="text-brand-600"
             />
             <MetricCard
               label="Expenses"
@@ -106,6 +108,8 @@ export default function DashboardPage() {
               changePct={latest.expenses_change_pct}
               icon={<Banknote className="w-4 h-4" />}
               prefix={`${currency} `}
+              iconBg="bg-risk-light"
+              iconText="text-risk"
             />
             <MetricCard
               label="Net Profit"
@@ -113,23 +117,31 @@ export default function DashboardPage() {
               changePct={latest.profit_change_pct}
               icon={<TrendingUp className="w-4 h-4" />}
               prefix={`${currency} `}
+              iconBg="bg-positive-light"
+              iconText="text-positive"
             />
             <MetricCard
               label="Profit Margin"
               value={`${(latest.margin * 100).toFixed(1)}%`}
               icon={<PiggyBank className="w-4 h-4" />}
+              iconBg="bg-warning-light"
+              iconText="text-warning"
             />
             <MetricCard
               label="Cash Flow"
               value={fmtCurrency(latest.cash_flow, currency)}
               icon={<TrendingDown className="w-4 h-4" />}
               prefix={`${currency} `}
+              iconBg="bg-ai-light"
+              iconText="text-ai"
             />
             <MetricCard
               label="Outstanding"
               value={fmtCurrency(latest.outstanding, currency)}
               icon={<Wallet className="w-4 h-4" />}
               prefix={`${currency} `}
+              iconBg="bg-surface-100"
+              iconText="text-surface-600"
             />
           </div>
         )}
@@ -247,7 +259,7 @@ export default function DashboardPage() {
               const Icon = a.icon;
               return (
                 <Link key={a.to} to={a.to}
-                  className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-4 hover:shadow-md transition-shadow group">
+                  className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-4 hover:shadow-md active:scale-[0.98] transition-all group">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${a.color.split(' ')[1]}`}>
                     <Icon className={`w-4 h-4 ${a.color.split(' ')[0]}`} />
                   </div>
@@ -269,7 +281,7 @@ export default function DashboardPage() {
       {/* ── Floating Copilot Button (mobile) ──────────────────── */}
       <button
         onClick={() => setCopilotOpen(true)}
-        className="md:hidden fixed bottom-20 right-4 w-12 h-12 rounded-full bg-ai text-white shadow-lg flex items-center justify-center z-30 hover:bg-ai/90 transition-colors"
+        className="md:hidden fixed bottom-20 right-4 w-12 h-12 rounded-full bg-ai text-white shadow-lg flex items-center justify-center z-30 hover:bg-ai/90 active:scale-95 transition-all"
         aria-label="Open AI Copilot"
       >
         <MessageSquare className="w-5 h-5" />

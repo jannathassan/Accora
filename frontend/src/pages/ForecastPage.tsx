@@ -29,7 +29,8 @@ export default function ForecastPage() {
   const chartText = theme === 'dark' ? '#8892a6' : theme === 'high-contrast' ? '#333333' : '#667085';
   const tooltipBg = theme === 'dark' ? '#1a1e28' : '#ffffff';
   const tooltipBorder = theme === 'dark' ? '#252a36' : theme === 'high-contrast' ? '#000000' : '#e4e7ec';
-  const { forecast, metrics } = useFinancial();
+  const { forecast, metrics, business } = useFinancial();
+  const currency = business?.currency ?? 'PKR';
   const [activeTab, setActiveTab] = useState('all');
 
   const visible = activeTab === 'all' ? forecast : forecast.filter((f) => f.metric === activeTab);
@@ -104,8 +105,10 @@ export default function ForecastPage() {
       </div>
 
       {forecast.length === 0 ? (
-        <div className="text-center py-16 text-sm text-surface-400">
-          No forecast data available yet. Add more transactions to generate forecasts.
+        <div className="text-center py-16">
+          <Brain className="w-10 h-10 text-surface-300 mx-auto mb-3" />
+          <p className="text-sm text-surface-500 font-medium">No forecast data available yet</p>
+          <p className="text-xs text-surface-400 mt-1">Add more transactions to generate AI-powered forecasts.</p>
         </div>
       ) : activeTab === 'all' ? (
         /* Grid View — all metrics */
@@ -142,7 +145,7 @@ export default function ForecastPage() {
                     <XAxis dataKey="period" tick={{ fontSize: 10, fill: chartText }} />
                     <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={fmtCurrency} />
                     <Tooltip
-                      formatter={(v: number) => `PKR ${v.toLocaleString()}`}
+                      formatter={(v: number) => `${currency} ${v.toLocaleString()}`}
                       contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }}
                     />
                     <Area type="monotone" dataKey="historical" stroke={color} strokeWidth={2}
@@ -227,7 +230,7 @@ export default function ForecastPage() {
                     <XAxis dataKey="period" tick={{ fontSize: 10, fill: chartText }} />
                     <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={fmtCurrency} />
                     <Tooltip
-                      formatter={(v: number) => `PKR ${v.toLocaleString()}`}
+                      formatter={(v: number) => `${currency} ${v.toLocaleString()}`}
                       contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }}
                     />
                     {boundary && (

@@ -48,10 +48,10 @@ const NAV_GROUPS: NavGroup[] = [
 // Flat list for mobile bottom nav
 const MOBILE_ITEMS = [
   { to: '/app', icon: LayoutDashboard, label: 'Dashboard', end: true },
+  { to: '/app/transactions', icon: Receipt, label: 'Transactions' },
   { to: '/app/invoices', icon: FileSpreadsheet, label: 'Invoices' },
   { to: '/app/intelligence', icon: Lightbulb, label: 'Insights' },
   { to: '/app/forecast', icon: TrendingUp, label: 'Forecast' },
-  { to: '/app/reports', icon: FileText, label: 'Reports' },
 ];
 
 export default function AppLayout() {
@@ -86,7 +86,7 @@ export default function AppLayout() {
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         isActive
-                          ? 'bg-brand-50 text-brand-700'
+                          ? 'bg-brand-50 text-brand-700 shadow-sm shadow-brand-100'
                           : 'text-surface-600 hover:bg-surface-100 hover:text-surface-900'
                       }`
                     }
@@ -106,7 +106,7 @@ export default function AppLayout() {
             to="/app/notifications"
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive ? 'bg-brand-50 text-brand-700' : 'text-surface-500 hover:bg-surface-100 hover:text-surface-900'
+                isActive ? 'bg-brand-50 text-brand-700 shadow-sm shadow-brand-100' : 'text-surface-500 hover:bg-surface-100 hover:text-surface-900'
               }`
             }
           >
@@ -122,7 +122,7 @@ export default function AppLayout() {
             to="/app/settings"
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive ? 'bg-brand-50 text-brand-700' : 'text-surface-500 hover:bg-surface-100 hover:text-surface-900'
+                isActive ? 'bg-brand-50 text-brand-700 shadow-sm shadow-brand-100' : 'text-surface-500 hover:bg-surface-100 hover:text-surface-900'
               }`
             }
           >
@@ -146,13 +146,22 @@ export default function AppLayout() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-0.5 px-2 py-1 text-xs ${
+                `flex flex-col items-center gap-0.5 px-2 py-1 text-xs transition-colors ${
                   isActive ? 'text-brand-600' : 'text-surface-400'
                 }`
               }
             >
-              <item.icon className="w-5 h-5" />
-              <span className="truncate max-w-14">{item.label}</span>
+              {({ isActive }) => (
+                <>
+                  <div className="relative">
+                    {isActive && (
+                      <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand-600" />
+                    )}
+                    <item.icon className="w-5 h-5" />
+                  </div>
+                  <span className={`truncate max-w-14 ${isActive ? 'font-semibold' : ''}`}>{item.label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </div>

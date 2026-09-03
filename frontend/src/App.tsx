@@ -1,6 +1,7 @@
-import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom';
+import { HashRouter, Outlet, Route, Routes } from 'react-router-dom';
 import { FinancialProvider } from './store/FinancialStore';
 import { ThemeProvider } from './store/ThemeProvider';
+import ErrorBoundary from './components/ErrorBoundary';
 import AppLayout from './layouts/AppLayout';
 import DashboardPage from './pages/DashboardPage';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -13,11 +14,13 @@ import ReportsPage from './pages/ReportsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import SettingsPage from './pages/SettingsPage';
 import LandingPage from './pages/LandingPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 export default function App() {
   return (
     <ThemeProvider>
-    <BrowserRouter>
+    <ErrorBoundary>
+    <HashRouter>
       <Routes>
         {/* Public */}
         <Route path="/" element={<LandingPage />} />
@@ -37,8 +40,11 @@ export default function App() {
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Route>
+        {/* Catch-all for unknown routes */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
+    </ErrorBoundary>
     </ThemeProvider>
   );
 }

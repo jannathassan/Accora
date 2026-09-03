@@ -5,28 +5,34 @@ import type { WhatIfResult } from '../types';
 import { fmtCurrency } from '../utils/format';
 import { clsx } from 'clsx';
 import {
-  TrendingUp, TrendingDown, Sliders, ArrowRight, Brain, DollarSign, PiggyBank, Activity, RotateCcw, Info,
+  TrendingUp, TrendingDown, Sliders, ArrowRight, Brain, DollarSign, PiggyBank, Activity, RotateCcw, Info, AlertTriangle,
 } from 'lucide-react';
 
-const PRESETS = [
+const PRESETS_BASE = [
   { label: 'Revenue +10%', params: { revenue_change_pct: 10, expense_change_pct: 0 } },
   { label: 'Revenue -20%', params: { revenue_change_pct: -20, expense_change_pct: 0 } },
   { label: 'Expenses -15%', params: { revenue_change_pct: 0, expense_change_pct: -15 } },
   { label: 'Expenses +25%', params: { revenue_change_pct: 0, expense_change_pct: 25 } },
-  { label: 'Hire at PKR 80K/mo', params: { revenue_change_pct: 0, expense_change_pct: 0, monthly_salary: 80000 } },
-  { label: 'Grow 20% + Hire', params: { revenue_change_pct: 20, expense_change_pct: 0, monthly_salary: 120000 } },
+];
+
+const SALARY_PRESETS = [
+  { label: (c: string) => `Hire at ${c} 80K/mo`, salary: 80000, params: { revenue_change_pct: 0, expense_change_pct: 0, monthly_salary: 80000 } },
+  { label: (c: string) => `Grow 20% + Hire`, salary: 120000, params: { revenue_change_pct: 20, expense_change_pct: 0, monthly_salary: 120000 } },
 ];
 
 export default function ScenariosPage() {
-  const { latest, health } = useFinancial();
+  const { latest, health, business } = useFinancial();
+  const currency = business?.currency ?? 'PKR';
   const [revenueChange, setRevenueChange] = useState(0);
   const [expenseChange, setExpenseChange] = useState(0);
   const [additionalCost, setAdditionalCost] = useState(0);
   const [result, setResult] = useState<WhatIfResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const runScenario = async (desc: string, params: Record<string, number>) => {
     setLoading(true);
+    setError(null);
     try {
       const res = await api.whatIfAnalysis({
         scenario_type: 'custom',
@@ -34,15 +40,15 @@ export default function ScenariosPage() {
         params,
       });
       setResult(res);
-    } catch {
-      // handle error silently
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to run scenario');
     } finally {
       setLoading(false);
     }
   };
 
   const handleCustomRun = () => {
-    const desc = `Revenue ${revenueChange >= 0 ? '+' : ''}${revenueChange}%, Expenses ${expenseChange >= 0 ? '+' : ''}${expenseChange}%${additionalCost ? `, +PKR ${additionalCost.toLocaleString()}/mo` : ''}`;
+    const desc = `Revenue ${revenueChange >= 0 ? '+' : ''}${revenueChange}%, Expenses ${expenseChange >= 0 ? '+' : ''}${expenseChange}%${additionalCost ? `, +${currency} ${additionalCost.toLocaleString()}/mo` : ''}`;
     runScenario(desc, { revenue_change_pct: revenueChange, expense_change_pct: expenseChange, monthly_salary: additionalCost });
   };
 
@@ -71,10 +77,16 @@ export default function ScenariosPage() {
       <div>
         <p className="text-xs font-medium text-surface-600 mb-2">Quick Scenarios</p>
         <div className="flex flex-wrap gap-2">
-          {PRESETS.map((p) => (
+          {PRESETS_BASE.map((p) => (
             <button key={p.label} onClick={() => applyPreset(p)}
               className="px-3 py-2 bg-surface-card border border-surface-200 rounded-lg text-sm font-medium text-surface-700 hover:border-brand-400 hover:bg-brand-50 transition-colors">
               {p.label}
+            </button>
+          ))}
+          {SALARY_PRESETS.map((p) => (
+            <button key={p.salary} onClick={() => applyPreset({ label: p.label(currency), params: p.params })}
+              className="px-3 py-2 bg-surface-card border border-surface-200 rounded-lg text-sm font-medium text-surface-700 hover:border-brand-400 hover:bg-brand-50 transition-colors">
+              {p.label(currency)}
             </button>
           ))}
         </div>
@@ -101,7 +113,7 @@ export default function ScenariosPage() {
           </div>
         </div>
         <button onClick={handleCustomRun} disabled={loading}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors">
+          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed transition-all">
           <Brain className="w-4 h-4" /> Simulate Impact
         </button>
       </div>
@@ -110,6 +122,16 @@ export default function ScenariosPage() {
       {loading && (
         <div className="flex items-center justify-center py-8">
           <div className="w-6 h-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="bg-risk-light rounded-[var(--radius-card)] p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-risk shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-risk">Scenario failed</p>
+            <p className="text-xs text-surface-600 mt-0.5">{error}</p>
+          </div>
         </div>
       )}
 

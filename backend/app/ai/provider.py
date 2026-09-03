@@ -279,6 +279,14 @@ class MockAIProvider(AIProvider):
             )
 
         # --- Default contextual response ---
+        # Use the financial context to make the response data-aware
+        ctx_lines = context.split("\n") if context else []
+        ctx_currency = "PKR"
+        for cl in ctx_lines:
+            if cl.startswith("Currency:"):
+                ctx_currency = cl.split(":", 1)[1].strip()
+                break
+
         return ChatResponse(
             answer=f"I've analyzed your financial data for {DEMO_BUSINESS_NAME}. Your business is showing steady revenue growth of ~24% year-over-year, but expense growth is outpacing revenue growth in recent months.",
             evidence=[

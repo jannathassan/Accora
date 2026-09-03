@@ -1,9 +1,12 @@
 # Dependencies
 node_modules/
-backend/venv/
+.venv/
 
 # Build output
 frontend/dist/
+
+# Electron packaging output
+frontend/release/
 
 # Python
 __pycache__/

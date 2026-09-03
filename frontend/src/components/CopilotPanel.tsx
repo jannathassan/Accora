@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useFinancial } from '../store/FinancialStore';
 import type { ChatResponse } from '../types';
-import { X, Send, Sparkles, Loader2, MessageCircle } from 'lucide-react';
+import CopilotResponse from './CopilotResponse';
+import { X, Send, Sparkles, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface Props {
@@ -111,51 +112,7 @@ export default function CopilotPanel({ open, onClose }: Props) {
 
               {/* Structured response */}
               {msg.data && (
-                <div className="mt-2 space-y-2">
-                  {msg.data.evidence.length > 0 && (
-                    <div className="bg-surface-50 rounded-lg p-2.5">
-                      <p className="text-[10px] font-semibold text-surface-500 uppercase tracking-wide mb-1">Evidence</p>
-                      {msg.data.evidence.map((e, j) => (
-                        <p key={j} className="text-[11px] text-surface-600 flex items-center gap-1.5">
-                          <span className="w-1 h-1 rounded-full bg-surface-300 shrink-0" />
-                          {e}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-                  {msg.data.interpretation && (
-                    <div className="bg-brand-50 rounded-lg p-2.5">
-                      <p className="text-[10px] font-semibold text-brand-600 uppercase tracking-wide mb-0.5">Interpretation</p>
-                      <p className="text-[11px] text-surface-700">{msg.data.interpretation}</p>
-                    </div>
-                  )}
-                  {msg.data.recommendation && (
-                    <div className="bg-positive-light rounded-lg p-2.5">
-                      <p className="text-[10px] font-semibold text-positive uppercase tracking-wide mb-0.5">Recommendation</p>
-                      <p className="text-[11px] text-surface-700">{msg.data.recommendation}</p>
-                    </div>
-                  )}
-                  {/* Follow-up suggestions */}
-                  {msg.data.follow_ups && msg.data.follow_ups.length > 0 && (
-                    <div className="pt-1">
-                      <p className="text-[10px] font-semibold text-surface-400 uppercase tracking-wide mb-1.5 flex items-center gap-1">
-                        <MessageCircle className="w-3 h-3" />
-                        Follow-up questions
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {msg.data.follow_ups.map((f, j) => (
-                          <button
-                            key={j}
-                            onClick={() => send(f)}
-                            className="text-[11px] px-2.5 py-1.5 rounded-full bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors border border-brand/10"
-                          >
-                            {f}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <CopilotResponse data={msg.data} onFollowUp={send} />
               )}
             </div>
           ))}
@@ -179,12 +136,13 @@ export default function CopilotPanel({ open, onClose }: Props) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about your business..."
+              aria-label="Ask Accora a question"
               className="flex-1 px-3.5 py-2.5 bg-surface-50 rounded-lg text-sm border border-surface-200 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-all"
             />
             <button
               type="submit"
               disabled={!input.trim() || loading}
-              className="w-9 h-9 rounded-lg bg-brand-600 text-white flex items-center justify-center hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="w-9 h-9 rounded-lg bg-brand-600 text-white flex items-center justify-center hover:bg-brand-700 active:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               <Send className="w-4 h-4" />
             </button>

@@ -8,6 +8,8 @@ interface MetricCardProps {
   changePct?: number;
   icon?: ReactNode;
   prefix?: string;
+  iconBg?: string;
+  iconText?: string;
 }
 
 export default function MetricCard({
@@ -16,6 +18,8 @@ export default function MetricCard({
   changePct,
   icon,
   prefix,
+  iconBg = 'bg-brand-50',
+  iconText = 'text-brand-600',
 }: MetricCardProps) {
   const isPositive = changePct !== undefined && changePct >= 0;
   const isNegative = changePct !== undefined && changePct < 0;
@@ -25,7 +29,7 @@ export default function MetricCard({
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium text-surface-500">{label}</span>
         {icon && (
-          <span className="w-9 h-9 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600">
+          <span className={`w-9 h-9 rounded-lg flex items-center justify-center ${iconBg} ${iconText}`}>
             {icon}
           </span>
         )}
