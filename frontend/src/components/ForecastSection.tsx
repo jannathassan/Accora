@@ -59,9 +59,9 @@ export default function ForecastSection() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
                   <XAxis dataKey="period" tick={{ fontSize: 10, fill: chartText }} />
-                  <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={fmtCurrency} />
+                  <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={(v: number) => fmtCurrency(v)} />
                   <Tooltip
-                    formatter={(v: number) => `${currency} ${v.toLocaleString()}`}
+                    formatter={(v) => `${currency} ${Number(v).toLocaleString()}`}
                     contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }}
                   />
                   <Area
@@ -70,7 +70,7 @@ export default function ForecastSection() {
                   />
                   {/* Predicted portion gets dashed */}
                   <Area
-                    type="monotone" dataKey={(d: { predicted: boolean }) => d.predicted ? d.value : undefined}
+                    type="monotone" dataKey={(d: { predicted: boolean; value: number }) => d.predicted ? d.value : undefined}
                     stroke="#7c3aed" strokeWidth={2} strokeDasharray="5 3" fill="none"
                   />
                 </AreaChart>

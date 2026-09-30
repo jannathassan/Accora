@@ -17,7 +17,7 @@ const PRESETS_BASE = [
 
 const SALARY_PRESETS = [
   { label: (c: string) => `Hire at ${c} 80K/mo`, salary: 80000, params: { revenue_change_pct: 0, expense_change_pct: 0, monthly_salary: 80000 } },
-  { label: (c: string) => `Grow 20% + Hire`, salary: 120000, params: { revenue_change_pct: 20, expense_change_pct: 0, monthly_salary: 120000 } },
+  { label: (_c: string) => `Grow 20% + Hire`, salary: 120000, params: { revenue_change_pct: 20, expense_change_pct: 0, monthly_salary: 120000 } },
 ];
 
 export default function ScenariosPage() {
@@ -52,7 +52,7 @@ export default function ScenariosPage() {
     runScenario(desc, { revenue_change_pct: revenueChange, expense_change_pct: expenseChange, monthly_salary: additionalCost });
   };
 
-  const applyPreset = (preset: typeof PRESETS[number]) => {
+  const applyPreset = (preset: { label: string; params: Record<string, number> }) => {
     setRevenueChange(preset.params.revenue_change_pct || 0);
     setExpenseChange(preset.params.expense_change_pct || 0);
     setAdditionalCost(preset.params.monthly_salary || 0);

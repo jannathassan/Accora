@@ -247,11 +247,11 @@ export default function InvoicesPage() {
             <div className="text-sm space-x-4">
               <span className="text-surface-500">Subtotal: </span>
               <span className="font-medium text-surface-700 tabular-nums">{fmtCurrency(subtotal)}</span>
-              {form.tax_rate > 0 && (
+              {(form.tax_rate ?? 0) > 0 && (
                 <>
                   <span className="text-surface-400">|</span>
-                  <span className="text-surface-500">Tax ({(form.tax_rate * 100).toFixed(1)}%): </span>
-                  <span className="font-medium text-surface-700 tabular-nums">{fmtCurrency(subtotal * form.tax_rate)}</span>
+                  <span className="text-surface-500">Tax ({((form.tax_rate ?? 0) * 100).toFixed(1)}%): </span>
+                  <span className="font-medium text-surface-700 tabular-nums">{fmtCurrency(subtotal * (form.tax_rate ?? 0))}</span>
                 </>
               )}
               <span className="text-surface-400">|</span>

@@ -29,7 +29,7 @@ export default function ForecastPage() {
   const chartText = theme === 'dark' ? '#8892a6' : theme === 'high-contrast' ? '#333333' : '#667085';
   const tooltipBg = theme === 'dark' ? '#1a1e28' : '#ffffff';
   const tooltipBorder = theme === 'dark' ? '#252a36' : theme === 'high-contrast' ? '#000000' : '#e4e7ec';
-  const { forecast, metrics, business } = useFinancial();
+  const { forecast, business } = useFinancial();
   const currency = business?.currency ?? 'PKR';
   const [activeTab, setActiveTab] = useState('all');
 
@@ -143,9 +143,9 @@ export default function ForecastPage() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
                     <XAxis dataKey="period" tick={{ fontSize: 10, fill: chartText }} />
-                    <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={fmtCurrency} />
+                    <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={(v: number) => fmtCurrency(v)} />
                     <Tooltip
-                      formatter={(v: number) => `${currency} ${v.toLocaleString()}`}
+                      formatter={(v) => `${currency} ${Number(v).toLocaleString()}`}
                       contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }}
                     />
                     <Area type="monotone" dataKey="historical" stroke={color} strokeWidth={2}
@@ -228,9 +228,9 @@ export default function ForecastPage() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
                     <XAxis dataKey="period" tick={{ fontSize: 10, fill: chartText }} />
-                    <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={fmtCurrency} />
+                    <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={(v: number) => fmtCurrency(v)} />
                     <Tooltip
-                      formatter={(v: number) => `${currency} ${v.toLocaleString()}`}
+                      formatter={(v) => `${currency} ${Number(v).toLocaleString()}`}
                       contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }}
                     />
                     {boundary && (
