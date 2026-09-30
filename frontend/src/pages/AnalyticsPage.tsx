@@ -85,8 +85,8 @@ export default function AnalyticsPage() {
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
             <XAxis dataKey="period" tick={{ fontSize: 11, fill: chartText }} />
-            <YAxis tick={{ fontSize: 11, fill: chartText }} tickFormatter={fmtCurrency} />
-            <Tooltip formatter={(v: number) => `${currency} ${v.toLocaleString()}`}
+            <YAxis tick={{ fontSize: 11, fill: chartText }} tickFormatter={(v: number) => fmtCurrency(v)} />
+            <Tooltip formatter={(v) => `${currency} ${Number(v).toLocaleString()}`}
               contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }}
             />
             <Area type="monotone" dataKey="revenue" stroke="#3378ff" strokeWidth={2} fill="url(#aRev)" name="Revenue" />
@@ -103,8 +103,8 @@ export default function AnalyticsPage() {
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
               <XAxis dataKey="period" tick={{ fontSize: 10, fill: chartText }} />
-              <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={fmtCurrency} />
-              <Tooltip formatter={(v: number) => `${currency} ${v.toLocaleString()}`}
+              <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={(v: number) => fmtCurrency(v)} />
+              <Tooltip formatter={(v) => `${currency} ${Number(v).toLocaleString()}`}
                 contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }}
               />
               <Bar dataKey="profit" radius={[4, 4, 0, 0]} name="Profit">
@@ -129,8 +129,8 @@ export default function AnalyticsPage() {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
               <XAxis dataKey="period" tick={{ fontSize: 10, fill: chartText }} />
-              <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={fmtCurrency} />
-              <Tooltip formatter={(v: number) => `${currency} ${v.toLocaleString()}`}
+              <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={(v: number) => fmtCurrency(v)} />
+              <Tooltip formatter={(v) => `${currency} ${Number(v).toLocaleString()}`}
                 contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }}
               />
               <Area type="monotone" dataKey="cashFlow" stroke="#12b76a" strokeWidth={2} fill="url(#aCF)" name="Cash Flow" />
@@ -151,7 +151,7 @@ export default function AnalyticsPage() {
                   <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(v: number) => `${currency} ${v.toLocaleString()}`}
+              <Tooltip formatter={(v) => `${currency} ${Number(v).toLocaleString()}`}
                 contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }}
               />
             </PieChart>
@@ -180,8 +180,8 @@ export default function AnalyticsPage() {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
               <XAxis dataKey="period" tick={{ fontSize: 10, fill: chartText }} />
-              <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={(v) => `${v}%`} />
-              <Tooltip formatter={(v: number) => `${v}%`}
+              <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={(v: number) => `${v}%`} />
+              <Tooltip formatter={(v) => `${v}%`}
                 contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }}
               />
               <Area type="monotone" dataKey="margin" stroke="#7c3aed" strokeWidth={2} fill="url(#aMargin)" name="Margin" />
