@@ -10,7 +10,22 @@ export interface Business {
   name: string;
   industry: string;
   business_type: string;
+  country: string;
   currency: string;
+  fiscal_year_start: string;
+  business_start_date: string;
+  employee_count: number;
+  opening_cash_balance: number;
+  avg_monthly_revenue: number;
+  monthly_fixed_expenses: number;
+  monthly_variable_expenses: number;
+  outstanding_ar: number;
+  outstanding_ap: number;
+  loan_balance: number;
+  monthly_loan_repayment: number;
+  expected_growth_rate: number;
+  financial_goals: string;
+  onboarding_completed: boolean;
   monthly_revenue_range: string;
   created_at: string;
 }
@@ -69,6 +84,22 @@ export interface FinancialMetrics {
   expenses_change_pct: number;
   profit_change_pct: number;
   expense_breakdown: Record<string, number>;
+  is_estimated?: boolean;
+  opening_balance?: number;
+  operating_cash_flow?: number;
+  financing_cash_flow?: number;
+}
+
+export interface TransactionBatchImportRequest {
+  transactions: TransactionCreate[];
+  skip_duplicates?: boolean;
+}
+
+export interface TransactionBatchImportResponse {
+  imported_count: number;
+  skipped_count: number;
+  total_count: number;
+  duplicates: string[];
 }
 
 export interface BusinessHealthScore {
@@ -261,9 +292,23 @@ export interface BusinessSettings {
   business_name: string;
   industry: string;
   business_type: string;
+  country: string;
   currency: string;
-  monthly_revenue_range: string;
   fiscal_year_start: string;
+  business_start_date: string;
+  employee_count: number;
+  opening_cash_balance: number;
+  avg_monthly_revenue: number;
+  monthly_fixed_expenses: number;
+  monthly_variable_expenses: number;
+  outstanding_ar: number;
+  outstanding_ap: number;
+  loan_balance: number;
+  monthly_loan_repayment: number;
+  expected_growth_rate: number;
+  financial_goals: string;
+  onboarding_completed?: boolean;
+  monthly_revenue_range: string;
 }
 
 export interface UserPreferences {

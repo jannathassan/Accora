@@ -68,18 +68,59 @@ class MockAIProvider(AIProvider):
     async def chat(self, request: ChatRequest, context: str) -> ChatResponse:
         q = request.message.lower()
 
+        # Parse context parameters dynamically
+        ctx_map: dict[str, str] = {}
+        for line in (context or "").splitlines():
+            if ":" in line:
+                k, v = line.split(":", 1)
+                ctx_map[k.strip().lower()] = v.strip()
+
+        currency = ctx_map.get("currency", "USD")
+        biz_name = ctx_map.get("business", "Your Business").split("(")[0].strip()
+        is_estimated = "estimated baseline" in (context or "").lower()
+        rev_str = ctx_map.get("revenue", f"{currency} 0")
+        exp_str = ctx_map.get("expenses", f"{currency} 0")
+        prof_str = ctx_map.get("profit", f"{currency} 0")
+        margin_str = ctx_map.get("margin", "0.0%")
+        cf_str = ctx_map.get("net cash flow", ctx_map.get("cash flow", f"{currency} 0"))
+        cash_str = ctx_map.get("cash balance", f"{currency} 0")
+        loan_balance_str = ctx_map.get("loan balance", f"{currency} 0")
+        loan_repayment_str = ctx_map.get("monthly loan repayment", f"{currency} 0")
+        ar_str = ctx_map.get("outstanding ar", f"{currency} 0")
+        growth_str = ctx_map.get("expected growth rate", "0%")
+        mode_note = " (Grounded in your business setup profile baseline estimates.)" if is_estimated else ""
+
+        # --- Loan & Debt questions ---
+        if "loan" in q or "debt" in q or "repayment" in q or "borrow" in q:
+            return ChatResponse(
+                answer=f"Your outstanding loan balance is {loan_balance_str} with monthly loan repayments of {loan_repayment_str}. Debt repayments reduce your net monthly cash flow.{mode_note}",
+                evidence=[
+                    f"Outstanding loan balance: {loan_balance_str}",
+                    f"Monthly loan repayment: {loan_repayment_str}",
+                    f"Current cash balance: {cash_str}",
+                    f"Monthly net cash flow: {cf_str}",
+                ],
+                interpretation="Loan service payments are financing cash outflows that reduce your bank balance without lowering your operating accounting profit.",
+                recommendation="Ensure operating cash inflows remain well above monthly debt service obligations to maintain positive liquidity.",
+                follow_ups=[
+                    "What is my current cash balance?",
+                    "How does debt affect my cash flow?",
+                    "What is my next best move?",
+                ],
+            )
+
         # --- Profit questions ---
         if "profit" in q and any(w in q for w in ("decrease", "down", "drop", "low", "enough")):
             return ChatResponse(
-                answer="Your profit this month is PKR 390,353 with a margin of 25.2%. While you are profitable, the margin has compressed compared to earlier months due to faster expense growth.",
+                answer=f"Your profit for {biz_name} is {prof_str} with a margin of {margin_str}. While positive, expense trends should be monitored closely to maintain target margins.{mode_note}",
                 evidence=[
-                    "Current profit: PKR 390,353 (margin 25.2%)",
-                    "3-month avg margin: ~27%",
-                    "Expense growth: +4.6% MoM",
-                    "Revenue growth: +3.4% MoM",
+                    f"Current profit: {prof_str} (margin {margin_str})",
+                    f"Revenue: {rev_str}",
+                    f"Expenses: {exp_str}",
+                    f"Expected Growth Target: {growth_str}",
                 ],
                 interpretation="You are making profit, but the rate of expense growth is gradually eating into your margins. The trend needs monitoring over the next 2-3 months.",
-                recommendation="Focus on your top 3 expense categories (Operations, Salaries, Marketing) and evaluate which costs are generating proportional revenue returns.",
+                recommendation="Focus on your top expense categories and evaluate which costs are generating proportional revenue returns.",
                 follow_ups=[
                     "What are my biggest expense categories?",
                     "How can I improve my profit margin?",
@@ -88,15 +129,15 @@ class MockAIProvider(AIProvider):
             )
         if "profit" in q and any(w in q for w in ("improve", "increase", "grow", "better")):
             return ChatResponse(
-                answer="To improve profit, you have two levers: increase revenue or reduce expenses. Based on your data, the biggest opportunity is in operations optimization.",
+                answer=f"To improve profit for {biz_name}, you can expand revenue from {rev_str} or reduce expenses from {exp_str}. Current margin is {margin_str}.{mode_note}",
                 evidence=[
-                    "Operations: PKR 420,000 (38% of expenses) — grew 50% over 12 months",
-                    "Marketing: PKR 229,400 (21%) — grew 53% over 12 months",
-                    "Current margin: 25.2%",
-                    "If operations were reduced by 10%, monthly savings: PKR 42,000",
+                    f"Current revenue: {rev_str}",
+                    f"Current expenses: {exp_str}",
+                    f"Current margin: {margin_str}",
+                    f"Target growth: {growth_str}",
                 ],
-                interpretation="Operations costs have been climbing steadily. A 10% reduction through vendor renegotiation or scope optimization could add PKR 504,000 to annual profit.",
-                recommendation="1. Audit your top 3 operations vendors for renegotiation opportunities. 2. Evaluate if all current service scope is generating proportional revenue. 3. Set a target to stabilize the operations-to-revenue ratio.",
+                interpretation="Optimizing operational expenses by 10% would directly expand monthly net income.",
+                recommendation="Audit recurring vendor contracts and eliminate unused software subscriptions or unallocated contractor hours.",
                 follow_ups=[
                     "What are my biggest expense categories?",
                     "Can I afford to hire someone?",
@@ -107,16 +148,15 @@ class MockAIProvider(AIProvider):
         # --- Expense questions ---
         if "expense" in q or "spend" in q or "overspend" in q or "cost" in q:
             return ChatResponse(
-                answer="Your total monthly expenses are PKR 1,161,400. The largest category is Operations at PKR 420,000 (36%), followed by Salaries at PKR 350,000 (30%) and Marketing at PKR 229,400 (20%).",
+                answer=f"Your monthly expenses are currently {exp_str} against revenue of {rev_str}, yielding a profit of {prof_str} (margin {margin_str}).{mode_note}",
                 evidence=[
-                    "Operations: PKR 420,000 (36%)",
-                    "Salaries: PKR 350,000 (30%)",
-                    "Marketing: PKR 229,400 (20%)",
-                    "Software & Tools: PKR 58,000 (5%)",
-                    "Total: PKR 1,161,400",
+                    f"Monthly expenses: {exp_str}",
+                    f"Revenue: {rev_str}",
+                    f"Operating profit: {prof_str}",
+                    f"Profit margin: {margin_str}",
                 ],
-                interpretation="Operations and Marketing together account for 56% of expenses. Both have grown significantly over the year (50%+ growth), while revenue grew ~24%.",
-                recommendation="Review Operations and Marketing spending for the highest-impact savings. Consider whether recent increases in these categories have produced measurable revenue returns.",
+                interpretation="Keeping fixed and variable expenses proportional to revenue growth ensures sustained profitability.",
+                recommendation="Review Operations and Marketing spending for the highest-impact savings.",
                 follow_ups=[
                     "How can I improve my profit?",
                     "What is my revenue forecast?",
@@ -127,16 +167,15 @@ class MockAIProvider(AIProvider):
         # --- Revenue questions ---
         if "revenue" in q or "income" in q or "earn" in q or "sales" in q:
             return ChatResponse(
-                answer="Your revenue this month is PKR 1,551,500 — a 24% increase from the start of the year. Your strongest revenue source is Client Projects (55% of total), followed by Retainer Contracts (30%).",
+                answer=f"Your recorded monthly revenue for {biz_name} is {rev_str}. Target annual growth rate is set to {growth_str}.{mode_note}",
                 evidence=[
-                    "Total revenue: PKR 1,551,500",
-                    "Client Projects: ~55% (PKR 853,325)",
-                    "Retainer Contracts: ~30% (PKR 465,450)",
-                    "YoY revenue growth: +24%",
-                    "Best month: November (PKR 1,600,000)",
+                    f"Total revenue: {rev_str}",
+                    f"Operating profit: {prof_str} (margin {margin_str})",
+                    f"Target growth rate: {growth_str}",
+                    f"Uncollected customer invoices (AR): {ar_str}",
                 ],
-                interpretation="Revenue growth is steady but retainer contracts provide the most predictable income. Expanding your retainer base would improve revenue stability.",
-                recommendation="Focus on converting one-time project clients into retainer arrangements. Your consulting revenue (10%) also has room to grow if you formalize that offering.",
+                interpretation="Consistent revenue generation and prompt invoice collection ensure steady operating cash inflows.",
+                recommendation="Focus on converting one-time project clients into predictable retainer contracts.",
                 follow_ups=[
                     "What is my revenue forecast?",
                     "How can I increase profit?",
@@ -147,18 +186,18 @@ class MockAIProvider(AIProvider):
         # --- Cash flow questions ---
         if "cash" in q or "flow" in q or "runway" in q or "balance" in q:
             return ChatResponse(
-                answer="Your current cash balance is approximately PKR 2,990,000 with a positive monthly cash flow of PKR 390,353. At this rate, you have strong financial runway.",
+                answer=f"Your current cash balance is approximately {cash_str} with a monthly net cash flow of {cf_str} for {biz_name}.{mode_note}",
                 evidence=[
-                    "Cash balance: ~PKR 2,990,000",
-                    "Monthly net cash flow: PKR 390,353",
-                    "All 12 months have been cash-flow positive",
-                    "Projected 3-month balance: ~PKR 4,160,000",
+                    f"Cash balance: {cash_str}",
+                    f"Monthly net cash flow: {cf_str}",
+                    f"Monthly loan repayment: {loan_repayment_str}",
+                    f"Outstanding receivables (AR): {ar_str}",
                 ],
-                interpretation="Your cash position is healthy and improving. You have sufficient buffer for unexpected expenses or strategic investments.",
-                recommendation="Consider allocating a portion of surplus cash: 3 months operating expenses (~PKR 3,500,000) as an emergency reserve, and invest remaining surplus in growth initiatives.",
+                interpretation="Your cash balance reflects reconciled opening working capital adjusted for recorded operating cash flows and loan payments.",
+                recommendation=f"Maintain a cash reserve buffer of at least 3 months operating expenses ({exp_str} monthly burn) to safeguard liquidity.",
                 follow_ups=[
                     "Can I afford to hire someone?",
-                    "What will happen to cash flow next quarter?",
+                    "What is my loan situation?",
                     "What is my next best move?",
                 ],
             )
@@ -166,19 +205,19 @@ class MockAIProvider(AIProvider):
         # --- Hiring / afford questions ---
         if "hire" in q or "employee" in q or "afford" in q or "salary" in q:
             return ChatResponse(
-                answer="Based on your cash balance of ~PKR 2,990,000 and monthly net flow of PKR 390,353, you can comfortably afford to hire. A new employee at PKR 80,000/month would use about 20% of your monthly surplus.",
+                answer=f"Based on your cash balance of {cash_str} and monthly net flow of {cf_str}, evaluating new headcount depends on your role ROI and runway.{mode_note}",
                 evidence=[
-                    "Cash balance: ~PKR 2,990,000",
-                    "Monthly net flow: PKR 390,353",
-                    "Current salaries: PKR 350,000/month",
-                    "Runway at current burn: 7+ months",
+                    f"Cash balance: {cash_str}",
+                    f"Monthly net flow: {cf_str}",
+                    f"Current monthly expenses: {exp_str}",
+                    f"Target revenue: {rev_str}",
                 ],
-                interpretation="The hire is financially sustainable as long as it contributes to revenue generation or operational efficiency within the first quarter.",
-                recommendation="Proceed with the hire, but set clear 90-day performance milestones. Ensure the role directly supports your highest-revenue activity (Client Projects).",
+                interpretation="A new hire represents a fixed monthly burn commitment. Ensure new headcount directly accelerates top-line growth or unlocks operational scale.",
+                recommendation="Proceed with the hire only with clear 90-day performance milestones that support key revenue objectives.",
                 follow_ups=[
                     "What is my current cash position?",
                     "How will this affect my profit?",
-                    "Can I afford another expense of PKR 50,000/month?",
+                    "What should I focus on next month?",
                 ],
             )
 
@@ -279,24 +318,16 @@ class MockAIProvider(AIProvider):
             )
 
         # --- Default contextual response ---
-        # Use the financial context to make the response data-aware
-        ctx_lines = context.split("\n") if context else []
-        ctx_currency = "PKR"
-        for cl in ctx_lines:
-            if cl.startswith("Currency:"):
-                ctx_currency = cl.split(":", 1)[1].strip()
-                break
-
         return ChatResponse(
-            answer=f"I've analyzed your financial data for {DEMO_BUSINESS_NAME}. Your business is showing steady revenue growth of ~24% year-over-year, but expense growth is outpacing revenue growth in recent months.",
+            answer=f"I've analyzed your financial data for {biz_name}. Current revenue is {rev_str}, expenses are {exp_str}, and cash balance is {cash_str}.{mode_note}",
             evidence=[
-                "Revenue trend: Growing, ~24% YoY",
-                "Expense trend: Growing faster at ~38% YoY",
-                "Current profit margin: ~25%",
-                "Cash position: Healthy and improving",
+                f"Revenue: {rev_str}",
+                f"Expenses: {exp_str}",
+                f"Net Profit: {prof_str} ({margin_str})",
+                f"Cash Balance: {cash_str}",
             ],
-            interpretation="The business is fundamentally healthy, but the widening gap between expense growth and revenue growth needs attention to protect margins.",
-            recommendation="Ask me about specific areas like expenses, revenue, cash flow, or what you should focus on next. I can provide data-grounded analysis for any aspect of your business.",
+            interpretation="The business is actively tracked in your private workspace ledger.",
+            recommendation="Ask me about specific areas like expenses, revenue, cash flow, or what you should focus on next.",
             follow_ups=[
                 "How is my business health score?",
                 "What are my biggest expenses?",
@@ -311,6 +342,42 @@ class MockAIProvider(AIProvider):
         latest = metrics[-1] if metrics else None
         if not latest:
             return []
+
+        if latest.is_estimated:
+            return [
+                AIInsight(
+                    type=InsightType.POSITIVE if latest.profit >= 0 else InsightType.RISK,
+                    severity=InsightSeverity.LOW if latest.profit >= 0 else InsightSeverity.HIGH,
+                    title="Profile Setup: Baseline Operating Margin",
+                    explanation=(
+                        f"Based on your setup profile (Revenue: {latest.revenue:,.0f}, Expenses: {latest.expenses:,.0f}), "
+                        f"your baseline profit margin is {latest.margin * 100:.1f}%. "
+                        f"This serves as your benchmark until historical transactions are imported."
+                    ),
+                    evidence=[
+                        f"Baseline revenue: {latest.revenue:,.0f}",
+                        f"Baseline expenses: {latest.expenses:,.0f}",
+                        f"Estimated profit: {latest.profit:,.0f}",
+                        "Source: Business Profile Setup",
+                    ],
+                    recommendation="Import your transaction CSV or enter regular records to compare actual performance against this baseline.",
+                ),
+                AIInsight(
+                    type=InsightType.OPPORTUNITY,
+                    severity=InsightSeverity.MEDIUM,
+                    title="Working Capital Buffer",
+                    explanation=(
+                        f"Your opening cash balance of {latest.cash_balance:,.0f} provides initial runway. "
+                        f"Estimated monthly net cash flow is {latest.cash_flow:,.0f} after financing obligations."
+                    ),
+                    evidence=[
+                        f"Opening cash: {latest.opening_balance:,.0f}",
+                        f"Net monthly flow: {latest.cash_flow:,.0f}",
+                        f"Financing debt service: {latest.financing_cash_flow:,.0f}",
+                    ],
+                    recommendation="Maintain at least 3-6 months of operating expenses in reserve as you scale transaction history.",
+                ),
+            ]
 
         return [
             AIInsight(

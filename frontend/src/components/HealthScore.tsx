@@ -5,11 +5,13 @@ import { CheckCircle2, XCircle } from 'lucide-react';
 export default function HealthScore() {
   const { health } = useFinancial();
   const { theme } = useTheme();
+
   if (!health) return null;
 
+  const color =
+    health.overall >= 70 ? '#12b76a' : health.overall >= 50 ? '#f79009' : '#f04438';
   const ringBg = theme === 'dark' ? '#252a36' : theme === 'high-contrast' ? '#cccccc' : '#e4e7ec';
 
-  const color = health.overall >= 70 ? '#12b76a' : health.overall >= 50 ? '#f79009' : '#f04438';
   const dims = [
     { label: 'Revenue', value: health.revenue_performance },
     { label: 'Profitability', value: health.profitability },
@@ -19,8 +21,15 @@ export default function HealthScore() {
   ];
 
   return (
-    <div className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-6">
-      <h2 className="text-sm font-semibold text-surface-900 mb-1">Financial Health</h2>
+    <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-6 transition-all hover:border-surface-300 font-sans">
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-xs font-bold text-surface-500 uppercase tracking-wider">
+          Financial Health
+        </h2>
+        <span className="text-[10px] font-semibold text-brand-600 dark:text-brand-300 bg-brand-100 dark:bg-brand-500/20 px-2 py-0.5 rounded-full border border-brand-200 dark:border-brand-500/30">
+          Real-Time
+        </span>
+      </div>
 
       {/* Score ring */}
       <div className="flex items-center gap-6 my-4">
@@ -34,26 +43,26 @@ export default function HealthScore() {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold text-surface-900">{health.overall.toFixed(0)}</span>
-            <span className="text-[10px] text-surface-400 uppercase tracking-wide">/ 100</span>
+            <span className="text-3xl font-bold text-surface-900 tabular-nums font-sans">{health.overall.toFixed(0)}</span>
+            <span className="text-[10px] text-surface-400 uppercase tracking-wide font-mono">/ 100</span>
           </div>
         </div>
         <div>
-          <span className="inline-block px-2.5 py-1 text-xs font-semibold rounded-full"
+          <span className="inline-block px-2.5 py-1 text-xs font-semibold rounded-full font-sans"
             style={{ backgroundColor: `${color}18`, color }}>
             {health.label}
           </span>
-          <p className="text-xs text-surface-500 mt-2 leading-relaxed">{health.explanation}</p>
+          <p className="text-xs text-surface-500 mt-2 leading-relaxed font-sans">{health.explanation}</p>
         </div>
       </div>
 
       {/* Dimension bars */}
-      <div className="space-y-2.5">
+      <div className="space-y-2.5 font-sans">
         {dims.map((d) => (
           <div key={d.label}>
             <div className="flex justify-between text-xs mb-1">
               <span className="text-surface-600">{d.label}</span>
-              <span className="font-medium text-surface-900">{d.value.toFixed(0)}</span>
+              <span className="font-semibold text-surface-900 font-mono tabular-nums">{d.value.toFixed(0)}</span>
             </div>
             <div className="h-1.5 bg-surface-100 rounded-full overflow-hidden">
               <div className="h-full rounded-full transition-all duration-500"
@@ -69,7 +78,7 @@ export default function HealthScore() {
 
       {/* Strengths & Improvements */}
       {(health.strengths.length > 0 || health.improvements.length > 0) && (
-        <div className="mt-5 space-y-3">
+        <div className="mt-5 space-y-3 font-sans pt-3 border-t border-surface-200/60">
           {health.strengths.map((s, i) => (
             <div key={i} className="flex items-start gap-2 text-xs">
               <CheckCircle2 className="w-3.5 h-3.5 text-positive shrink-0 mt-0.5" />

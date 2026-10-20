@@ -1,47 +1,45 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useFinancial } from '../store/FinancialStore';
+import { useTheme } from '../store/ThemeProvider';
+import { fmtCurrency, periodLabel } from '../utils/format';
+import { Link } from 'react-router-dom';
 import MetricCard from '../components/MetricCard';
-import InsightCard from '../components/InsightCard';
 import HealthScore from '../components/HealthScore';
-import ActionCenter from '../components/ActionCenter';
-import CashFlowAlert from '../components/CashFlowAlert';
 import NextBestMoveCard from '../components/NextBestMoveCard';
+import CashFlowAlert from '../components/CashFlowAlert';
+import ActionCenter from '../components/ActionCenter';
 import BusinessSnapshot from '../components/BusinessSnapshot';
 import ForecastSection from '../components/ForecastSection';
 import CopilotPanel from '../components/CopilotPanel';
-import { fmtCurrency, periodLabel } from '../utils/format';
-import { useTheme } from '../store/ThemeProvider';
 import {
-  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart,
-  ResponsiveContainer, Tooltip, XAxis, YAxis,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell,
 } from 'recharts';
 import {
-  Banknote, CircleDollarSign, MessageSquare, PiggyBank,
-  Sparkles, TrendingDown, TrendingUp, Wallet,
-  FileSpreadsheet, Lightbulb, Brain, FileText, Sliders, ArrowRight,
+  DollarSign, TrendingUp, TrendingDown, Percent, Clock, Wallet,
+  Sparkles, Info,
 } from 'lucide-react';
 
-const PIE_COLORS = ['#3378ff', '#12b76a', '#f79009', '#7c3aed', '#f04438', '#06aed4'];
+const PIE_COLORS = ['#7c3aed', '#12b76a', '#f79009', '#a78bfa', '#f04438', '#06aed4'];
 
 export default function DashboardPage() {
   const {
-    business, metrics, latest, insights, loading,
+    business, metrics, latest, loading,
   } = useFinancial();
   const [copilotOpen, setCopilotOpen] = useState(false);
 
   const { theme } = useTheme();
-  const chartGrid = theme === 'dark' ? '#252a36' : theme === 'high-contrast' ? '#cccccc' : '#e4e7ec';
-  const chartText = theme === 'dark' ? '#8892a6' : theme === 'high-contrast' ? '#333333' : '#667085';
-  const tooltipBg = theme === 'dark' ? '#1a1e28' : '#ffffff';
-  const tooltipBorder = theme === 'dark' ? '#252a36' : theme === 'high-contrast' ? '#000000' : '#e4e7ec';
+  const chartGrid = theme === 'dark' ? '#28213b' : theme === 'high-contrast' ? '#b4b4c4' : '#e8e2f2';
+  const chartText = theme === 'dark' ? '#9687b8' : theme === 'high-contrast' ? '#000000' : '#736484';
+  const tooltipBg = theme === 'dark' ? '#1d182e' : '#ffffff';
+  const tooltipBorder = theme === 'dark' ? '#3b3156' : theme === 'high-contrast' ? '#000000' : '#e8e2f2';
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-surface-500">Loading financial data...</p>
+          <p className="text-sm text-surface-500 font-sans">Loading financial data...</p>
         </div>
       </div>
     );
@@ -63,229 +61,270 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="p-4 md:p-6 pb-24 md:pb-6 max-w-7xl mx-auto space-y-6">
+      <div className="p-4 md:p-6 pb-24 md:pb-6 max-w-7xl mx-auto space-y-6 font-sans">
         {/* ── Header ─────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-surface-200">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-surface-900 tracking-tight">
-              {business?.name ?? 'Dashboard'}
-            </h1>
-            <p className="text-xs text-surface-500 mt-0.5">
-              {business?.industry} &middot; {currency}
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-surface-900 tracking-tight font-sans">
+                {business?.name ?? 'Executive Financial Dashboard'}
+              </h1>
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-100 text-brand-600 dark:text-brand-300 border border-brand-200 dark:border-brand-500/30 uppercase tracking-wider font-mono">
+                Active Ledger
+              </span>
+            </div>
+            <p className="text-xs text-surface-500 mt-1 flex items-center gap-2 font-sans">
+              <span>{business?.industry || 'Business Finance'}</span>
+              <span>&middot;</span>
+              <span className="font-semibold text-surface-700">Base Currency: {currency}</span>
             </p>
           </div>
           <button
             onClick={() => setCopilotOpen(true)}
             title="Ask Accora AI anything about your business"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-ai text-white text-sm font-medium rounded-lg hover:bg-ai/90 active:scale-[0.97] transition-all shadow-sm"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs md:text-sm font-semibold rounded-xl active:scale-[0.98] transition-all shadow-sm group cursor-pointer font-sans"
           >
-            <Sparkles className="w-4 h-4" />
-            <span className="hidden sm:inline">Ask Accora</span>
+            <Sparkles className="w-4 h-4 text-brand-200 group-hover:rotate-12 transition-transform" />
+            <span>Ask Financial Copilot</span>
           </button>
         </div>
 
-        {/* ── Cash Flow Alert ────────────────────────────────────── */}
-        <CashFlowAlert />
-
-        {/* ── Your Next Best Move ──────────────────────────────────── */}
-        <NextBestMoveCard />
-
-        {/* ── Financial Snapshot ─────────────────────────────────── */}
-        {latest && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
-            <MetricCard
-              label="Revenue"
-              value={fmtCurrency(latest.revenue, currency)}
-              changePct={latest.revenue_change_pct}
-              icon={<CircleDollarSign className="w-4 h-4" />}
-              prefix={`${currency} `}
-              iconBg="bg-brand-50"
-              iconText="text-brand-600"
-            />
-            <MetricCard
-              label="Expenses"
-              value={fmtCurrency(latest.expenses, currency)}
-              changePct={latest.expenses_change_pct}
-              icon={<Banknote className="w-4 h-4" />}
-              prefix={`${currency} `}
-              iconBg="bg-risk-light"
-              iconText="text-risk"
-            />
-            <MetricCard
-              label="Net Profit"
-              value={fmtCurrency(latest.profit, currency)}
-              changePct={latest.profit_change_pct}
-              icon={<TrendingUp className="w-4 h-4" />}
-              prefix={`${currency} `}
-              iconBg="bg-positive-light"
-              iconText="text-positive"
-            />
-            <MetricCard
-              label="Profit Margin"
-              value={`${(latest.margin * 100).toFixed(1)}%`}
-              icon={<PiggyBank className="w-4 h-4" />}
-              iconBg="bg-warning-light"
-              iconText="text-warning"
-            />
-            <MetricCard
-              label="Cash Flow"
-              value={fmtCurrency(latest.cash_flow, currency)}
-              icon={<TrendingDown className="w-4 h-4" />}
-              prefix={`${currency} `}
-              iconBg="bg-ai-light"
-              iconText="text-ai"
-            />
-            <MetricCard
-              label="Outstanding"
-              value={fmtCurrency(latest.outstanding, currency)}
-              icon={<Wallet className="w-4 h-4" />}
-              prefix={`${currency} `}
-              iconBg="bg-surface-100"
-              iconText="text-surface-600"
-            />
+        {/* ── Estimated Baseline Banner ─────────────────────────── */}
+        {latest?.is_estimated && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs font-sans">
+            <div className="flex items-start sm:items-center gap-2.5">
+              <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 sm:mt-0" />
+              <div>
+                <span className="font-semibold text-amber-600 dark:text-amber-400 mr-1.5 font-mono">
+                  [Estimated Baseline from Setup]
+                </span>
+                <span className="text-surface-700">
+                  Dashboard metrics, health score, and cash forecast are currently projected from your Business Profile setup figures. Import transactions or add records to unlock historical reporting.
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 font-sans">
+              <Link
+                to="/transactions"
+                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors shadow-sm"
+              >
+                Import CSV / Transactions
+              </Link>
+              <Link
+                to="/settings"
+                className="px-3 py-1.5 border border-surface-200 hover:bg-surface-100 rounded-lg transition-colors text-surface-700 font-medium"
+              >
+                Settings
+              </Link>
+            </div>
           </div>
         )}
 
-        {/* ── Charts Row ─────────────────────────────────────────── */}
-        <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
-          {/* Revenue vs Expenses */}
-          <div className="lg:col-span-2 bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-5">
-            <h2 className="text-sm font-semibold text-surface-900 mb-4">Revenue vs Expenses</h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3378ff" stopOpacity={0.15} />
-                    <stop offset="100%" stopColor="#3378ff" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f04438" stopOpacity={0.1} />
-                    <stop offset="100%" stopColor="#f04438" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
-                <XAxis dataKey="period" tick={{ fontSize: 10, fill: chartText }} />
-                <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={fmtCurrency} />
-                <Tooltip formatter={(v: number) => `${currency} ${v.toLocaleString()}`}
-                  contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }} />
-                <Area type="monotone" dataKey="revenue" stroke="#3378ff" strokeWidth={2} fill="url(#revGrad)" name="Revenue" />
-                <Area type="monotone" dataKey="expenses" stroke="#f04438" strokeWidth={2} fill="url(#expGrad)" name="Expenses" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+        {/* ── Top-level KPI Row ─────────────────────────────────── */}
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 md:gap-4">
+          <MetricCard
+            label="Cash Balance"
+            value={fmtCurrency(latest?.cash_balance ?? 0, currency)}
+            icon={<Wallet className="w-4 h-4" />}
+            iconBg="bg-brand-50"
+            iconText="text-brand-600"
+          />
+          <MetricCard
+            label="Monthly Revenue"
+            value={fmtCurrency(latest?.revenue ?? 0, currency)}
+            changePct={latest?.revenue_change_pct}
+            icon={<DollarSign className="w-4 h-4" />}
+            iconBg="bg-positive-light"
+            iconText="text-positive"
+          />
+          <MetricCard
+            label="Operating Expenses"
+            value={fmtCurrency(latest?.expenses ?? 0, currency)}
+            changePct={latest?.expenses_change_pct}
+            icon={<TrendingDown className="w-4 h-4" />}
+            iconBg="bg-risk-light"
+            iconText="text-risk"
+          />
+          <MetricCard
+            label="Net Profit"
+            value={fmtCurrency(latest?.profit ?? 0, currency)}
+            changePct={latest?.profit_change_pct}
+            icon={<TrendingUp className="w-4 h-4" />}
+            iconBg="bg-positive-light"
+            iconText="text-positive"
+          />
+          <MetricCard
+            label="Profit Margin"
+            value={`${((latest?.margin ?? 0) * 100).toFixed(1)}%`}
+            icon={<Percent className="w-4 h-4" />}
+            iconBg="bg-brand-50"
+            iconText="text-brand-600"
+          />
+          <MetricCard
+            label="Outstanding"
+            value={fmtCurrency(latest?.outstanding ?? 0, currency)}
+            icon={<Clock className="w-4 h-4" />}
+            iconBg="bg-warning-light"
+            iconText="text-warning"
+          />
+        </div>
 
-          {/* Expense Breakdown Pie */}
-          <div className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-5">
-            <h2 className="text-sm font-semibold text-surface-900 mb-4">Expense Breakdown</h2>
-            <ResponsiveContainer width="100%" height={160}>
-              <PieChart>
-                <Pie data={expenseBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%"
-                  innerRadius={40} outerRadius={65} paddingAngle={2}>
-                  {expenseBreakdown.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(v: number) => `${currency} ${v.toLocaleString()}`}
-                  contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="mt-2 space-y-1">
-              {expenseBreakdown.slice(0, 5).map((e, i) => (
-                <div key={e.name} className="flex items-center gap-2 text-[11px]">
-                  <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                  <span className="text-surface-600 flex-1 truncate">{e.name}</span>
-                  <span className="text-surface-900 font-medium">{fmtCurrency(e.value)}</span>
+        {/* ── Main Grid ────────────────────────────────────────── */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left 2 cols: Charts + Forecast */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Revenue vs Expenses Chart */}
+            <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-6 transition-all hover:border-surface-300">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-2 border-b border-surface-200/80">
+                <div>
+                  <h2 className="text-xs font-bold text-surface-500 uppercase tracking-wider font-sans">
+                    Revenue vs. Expenses Trend
+                  </h2>
+                  <p className="text-xs text-surface-500 mt-0.5 font-sans">Historical monthly performance</p>
                 </div>
-              ))}
+                <div className="flex items-center gap-4 text-xs font-sans">
+                  <span className="flex items-center gap-1.5 text-positive font-medium">
+                    <span className="w-2.5 h-2.5 rounded-full bg-positive" /> Revenue
+                  </span>
+                  <span className="flex items-center gap-1.5 text-risk font-medium">
+                    <span className="w-2.5 h-2.5 rounded-full bg-risk" /> Expenses
+                  </span>
+                  <span className="flex items-center gap-1.5 text-brand-600 font-medium">
+                    <span className="w-2.5 h-2.5 rounded-full bg-brand-600" /> Profit
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-64 sm:h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.25} />
+                        <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f04438" stopOpacity={0.2} />
+                        <stop offset="100%" stopColor="#f04438" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+                    <XAxis dataKey="period" tick={{ fontSize: 11, fill: chartText }} />
+                    <YAxis tick={{ fontSize: 11, fill: chartText }} tickFormatter={(v) => fmtCurrency(v)} />
+                    <Tooltip
+                      formatter={(v: any) => `${currency} ${Number(v ?? 0).toLocaleString()}`}
+                      contentStyle={{
+                        fontSize: 12,
+                        borderRadius: 10,
+                        border: `1px solid ${tooltipBorder}`,
+                        backgroundColor: tooltipBg,
+                        color: chartText,
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#7c3aed"
+                      strokeWidth={2}
+                      fill="url(#revGrad)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="expenses"
+                      stroke="#f04438"
+                      strokeWidth={2}
+                      fill="url(#expGrad)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* ── Profit Trend ─────────────────────────────────────── */}
-        <div className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-5">
-          <h2 className="text-sm font-semibold text-surface-900 mb-4">Monthly Profit</h2>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
-              <XAxis dataKey="period" tick={{ fontSize: 10, fill: chartText }} />
-              <YAxis tick={{ fontSize: 10, fill: chartText }} tickFormatter={fmtCurrency} />
-              <Tooltip formatter={(v: number) => `${currency} ${v.toLocaleString()}`}
-                contentStyle={{ fontSize: 11, borderRadius: 8, border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: chartText }} />
-              <Bar dataKey="profit" radius={[4, 4, 0, 0]} name="Profit">
-                {chartData.map((entry, i) => (
-                  <Cell key={i} fill={entry.profit >= 0 ? '#12b76a' : '#f04438'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+            {/* Expense Breakdown Pie + Forecast */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Expense Breakdown */}
+              <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-6 transition-all hover:border-surface-300">
+                <h2 className="text-xs font-bold text-surface-500 uppercase tracking-wider mb-1 font-sans">
+                  Expense Distribution
+                </h2>
+                <p className="text-xs text-surface-500 mb-3 font-sans">Current month breakdown</p>
 
-        {/* ── Intelligence Section ─────────────────────────────── */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4.5 h-4.5 text-ai" />
-              <h2 className="text-sm font-semibold text-surface-900">Accora Intelligence</h2>
+                {expenseBreakdown.length > 0 ? (
+                  <>
+                    <div className="h-44">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={expenseBreakdown}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={45}
+                            outerRadius={70}
+                            paddingAngle={2}
+                          >
+                            {expenseBreakdown.map((_, i) => (
+                              <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={(v: any) => `${currency} ${Number(v ?? 0).toLocaleString()}`}
+                            contentStyle={{
+                              fontSize: 11,
+                              borderRadius: 8,
+                              border: `1px solid ${tooltipBorder}`,
+                              backgroundColor: tooltipBg,
+                              color: chartText,
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-2">
+                      {expenseBreakdown.map((item, i) => (
+                        <div key={item.name} className="flex items-center gap-2 text-xs">
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
+                          />
+                          <span className="text-surface-600 truncate">{item.name}</span>
+                          <span className="font-semibold text-surface-900 ml-auto font-mono tabular-nums">
+                            {fmtCurrency(item.value, currency)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-surface-400 py-10 text-center">No expense data available</p>
+                )}
+              </div>
+
+              {/* Business Snapshot Mini Summary */}
+              <BusinessSnapshot />
             </div>
-            <Link to="/app/intelligence" className="text-xs font-medium text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
-              View All <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            {insights.slice(0, 4).map((ins) => (
-              <InsightCard key={ins.id} insight={ins} />
-            ))}
-          </div>
-        </div>
 
-        {/* ── Health + Actions + Snapshot ──────────────────────── */}
-        <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
-          <HealthScore />
-          <ActionCenter />
-          <BusinessSnapshot />
-        </div>
+            {/* Forecast Section */}
+            <ForecastSection />
+          </div>
 
-        {/* ── Quick Actions ────────────────────────────────────── */}
-        <div>
-          <h2 className="text-sm font-semibold text-surface-900 mb-3">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {[
-              { to: '/app/invoices', icon: FileSpreadsheet, label: 'Invoices', desc: 'Manage billing', color: 'text-brand-600 bg-brand-50' },
-              { to: '/app/intelligence', icon: Lightbulb, label: 'Insights', desc: 'AI intelligence', color: 'text-ai bg-ai-light' },
-              { to: '/app/forecast', icon: Brain, label: 'Forecast', desc: 'AI projections', color: 'text-purple-600 bg-purple-50' },
-              { to: '/app/scenarios', icon: Sliders, label: 'What-If', desc: 'Simulate impact', color: 'text-warning bg-warning-light' },
-              { to: '/app/reports', icon: FileText, label: 'Reports', desc: 'P&L, cash flow', color: 'text-positive bg-positive-light' },
-            ].map((a) => {
-              const Icon = a.icon;
-              return (
-                <Link key={a.to} to={a.to}
-                  className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-4 hover:shadow-md active:scale-[0.98] transition-all group">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${a.color.split(' ')[1]}`}>
-                    <Icon className={`w-4 h-4 ${a.color.split(' ')[0]}`} />
-                  </div>
-                  <p className="text-sm font-medium text-surface-900">{a.label}</p>
-                  <p className="text-[10px] text-surface-400">{a.desc}</p>
-                </Link>
-              );
-            })}
+          {/* Right col: Insights, Action Center, Health Score */}
+          <div className="space-y-6">
+            <NextBestMoveCard />
+            <CashFlowAlert />
+            <HealthScore />
+            <ActionCenter />
           </div>
         </div>
-
-        {/* ── Forecast ──────────────────────────────────────────── */}
-        <ForecastSection />
       </div>
 
-      {/* ── Copilot Panel ──────────────────────────────────────── */}
-      <CopilotPanel open={copilotOpen} onClose={() => setCopilotOpen(false)} />
-
-      {/* ── Floating Copilot Button (mobile) ──────────────────── */}
-      <button
-        onClick={() => setCopilotOpen(true)}
-        className="md:hidden fixed bottom-20 right-4 w-12 h-12 rounded-full bg-ai text-white shadow-lg flex items-center justify-center z-30 hover:bg-ai/90 active:scale-95 transition-all"
-        aria-label="Open AI Copilot"
-      >
-        <MessageSquare className="w-5 h-5" />
-      </button>
+      {/* Copilot Panel */}
+      <CopilotPanel
+        open={copilotOpen}
+        onClose={() => setCopilotOpen(false)}
+      />
     </>
   );
 }

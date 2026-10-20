@@ -1,6 +1,6 @@
 /** Shared formatting utilities for Accora. */
 
-export function fmtCurrency(n: number, currency = 'PKR'): string {
+export function fmtCurrency(n: number, _currency?: string | number): string {
   if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
   if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
   return n.toFixed(0);

@@ -4,62 +4,87 @@ import { ArrowRight, Lightbulb, Sparkles } from 'lucide-react';
 
 export default function NextBestMoveCard() {
   const { nextBestMove } = useFinancial();
+
   if (!nextBestMove) return null;
 
   return (
-    <div className="bg-gradient-to-br from-brand-50 to-brand-100/40 rounded-[var(--radius-card)] shadow-[var(--shadow-card)] border border-brand-200 p-6">
+    <div className="relative overflow-hidden rounded-[var(--radius-card)] bg-surface-card border border-brand-200 shadow-[var(--shadow-card)] p-5 md:p-6 transition-all hover:border-brand-300 font-sans">
+      {/* Subtle ambient corner warmth */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-brand-200/20 blur-3xl pointer-events-none rounded-full" />
+
       {/* Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-brand text-white">
-          <Sparkles className="w-4 h-4" />
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-100 border border-brand-300/40 text-brand-600 shadow-xs">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold text-brand-600 uppercase tracking-widest block font-mono">
+              Strategic Copilot Directive
+            </span>
+            <h2 className="text-xs font-semibold text-surface-500">
+              Prioritized Financial Action
+            </h2>
+          </div>
         </div>
-        <h2 className="text-sm font-semibold text-brand-700 uppercase tracking-wide">
-          Your Next Best Move
-        </h2>
+
+        <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-positive-light text-positive border border-positive/30 font-mono">
+          {nextBestMove.impact}
+        </span>
       </div>
 
       {/* Primary recommendation */}
-      <h3 className="text-lg font-bold text-surface-900 mb-2">{nextBestMove.title}</h3>
-      <p className="text-sm text-surface-700 leading-relaxed mb-3">{nextBestMove.description}</p>
+      <h3 className="text-lg md:text-xl font-bold text-surface-900 tracking-tight mb-2 font-sans">
+        {nextBestMove.title}
+      </h3>
+      <p className="text-sm text-surface-600 leading-relaxed mb-4 font-sans">
+        {nextBestMove.description}
+      </p>
 
       {/* Why it matters */}
-      <div className="bg-surface-card/70 rounded-lg p-3 mb-4">
-        <div className="flex items-start gap-2">
+      <div className="bg-surface-100/70 border border-surface-200 rounded-xl p-3.5 mb-4 shadow-xs">
+        <div className="flex items-start gap-2.5">
           <Lightbulb className="w-4 h-4 text-warning shrink-0 mt-0.5" />
           <div>
-            <span className="text-xs font-semibold text-surface-800 block mb-0.5">Why this matters</span>
-            <p className="text-xs text-surface-600 leading-relaxed">{nextBestMove.why_it_matters}</p>
+            <span className="text-xs font-bold text-surface-900 block mb-0.5 font-sans">
+              Financial Impact Context
+            </span>
+            <p className="text-xs text-surface-600 leading-relaxed font-sans">
+              {nextBestMove.why_it_matters}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Impact badge */}
-      <div className="flex items-center gap-2 mb-4">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-positive-light text-positive">
+      {/* Mobile Impact badge */}
+      <div className="sm:hidden flex items-center gap-2 mb-4 font-mono">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-positive-light text-positive border border-positive/30">
           {nextBestMove.impact}
         </span>
       </div>
 
       {/* Action button */}
-      <Link
-        to={nextBestMove.action_url}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand text-white text-sm font-semibold hover:bg-brand/90 transition-colors shadow-sm"
-      >
-        {nextBestMove.action_label}
-        <ArrowRight className="w-4 h-4" />
-      </Link>
+      <div className="flex items-center gap-3">
+        <Link
+          to={nextBestMove.action_url}
+          className="inline-flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs md:text-sm font-semibold transition-all shadow-sm active:scale-[0.98] font-sans"
+        >
+          <span>{nextBestMove.action_label}</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
 
       {/* Secondary recommendations */}
       {nextBestMove.secondary.length > 0 && (
-        <div className="mt-5 pt-4 border-t border-brand-200">
-          <span className="text-xs font-semibold text-surface-500 uppercase tracking-wide mb-2 block">
-            Also consider
+        <div className="mt-5 pt-4 border-t border-surface-200">
+          <span className="text-[11px] font-bold text-surface-400 uppercase tracking-widest mb-2.5 block font-mono">
+            Complementary Optimization Steps
           </span>
           <ul className="space-y-1.5">
             {nextBestMove.secondary.map((s, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-surface-600">
-                <span className="w-1 h-1 rounded-full bg-surface-400 shrink-0 mt-1.5" />
-                {s}
+              <li key={i} className="flex items-start gap-2.5 text-xs text-surface-600 font-sans">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-400 shrink-0 mt-1.5" />
+                <span>{s}</span>
               </li>
             ))}
           </ul>

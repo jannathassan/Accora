@@ -8,6 +8,7 @@ from collections import defaultdict
 from datetime import date
 
 from app.models.financial import (
+    Business,
     BusinessHealthScore,
     CashFlowReport,
     CashFlowStatus,
@@ -33,20 +34,71 @@ from app.models.financial import (
 
 def compute_monthly_metrics(
     transactions: list[Transaction],
+    business: Business | None = None,
+    invoices: list[Invoice] | None = None,
 ) -> list[FinancialMetrics]:
-    """Aggregate transactions into monthly FinancialMetrics."""
+    """Aggregate transactions into monthly FinancialMetrics, incorporating opening cash balances,
+    loan repayments, and baseline business setup estimates when historical transactions are absent."""
     if not transactions:
+        # Check if business has baseline financial figures from profile/onboarding
+        if business and (
+            business.opening_cash_balance > 0
+            or business.avg_monthly_revenue > 0
+            or business.monthly_fixed_expenses > 0
+            or business.monthly_variable_expenses > 0
+            or business.loan_balance > 0
+        ):
+            current_period = date.today().strftime("%Y-%m")
+            rev = business.avg_monthly_revenue
+            fixed_exp = business.monthly_fixed_expenses
+            var_exp = business.monthly_variable_expenses
+            exp = fixed_exp + var_exp
+            profit = rev - exp
+            margin = profit / rev if rev > 0 else 0.0
+
+            operating_cf = profit
+            financing_cf = -business.monthly_loan_repayment
+            net_cf = operating_cf + financing_cf
+            closing_cash = business.opening_cash_balance + net_cf
+
+            exp_breakdown: dict[str, float] = {}
+            if fixed_exp > 0:
+                exp_breakdown["Fixed Expenses"] = round(fixed_exp, 2)
+            if var_exp > 0:
+                exp_breakdown["Variable Expenses"] = round(var_exp, 2)
+
+            return [
+                FinancialMetrics(
+                    period=current_period,
+                    revenue=round(rev, 2),
+                    expenses=round(exp, 2),
+                    profit=round(profit, 2),
+                    margin=round(margin, 4),
+                    cash_flow=round(net_cf, 2),
+                    cash_balance=round(closing_cash, 2),
+                    outstanding=round(business.outstanding_ar, 2),
+                    revenue_change_pct=0.0,
+                    expenses_change_pct=0.0,
+                    profit_change_pct=0.0,
+                    expense_breakdown=exp_breakdown,
+                    is_estimated=True,
+                    opening_balance=round(business.opening_cash_balance, 2),
+                    operating_cash_flow=round(operating_cf, 2),
+                    financing_cash_flow=round(financing_cf, 2),
+                )
+            ]
         return []
 
     monthly: dict[str, dict] = defaultdict(
         lambda: {"revenue": 0.0, "expenses": 0.0, "expense_cats": defaultdict(float)}
     )
 
-    # Outstanding = pending income transactions
-    outstanding = sum(
+    # Outstanding = pending income transactions or AR from business profile
+    pending_amount = sum(
         t.amount for t in transactions
         if t.type == TransactionType.INCOME and t.status == TransactionStatus.PENDING
     )
+    outstanding = pending_amount if pending_amount > 0 else (business.outstanding_ar if business else 0.0)
 
     for txn in sorted(transactions, key=lambda t: t.date):
         key = txn.date.strftime("%Y-%m")
@@ -54,19 +106,31 @@ def compute_monthly_metrics(
             if txn.status == TransactionStatus.COMPLETED:
                 monthly[key]["revenue"] += txn.amount
         else:
-            monthly[key]["expenses"] += txn.amount
-            monthly[key]["expense_cats"][txn.category] += txn.amount
+            if txn.status == TransactionStatus.COMPLETED:
+                monthly[key]["expenses"] += txn.amount
+                monthly[key]["expense_cats"][txn.category] += txn.amount
 
     result: list[FinancialMetrics] = []
     prev: FinancialMetrics | None = None
-    cash_balance = 500_000.0  # starting balance
+
+    # Starting cash balance: from business opening_cash_balance, or 500,000 for legacy demo
+    if business is not None:
+        cash_balance = float(business.opening_cash_balance)
+    else:
+        cash_balance = 500_000.0
+
+    loan_repayment = float(business.monthly_loan_repayment) if business else 0.0
 
     for period in sorted(monthly.keys()):
         rev = monthly[period]["revenue"]
         exp = monthly[period]["expenses"]
         profit = rev - exp
         margin = profit / rev if rev else 0.0
-        cf = profit  # simplified cash-flow proxy
+
+        period_opening = cash_balance
+        operating_cf = profit
+        financing_cf = -loan_repayment
+        cf = operating_cf + financing_cf
         cash_balance += cf
 
         def pct_change(current: float, previous: float) -> float:
@@ -89,6 +153,10 @@ def compute_monthly_metrics(
             expense_breakdown={
                 k: round(v, 2) for k, v in monthly[period]["expense_cats"].items()
             },
+            is_estimated=False,
+            opening_balance=round(period_opening, 2),
+            operating_cash_flow=round(operating_cf, 2),
+            financing_cash_flow=round(financing_cf, 2),
         )
         result.append(m)
         prev = m
@@ -181,28 +249,28 @@ def compute_health_score(metrics: list[FinancialMetrics]) -> BusinessHealthScore
     )
 
 
-def compute_cash_flow_status(metrics: list[FinancialMetrics]) -> CashFlowStatus:
+def compute_cash_flow_status(metrics: list[FinancialMetrics], currency: str = "USD") -> CashFlowStatus:
     """Analyze cash flow trends and project future position."""
-    if len(metrics) < 3:
+    if not metrics:
         return CashFlowStatus(
             status="healthy", label="Healthy",
             explanation="Not enough data for cash-flow analysis.",
-            projected_balance_3mo=metrics[-1].cash_balance if metrics else 0,
-            recommendation="Add more financial data to enable cash-flow forecasting.",
+            projected_balance_3mo=0,
+            recommendation="Add more financial data or configure your business profile to enable cash-flow forecasting.",
         )
 
-    recent = metrics[-3:]
-    avg_cf = sum(m.cash_flow for m in recent) / 3
+    recent = metrics[-3:] if len(metrics) >= 3 else metrics
+    avg_cf = sum(m.cash_flow for m in recent) / len(recent)
     latest = metrics[-1]
 
     projected_3mo = latest.cash_balance + avg_cf * 3
 
-    if avg_cf > 100_000 and projected_3mo > latest.cash_balance:
+    if avg_cf > 0 and projected_3mo >= latest.cash_balance:
         return CashFlowStatus(
             status="healthy", label="Healthy",
             explanation=(
-                f"Your cash flow is positive and growing. Average monthly inflow of "
-                f"PKR {avg_cf:,.0f} puts you in a strong position."
+                f"Your cash flow is positive. Average monthly net inflow of "
+                f"{currency} {avg_cf:,.0f} puts you in a strong position."
             ),
             projected_balance_3mo=round(projected_3mo, 2),
             recommendation="Consider allocating surplus cash to growth investments or an emergency reserve.",
@@ -212,8 +280,8 @@ def compute_cash_flow_status(metrics: list[FinancialMetrics]) -> CashFlowStatus:
             status="watch", label="Watch",
             explanation=(
                 f"Cash flow is positive but tightening. Average monthly net flow is "
-                f"PKR {avg_cf:,.0f}, down from earlier months. Your projected balance in 3 months "
-                f"is PKR {projected_3mo:,.0f}."
+                f"{currency} {avg_cf:,.0f}. Your projected balance in 3 months "
+                f"is {currency} {projected_3mo:,.0f}."
             ),
             projected_balance_3mo=round(projected_3mo, 2),
             recommendation="Monitor expenses closely. Identify any recurring costs that can be optimized before cash position weakens further.",
@@ -223,8 +291,8 @@ def compute_cash_flow_status(metrics: list[FinancialMetrics]) -> CashFlowStatus:
             status="at_risk", label="At Risk",
             explanation=(
                 f"Cash flow is negative or flat. Average monthly net flow is "
-                f"PKR {avg_cf:,.0f}. At this rate, your cash balance could decline to "
-                f"PKR {projected_3mo:,.0f} within 3 months."
+                f"{currency} {avg_cf:,.0f}. At this rate, your cash balance could decline to "
+                f"{currency} {projected_3mo:,.0f} within 3 months."
             ),
             projected_balance_3mo=round(projected_3mo, 2),
             recommendation="Take immediate action: reduce non-essential expenses, accelerate collections on outstanding payments, and defer large purchases.",
@@ -233,30 +301,33 @@ def compute_cash_flow_status(metrics: list[FinancialMetrics]) -> CashFlowStatus:
 
 def generate_forecast(metrics: list[FinancialMetrics]) -> list[Forecast]:
     """Generate 3-month forecasts using linear extrapolation with confidence bands."""
-    if len(metrics) < 3:
+    if not metrics:
         return []
 
     forecasts: list[Forecast] = []
 
     for metric_key, fc_metric, explanation in [
-        ("revenue", ForecastMetric.REVENUE, "Based on recent revenue trends and seasonal patterns."),
-        ("expenses", ForecastMetric.EXPENSES, "Projected from expense growth rate over the last 6 months."),
+        ("revenue", ForecastMetric.REVENUE, "Based on recent revenue trends and baseline setup figures."),
+        ("expenses", ForecastMetric.EXPENSES, "Projected from expense run rate over recent periods."),
         ("profit", ForecastMetric.PROFIT, "Derived from forecasted revenue minus projected expenses."),
         ("cash_flow", ForecastMetric.CASH_FLOW, "Estimated from net cash flow trends."),
     ]:
         values = [getattr(m, metric_key) for m in metrics]
-        # Simple linear regression on last 6 months
         n = min(6, len(values))
         recent = values[-n:]
-        x_mean = (n - 1) / 2
-        y_mean = sum(recent) / n
-        num = sum((i - x_mean) * (v - y_mean) for i, v in enumerate(recent))
-        den = sum((i - x_mean) ** 2 for i in range(n))
-        slope = num / den if den else 0
-        intercept = y_mean - slope * x_mean
+        if n >= 2:
+            x_mean = (n - 1) / 2
+            y_mean = sum(recent) / n
+            num = sum((i - x_mean) * (v - y_mean) for i, v in enumerate(recent))
+            den = sum((i - x_mean) ** 2 for i in range(n))
+            slope = num / den if den else 0
+            intercept = y_mean - slope * x_mean
+        else:
+            slope = 0.0
+            intercept = recent[0]
 
         points: list[ForecastPoint] = []
-        # Historical points (last 6)
+        # Historical / Baseline points
         for i, m in enumerate(metrics[-n:]):
             points.append(ForecastPoint(
                 date=m.period, value=round(getattr(m, metric_key), 2), is_predicted=False,
@@ -272,8 +343,7 @@ def generate_forecast(metrics: list[FinancialMetrics]) -> list[Forecast]:
                 year += 1
             future_date = f"{year}-{month:02d}"
             predicted = intercept + slope * (n - 1 + step)
-            # Confidence band widens with distance
-            band = abs(predicted) * 0.08 * step
+            band = max(abs(predicted) * 0.08 * step, 100.0)
             points.append(ForecastPoint(
                 date=future_date,
                 value=round(predicted, 2),
@@ -355,6 +425,7 @@ def generate_notifications(
     metrics: list[FinancialMetrics],
     invoices: list[Invoice],
     cash_flow_status: CashFlowStatus,
+    currency: str = "USD",
 ) -> list[Notification]:
     """Generate data-driven notifications from financial state."""
     notifs: list[Notification] = []
@@ -366,7 +437,7 @@ def generate_notifications(
             notifs.append(Notification(
                 type=NotificationType.OVERDUE_INVOICE,
                 title=f"Overdue: {inv.invoice_number} \u2014 {inv.client_name}",
-                message=f"PKR {inv.total:,.0f} is overdue since {inv.due_date.strftime('%b %d, %Y')}. Follow up to improve cash flow.",
+                message=f"{currency} {inv.total:,.0f} is overdue since {inv.due_date.strftime('%b %d, %Y')}. Follow up to improve cash flow.",
                 severity=NotificationSeverity.HIGH,
                 action_url="/app/invoices",
                 related_id=str(inv.id),
@@ -513,6 +584,7 @@ def generate_next_best_move(
     metrics: list[FinancialMetrics],
     invoices: list[Invoice],
     cash_flow_status: CashFlowStatus,
+    currency: str = "USD",
 ) -> NextBestMove:
     """Determine the single most important action the user should take right now."""
     latest = metrics[-1] if metrics else None
@@ -526,7 +598,7 @@ def generate_next_best_move(
         return NextBestMove(
             title="Collect Overdue Invoices",
             description=(
-                f"PKR {overdue_total:,.0f} is outstanding from {len(overdue)} overdue "
+                f"{currency} {overdue_total:,.0f} is outstanding from {len(overdue)} overdue "
                 f"invoice{'s' if len(overdue) > 1 else ''}."
             ),
             why_it_matters=(
@@ -535,7 +607,7 @@ def generate_next_best_move(
             ),
             action_label="View Invoices",
             action_url="/app/invoices",
-            impact=f"+PKR {overdue_total:,.0f} immediate cash improvement",
+            impact=f"+{currency} {overdue_total:,.0f} immediate cash improvement",
             secondary=[
                 "Review your top 3 expense categories for optimization opportunities.",
                 "Consider converting project clients to retainer agreements for predictable income.",
@@ -575,7 +647,7 @@ def generate_next_best_move(
             ),
             action_label="Review Expenses",
             action_url="/app/analytics",
-            impact=f"Protect {(gap * latest.expenses / 100):,.0f}/month in margin",
+            impact=f"Protect {currency} {(gap * latest.expenses / 100):,.0f}/month in margin",
             secondary=[
                 "Audit your fastest-growing expense categories.",
                 "Evaluate whether recent spending increases produced measurable returns.",
@@ -596,7 +668,7 @@ def generate_next_best_move(
             ),
             action_label="View Reports",
             action_url="/app/reports",
-            impact=f"Target: +PKR {(latest.revenue * 0.05):,.0f}/month with 5% margin improvement",
+            impact=f"Target: +{currency} {(latest.revenue * 0.05):,.0f}/month with 5% margin improvement",
             secondary=[
                 "Identify your highest-margin services and focus sales efforts there.",
                 "Negotiate better rates with your top 3 vendors.",
@@ -616,7 +688,7 @@ def generate_next_best_move(
         ),
         action_label="View Insights",
         action_url="/app/intelligence",
-        impact="~+PKR 50,000/month per converted client",
+        impact=f"~+{currency} 50,000/month per converted client",
         secondary=[
             "Approach your top 3 repeat clients with retainer proposals.",
             "Set a target of 40% retainer revenue within 6 months.",

@@ -60,9 +60,47 @@ class Business(BaseModel):
     name: str
     industry: str = ""
     business_type: str = ""
+    country: str = "US"
     currency: str = "USD"
+    fiscal_year_start: str = "January"
+    business_start_date: str = ""
+    employee_count: int = 1
+    opening_cash_balance: float = 0.0
+    avg_monthly_revenue: float = 0.0
+    monthly_fixed_expenses: float = 0.0
+    monthly_variable_expenses: float = 0.0
+    outstanding_ar: float = 0.0
+    outstanding_ap: float = 0.0
+    loan_balance: float = 0.0
+    monthly_loan_repayment: float = 0.0
+    expected_growth_rate: float = 0.0
+    financial_goals: str = ""
+    onboarding_completed: bool = False
     monthly_revenue_range: str = ""
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class BusinessUpdate(BaseModel):
+    name: str | None = None
+    industry: str | None = None
+    business_type: str | None = None
+    country: str | None = None
+    currency: str | None = None
+    fiscal_year_start: str | None = None
+    business_start_date: str | None = None
+    employee_count: int | None = None
+    opening_cash_balance: float | None = None
+    avg_monthly_revenue: float | None = None
+    monthly_fixed_expenses: float | None = None
+    monthly_variable_expenses: float | None = None
+    outstanding_ar: float | None = None
+    outstanding_ap: float | None = None
+    loan_balance: float | None = None
+    monthly_loan_repayment: float | None = None
+    expected_growth_rate: float | None = None
+    financial_goals: str | None = None
+    onboarding_completed: bool | None = None
+    monthly_revenue_range: str | None = None
 
 
 class User(BaseModel):
@@ -110,6 +148,18 @@ class TransactionUpdate(BaseModel):
     notes: str | None = None
 
 
+class TransactionBatchImportRequest(BaseModel):
+    transactions: list[TransactionCreate]
+    skip_duplicates: bool = True
+
+
+class TransactionBatchImportResponse(BaseModel):
+    imported_count: int
+    skipped_count: int
+    total_count: int
+    duplicates: list[str] = []
+
+
 # ---------------------------------------------------------------------------
 # Financial Metrics
 # ---------------------------------------------------------------------------
@@ -128,6 +178,10 @@ class FinancialMetrics(BaseModel):
     expenses_change_pct: float = 0.0
     profit_change_pct: float = 0.0
     expense_breakdown: dict[str, float] = {}
+    is_estimated: bool = False
+    opening_balance: float = 0.0
+    operating_cash_flow: float = 0.0
+    financing_cash_flow: float = 0.0
 
 
 class BusinessHealthScore(BaseModel):
@@ -367,9 +421,23 @@ class BusinessSettings(BaseModel):
     business_name: str = ""
     industry: str = ""
     business_type: str = ""
-    currency: str = "PKR"
-    monthly_revenue_range: str = ""
+    country: str = "US"
+    currency: str = "USD"
     fiscal_year_start: str = "January"
+    business_start_date: str = ""
+    employee_count: int = 1
+    opening_cash_balance: float = 0.0
+    avg_monthly_revenue: float = 0.0
+    monthly_fixed_expenses: float = 0.0
+    monthly_variable_expenses: float = 0.0
+    outstanding_ar: float = 0.0
+    outstanding_ap: float = 0.0
+    loan_balance: float = 0.0
+    monthly_loan_repayment: float = 0.0
+    expected_growth_rate: float = 0.0
+    financial_goals: str = ""
+    onboarding_completed: bool = False
+    monthly_revenue_range: str = ""
 
 
 class UserPreferences(BaseModel):

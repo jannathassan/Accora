@@ -1,38 +1,47 @@
 @import "tailwindcss";
 
-/* ─── Accora Design Tokens ─────────────────────────────────────────── */
+/* ─── Accora Design System: Aurora Themes (Light Aurora, Dark Aurora, High Contrast Aurora) ─── */
 
 @theme {
-  /* Brand palette (unchanged across themes) */
-  --color-brand-50: #eef5ff;
-  --color-brand-100: #d9e8ff;
-  --color-brand-200: #bcd7ff;
-  --color-brand-300: #8ec0ff;
-  --color-brand-400: #599dff;
-  --color-brand-500: #3378ff;
-  --color-brand-600: #1b57f5;
-  --color-brand-700: #1443e1;
-  --color-brand-800: #1736b6;
-  --color-brand-900: #19338f;
-  --color-brand-950: #142057;
+  /* Brand palette: Lavender, Lilac, and Soft to Deep Violet */
+  --color-brand-50: #f5f3ff;
+  --color-brand-100: #ede9fe;
+  --color-brand-200: #ddd6fe;
+  --color-brand-300: #c4b5fd;
+  --color-brand-400: #a78bfa;
+  --color-brand-500: #8b5cf6;
+  --color-brand-600: #7c3aed;
+  --color-brand-700: #6d28d9;
+  --color-brand-800: #5b21b6;
+  --color-brand-900: #4c1d95;
+  --color-brand-950: #2e1065;
 
-  /* Neutral palette — LIGHT defaults */
-  --color-surface-50: #f8f9fb;
-  --color-surface-100: #f1f3f6;
-  --color-surface-200: #e4e7ec;
-  --color-surface-300: #d0d5dd;
-  --color-surface-400: #98a2b3;
-  --color-surface-500: #667085;
-  --color-surface-600: #475467;
-  --color-surface-700: #344054;
-  --color-surface-800: #1d2939;
-  --color-surface-900: #101828;
-  --color-surface-950: #0c111d;
+  /* Galaxy Space Palette (Preserved for Outer Public Homepage) */
+  --color-galaxy-void: #030712;
+  --color-galaxy-space: #060919;
+  --color-galaxy-navy: #0b1026;
+  --color-galaxy-violet: #7c3aed;
+  --color-galaxy-lavender: #c084fc;
+  --color-galaxy-cyan: #38bdf8;
+  --color-galaxy-magenta: #e879f9;
 
-  /* Card surface — the main card background */
+  /* Neutral palette — LIGHT MODE (Luminous pearl-white, soft lavender & subtle lilac) */
+  --color-surface-50: #fbf9fd;
+  --color-surface-100: #f4f0f9;
+  --color-surface-200: #e8e2f2;
+  --color-surface-300: #d6ccdf;
+  --color-surface-400: #a395b3;
+  --color-surface-500: #736484;
+  --color-surface-600: #554766;
+  --color-surface-700: #3c304d;
+  --color-surface-800: #261e33;
+  --color-surface-900: #161122;
+  --color-surface-950: #0d0a14;
+
+  /* Card surface — Crisp Pure White */
   --color-surface-card: #ffffff;
 
-  /* Semantic */
+  /* Semantic Financial Colors (Clean, vibrant, high-readability) */
   --color-positive: #12b76a;
   --color-positive-light: #d1fadf;
   --color-warning: #f79009;
@@ -42,8 +51,11 @@
   --color-ai: #7c3aed;
   --color-ai-light: #ede9fe;
 
-  /* Typography */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Typography: Original Accora fonts */
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Playfair Display", Georgia, Cambria, serif;
+  --font-heading: "Plus Jakarta Sans", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Spacing scale */
   --spacing-18: 4.5rem;
@@ -53,67 +65,76 @@
   /* Border radius */
   --radius-card: 0.75rem;
 
-  /* Shadows */
-  --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
-  --shadow-card-hover: 0 4px 8px -2px rgba(16, 24, 40, 0.08), 0 2px 4px -2px rgba(16, 24, 40, 0.04);
+  /* Shadows: Soft, clean elevation with restrained lavender tint */
+  --shadow-card: 0 1px 3px rgba(22, 17, 34, 0.05), 0 1px 2px rgba(22, 17, 34, 0.03);
+  --shadow-card-hover: 0 6px 14px -3px rgba(124, 58, 237, 0.08), 0 2px 4px -2px rgba(22, 17, 34, 0.04);
 
-  /* Chart-specific tokens */
-  --color-chart-grid: #e4e7ec;
-  --color-chart-text: #667085;
+  /* Chart tokens for Light Mode */
+  --color-chart-grid: #e8e2f2;
+  --color-chart-text: #736484;
   --color-chart-tooltip-bg: #ffffff;
-  --color-chart-tooltip-border: #e4e7ec;
+  --color-chart-tooltip-border: #e8e2f2;
 }
 
-/* ─── Theme Overrides (unlayered for highest cascade priority) ──────── */
+/* ─── Theme Overrides (highest cascade priority) ──────── */
 
-/* ── DARK ────────────────────────────────────────────────────── */
+/* ── DARK MODE (Deep Plum, Charcoal & Violet-Tinted Atmospheres) ───────────── */
 [data-theme="dark"] {
-  --color-surface-50: #10131a;
-  --color-surface-100: #181c26;
-  --color-surface-200: #252a36;
-  --color-surface-300: #363d4d;
-  --color-surface-400: #5a6478;
-  --color-surface-500: #8892a6;
-  --color-surface-600: #a3adbf;
-  --color-surface-700: #c0c8d6;
-  --color-surface-800: #dce0e8;
-  --color-surface-900: #eef0f5;
-  --color-surface-950: #f8f9fb;
+  --color-surface-50: #0f0d17;
+  --color-surface-100: #171324;
+  --color-surface-200: #28213b;
+  --color-surface-300: #3b3156;
+  --color-surface-400: #675887;
+  --color-surface-500: #9687b8;
+  --color-surface-600: #b9adcf;
+  --color-surface-700: #d6cee4;
+  --color-surface-800: #ece7f5;
+  --color-surface-900: #f6f3fa;
+  --color-surface-950: #ffffff;
 
-  --color-surface-card: #1a1e28;
+  --color-surface-card: #161224;
 
+  --color-brand-400: #c4b5fd;
+  --color-brand-500: #a78bfa;
+  --color-brand-600: #8b5cf6;
+  --color-brand-700: #7c3aed;
+
+  --color-positive: #12b76a;
   --color-positive-light: #0d3320;
+  --color-warning: #f79009;
   --color-warning-light: #332808;
+  --color-risk: #f04438;
   --color-risk-light: #331210;
-  --color-ai-light: #1e1338;
+  --color-ai: #a78bfa;
+  --color-ai-light: #251842;
 
-  --color-chart-grid: #252a36;
-  --color-chart-text: #8892a6;
-  --color-chart-tooltip-bg: #1a1e28;
-  --color-chart-tooltip-border: #252a36;
+  --color-chart-grid: #28213b;
+  --color-chart-text: #9687b8;
+  --color-chart-tooltip-bg: #1d182e;
+  --color-chart-tooltip-border: #3b3156;
 
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-card-hover: 0 4px 8px -2px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.25);
+  --shadow-card: 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 1px rgba(167, 139, 250, 0.15);
+  --shadow-card-hover: 0 8px 20px -4px rgba(0, 0, 0, 0.5), 0 0 12px rgba(139, 92, 246, 0.15);
 }
 
-/* ── HIGH CONTRAST ───────────────────────────────────────────── */
+/* ── HIGH CONTRAST MODE (Stark Black/White, Maximum Accessibility) ──────────────────── */
 [data-theme="high-contrast"] {
   --color-surface-50: #ffffff;
-  --color-surface-100: #f0f0f0;
-  --color-surface-200: #cccccc;
-  --color-surface-300: #999999;
-  --color-surface-400: #666666;
-  --color-surface-500: #444444;
-  --color-surface-600: #333333;
-  --color-surface-700: #222222;
-  --color-surface-800: #111111;
+  --color-surface-100: #f2f2f4;
+  --color-surface-200: #b4b4c4;
+  --color-surface-300: #7c7c90;
+  --color-surface-400: #555566;
+  --color-surface-500: #333344;
+  --color-surface-600: #222233;
+  --color-surface-700: #111122;
+  --color-surface-800: #090910;
   --color-surface-900: #000000;
   --color-surface-950: #000000;
 
   --color-surface-card: #ffffff;
 
-  --color-brand-600: #0040cc;
-  --color-brand-700: #003399;
+  --color-brand-600: #5b21b6;
+  --color-brand-700: #4c1d95;
 
   --color-positive: #007a3d;
   --color-positive-light: #d1fadf;
@@ -122,15 +143,15 @@
   --color-risk: #cc0000;
   --color-risk-light: #fee4e2;
   --color-ai: #5b21b6;
-  --color-ai-light: #e8e0fb;
+  --color-ai-light: #ede9fe;
 
-  --color-chart-grid: #cccccc;
-  --color-chart-text: #333333;
+  --color-chart-grid: #7c7c90;
+  --color-chart-text: #000000;
   --color-chart-tooltip-bg: #ffffff;
   --color-chart-tooltip-border: #000000;
 
   --shadow-card: 0 0 0 2px #000000;
-  --shadow-card-hover: 0 0 0 3px #0040cc;
+  --shadow-card-hover: 0 0 0 3px #5b21b6;
 }
 
 /* ─── Base styles ──────────────────────────────────────────────────── */
@@ -147,12 +168,12 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Force theme backgrounds on body/main — bypasses @property inheritance issues */
+/* Force theme backgrounds on body/main */
 [data-theme="dark"] body,
 [data-theme="dark"] body > #root,
 [data-theme="dark"] .bg-surface-50 {
-  background-color: #10131a;
-  color: #eef0f5;
+  background-color: #0f0d17;
+  color: #f6f3fa;
 }
 
 [data-theme="high-contrast"] body,
@@ -165,11 +186,11 @@ body {
 [data-theme="light"] body,
 [data-theme="light"] body > #root,
 [data-theme="light"] .bg-surface-50 {
-  background-color: #f8f9fb;
-  color: #101828;
+  background-color: #fbf9fd;
+  color: #161122;
 }
 
-/* Smooth theme transitions on all theme-aware elements */
+/* Smooth theme transitions */
 @media (prefers-reduced-motion: no-preference) {
   *,
   *::before,
@@ -182,18 +203,23 @@ body {
 
 /* Focus-visible ring for accessibility */
 :focus-visible {
-  outline: 2px solid var(--color-brand-500);
+  outline: 2px solid var(--color-brand-600);
   outline-offset: 2px;
 }
 
 /* High-contrast: stronger borders on all cards */
 [data-theme="high-contrast"] .shadow-\[var\(--shadow-card\)\] {
-  border: 2px solid var(--color-surface-800);
+  border: 2px solid #000000;
 }
 
-/* Dark mode: subtle border on cards instead of shadow-only */
+/* Dark mode: subtle border on cards with restrained violet glow */
 [data-theme="dark"] .shadow-\[var\(--shadow-card\)\] {
-  border: 1px solid var(--color-surface-200);
+  border: 1px solid rgba(167, 139, 250, 0.18);
+}
+
+/* Light mode: subtle delicate lavender border on cards */
+[data-theme="light"] .shadow-\[var\(--shadow-card\)\] {
+  border: 1px solid #e8e2f2;
 }
 
 /* Toast slide-in animation */
@@ -203,4 +229,71 @@ body {
 }
 .toast-enter {
   animation: toast-in 0.2s ease-out;
+}
+
+/* Tabular figures for financial accuracy and alignment */
+.tabular-nums,
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ─── THEME 1: GALAXY SPACE (Public Homepage & Decorative Cosmic Layer) ─ */
+
+/* Realistic, multi-layered cosmic starfield */
+.cosmic-starfield {
+  background-image: 
+    radial-gradient(1px 1px at 25px 35px, rgba(255, 255, 255, 0.75), rgba(0, 0, 0, 0)),
+    radial-gradient(1.5px 1.5px at 140px 90px, rgba(192, 132, 252, 0.7), rgba(0, 0, 0, 0)),
+    radial-gradient(1px 1px at 260px 190px, rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0)),
+    radial-gradient(2px 2px at 380px 70px, rgba(129, 140, 248, 0.65), rgba(0, 0, 0, 0)),
+    radial-gradient(1px 1px at 490px 240px, rgba(56, 189, 248, 0.55), rgba(0, 0, 0, 0)),
+    radial-gradient(1.5px 1.5px at 620px 160px, rgba(232, 121, 249, 0.5), rgba(0, 0, 0, 0)),
+    radial-gradient(1px 1px at 730px 40px, rgba(255, 255, 255, 0.6), rgba(0, 0, 0, 0));
+  background-repeat: repeat;
+  background-size: 750px 400px;
+}
+
+/* Cosmic Nebula Atmospheric Gradients */
+.galaxy-nebula-blue {
+  background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.14) 0%, rgba(99, 102, 241, 0.08) 50%, transparent 75%);
+}
+.galaxy-nebula-violet {
+  background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.15) 0%, rgba(192, 132, 252, 0.08) 50%, transparent 75%);
+}
+.galaxy-nebula-magenta {
+  background: radial-gradient(circle at 50% 50%, rgba(232, 121, 249, 0.12) 0%, rgba(124, 58, 237, 0.07) 50%, transparent 75%);
+}
+
+/* Tasteful Planetary Horizon Arc */
+.planetary-horizon {
+  position: relative;
+}
+.planetary-horizon::before {
+  content: "";
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140%;
+  height: 240px;
+  background: radial-gradient(ellipse at top, rgba(139, 92, 246, 0.18) 0%, rgba(56, 189, 248, 0.10) 35%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(32px);
+}
+
+/* Cosmic Translucent Surface */
+.cosmic-panel {
+  background: rgba(11, 16, 38, 0.82);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(192, 132, 252, 0.2);
+}
+
+/* Cosmic Glows */
+.glow-galaxy-sm {
+  box-shadow: 0 0 16px -2px rgba(139, 92, 246, 0.3);
+}
+.glow-galaxy-md {
+  box-shadow: 0 0 30px -4px rgba(139, 92, 246, 0.4), 0 0 12px rgba(56, 189, 248, 0.2);
 }

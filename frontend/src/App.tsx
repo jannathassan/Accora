@@ -14,6 +14,8 @@ import ReportsPage from './pages/ReportsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import SettingsPage from './pages/SettingsPage';
 import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 export default function App() {
@@ -24,6 +26,8 @@ export default function App() {
       <Routes>
         {/* Public */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
 
         {/* Authenticated app shell — FinancialProvider wraps layout + all pages */}
         <Route element={<FinancialProvider><Outlet /></FinancialProvider>}>

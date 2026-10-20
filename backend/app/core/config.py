@@ -28,8 +28,9 @@ class Settings(BaseSettings):
     alibaba_model_id: str = "qwen-turbo"
     alibaba_endpoint: str = ""
 
-    # Data
+    # Data & Database
     demo_mode: bool = True
+    database_path: str = "accora.db"
 
     model_config = {"env_file": ".env", "env_prefix": "ACCORA_"}
 

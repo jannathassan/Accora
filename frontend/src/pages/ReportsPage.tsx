@@ -6,7 +6,7 @@ import { clsx } from 'clsx';
 import {
   FileText, TrendingUp, TrendingDown, DollarSign, PiggyBank, Waves,
   BarChart3, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, AlertTriangle, RefreshCcw,
-  Download, Printer,
+  Download, Printer
 } from 'lucide-react';
 
 const TABS = [
@@ -22,7 +22,7 @@ const PERIOD_OPTIONS = [
   { label: '12 Months', value: 12 },
 ];
 
-const CATEGORY_COLORS = ['#3378ff', '#12b76a', '#f79009', '#7c3aed', '#f04438', '#06aed4', '#ee442f', '#2e90fa'];
+const CATEGORY_COLORS = ['#7c3aed', '#12b76a', '#f79009', '#a78bfa', '#f04438', '#06aed4', '#8b5cf6', '#5b21b6'];
 
 function exportCSV(tab: string, data: unknown) {
   if (!data) return;
@@ -101,15 +101,15 @@ export default function ReportsPage() {
   }, [tab, months]);
 
   return (
-    <div className="p-4 md:p-6 pb-24 md:pb-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 pb-24 md:pb-6 max-w-7xl mx-auto space-y-6 font-sans">
       {exportToast && (
-        <div className="toast-enter fixed top-4 right-4 z-50 px-4 py-2.5 bg-surface-900 text-white text-sm font-medium rounded-lg shadow-lg">
+        <div className="toast-enter fixed top-4 right-4 z-50 px-4 py-2.5 bg-surface-900 text-white text-xs font-semibold rounded-lg shadow-lg">
           {exportToast}
         </div>
       )}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 pb-3 border-b border-surface-200">
         <FileText className="w-5 h-5 text-brand-600" />
-        <h1 className="text-xl font-bold text-surface-900">Reports</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-surface-900 dark:text-surface-100 tracking-tight">Reports</h1>
       </div>
 
       {/* Tab Bar */}
@@ -118,8 +118,10 @@ export default function ReportsPage() {
           const Icon = t.icon;
           return (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={clsx('inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors',
-                tab === t.key ? 'bg-brand-600 text-white' : 'bg-surface-100 text-surface-600 hover:bg-surface-200')}>
+              className={clsx('inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer',
+                tab === t.key
+                  ? 'bg-brand-600 text-white shadow-xs'
+                  : 'bg-surface-card border border-surface-200 text-surface-600 dark:text-surface-300 hover:bg-surface-100')}>
               <Icon className="w-3.5 h-3.5" /> {t.label}
             </button>
           );
@@ -129,7 +131,7 @@ export default function ReportsPage() {
             <div className="flex items-center gap-1">
               {PERIOD_OPTIONS.map((p) => (
                 <button key={p.value} onClick={() => setMonths(p.value)}
-                  className={clsx('px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                  className={clsx('px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer',
                     months === p.value ? 'bg-surface-800 text-white' : 'bg-surface-100 text-surface-500 hover:bg-surface-200')}>
                   {p.label}
                 </button>
@@ -143,13 +145,13 @@ export default function ReportsPage() {
               setExportToast('Report exported to CSV');
               setTimeout(() => setExportToast(null), 2500);
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-surface-600 bg-surface-100 rounded-lg hover:bg-surface-200 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-surface-700 dark:text-surface-200 bg-surface-card border border-surface-200 rounded-xl hover:bg-surface-100 transition-colors cursor-pointer shadow-2xs"
           >
             <Download className="w-3.5 h-3.5" /> Export CSV
           </button>
           <button
             onClick={() => window.print()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-surface-600 bg-surface-100 rounded-lg hover:bg-surface-200 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-surface-700 dark:text-surface-200 bg-surface-card border border-surface-200 rounded-xl hover:bg-surface-100 transition-colors cursor-pointer shadow-2xs"
           >
             <Printer className="w-3.5 h-3.5" /> Print
           </button>
@@ -166,7 +168,7 @@ export default function ReportsPage() {
           <AlertTriangle className="w-8 h-8 text-risk mb-3" />
           <p className="text-sm text-surface-600 mb-3">Failed to load report: {error}</p>
           <button onClick={() => { setTab(tab); }}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-brand-600 bg-brand-50 rounded-lg hover:bg-brand-100 transition-colors">
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition-colors cursor-pointer">
             <RefreshCcw className="w-3.5 h-3.5" /> Retry
           </button>
         </div>
@@ -189,42 +191,42 @@ function PLView({ report }: { report: PLReport }) {
     <div className="space-y-4">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Revenue', value: report.revenue, icon: DollarSign, color: 'text-brand-600' },
+          { label: 'Revenue', value: report.revenue, icon: DollarSign, color: 'text-surface-900 dark:text-surface-100' },
           { label: 'Expenses', value: report.expenses, icon: TrendingDown, color: 'text-risk' },
           { label: 'Net Profit', value: report.net_profit, icon: PiggyBank, color: report.net_profit >= 0 ? 'text-positive' : 'text-risk' },
-          { label: 'Margin', value: null, icon: TrendingUp, color: 'text-surface-900', display: `${(report.margin * 100).toFixed(1)}%` },
+          { label: 'Margin', value: null, icon: TrendingUp, color: 'text-surface-900 dark:text-surface-100', display: `${(report.margin * 100).toFixed(1)}%` },
         ].map((m) => {
           const Icon = m.icon;
           return (
-            <div key={m.label} className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-4">
+            <div key={m.label} className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-4 hover:border-surface-300 transition-all">
               <div className="flex items-center gap-2 mb-2">
                 <Icon className="w-4 h-4 text-surface-400" />
-                <span className="text-xs text-surface-500">{m.label}</span>
+                <span className="text-xs text-surface-500 dark:text-surface-400 font-medium">{m.label}</span>
               </div>
-              <p className={clsx('text-lg font-semibold tabular-nums', m.color)}>
+              <p className={clsx('text-lg font-bold tabular-nums font-mono', m.color)}>
                 {m.display ?? fmtCurrency(m.value!)}
               </p>
             </div>
           );
         })}
       </div>
-      <div className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-5">
-        <h3 className="text-sm font-semibold text-surface-900 mb-3">Expense Breakdown</h3>
-        <div className="space-y-2">
+      <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-5 md:p-6">
+        <h3 className="text-sm font-bold text-surface-900 dark:text-surface-100 mb-3">Expense Breakdown</h3>
+        <div className="space-y-2.5">
           {entries.map(([cat, amt], i) => {
             const pct = report.expenses ? ((amt / report.expenses) * 100).toFixed(1) : '0';
             return (
               <div key={cat} className="flex items-center gap-3">
                 <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length] }} />
-                <span className="text-sm text-surface-700 flex-1">{cat}</span>
-                <span className="text-xs text-surface-400 tabular-nums">{pct}%</span>
-                <span className="text-sm font-medium text-surface-900 tabular-nums w-24 text-right">{fmtCurrency(amt)}</span>
+                <span className="text-sm text-surface-700 dark:text-surface-300 flex-1">{cat}</span>
+                <span className="text-xs text-surface-400 tabular-nums font-mono">{pct}%</span>
+                <span className="text-sm font-semibold text-surface-900 dark:text-surface-100 tabular-nums font-mono w-28 text-right">{fmtCurrency(amt)}</span>
               </div>
             );
           })}
         </div>
       </div>
-      <div className="text-[10px] text-surface-400 text-center">Period: {report.period}</div>
+      <div className="text-[10px] text-surface-400 font-mono text-center">Period: {report.period}</div>
     </div>
   );
 }
@@ -234,41 +236,41 @@ function ExpenseView({ report }: { report: ExpenseReport }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <div className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-4">
-          <p className="text-xs text-surface-500 mb-1">Total Expenses</p>
-          <p className="text-lg font-semibold text-risk tabular-nums">{fmtCurrency(report.total)}</p>
+        <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-4">
+          <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Total Expenses</p>
+          <p className="text-lg font-bold text-risk tabular-nums font-mono">{fmtCurrency(report.total)}</p>
         </div>
-        <div className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-4">
-          <p className="text-xs text-surface-500 mb-1">Change vs Prior</p>
-          <span className={clsx('inline-flex items-center gap-1 text-lg font-semibold tabular-nums',
+        <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-4">
+          <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Change vs Prior</p>
+          <span className={clsx('inline-flex items-center gap-1 text-lg font-bold tabular-nums font-mono',
             report.change_vs_prior <= 0 ? 'text-positive' : 'text-risk')}>
             {report.change_vs_prior <= 0 ? <ArrowDownRight className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
             {report.change_vs_prior > 0 ? '+' : ''}{(report.change_vs_prior * 100).toFixed(1)}%
           </span>
         </div>
-        <div className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-4">
-          <p className="text-xs text-surface-500 mb-1">Top Category</p>
-          <p className="text-sm font-semibold text-surface-900">
+        <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-4">
+          <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Top Category</p>
+          <p className="text-sm font-bold text-surface-900 dark:text-surface-100">
             {report.top_categories[0]?.category ?? '—'}
           </p>
-          <p className="text-xs text-surface-400">
+          <p className="text-xs text-surface-400 font-mono mt-0.5">
             {report.top_categories[0] ? fmtCurrency(report.top_categories[0].amount) : ''}
           </p>
         </div>
       </div>
-      <div className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-5">
-        <h3 className="text-sm font-semibold text-surface-900 mb-3">Top Categories</h3>
+      <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-5 md:p-6">
+        <h3 className="text-sm font-bold text-surface-900 dark:text-surface-100 mb-3">Top Categories</h3>
         <div className="space-y-3">
           {report.top_categories.map((c, i) => (
             <div key={c.category}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm text-surface-700">{c.category}</span>
+                <span className="text-sm text-surface-700 dark:text-surface-300">{c.category}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-surface-400 tabular-nums">{c.pct.toFixed(1)}%</span>
-                  <span className="text-sm font-medium text-surface-900 tabular-nums">{fmtCurrency(c.amount)}</span>
+                  <span className="text-xs text-surface-400 tabular-nums font-mono">{c.pct.toFixed(1)}%</span>
+                  <span className="text-sm font-semibold text-surface-900 dark:text-surface-100 tabular-nums font-mono">{fmtCurrency(c.amount)}</span>
                 </div>
               </div>
-              <div className="w-full h-2 bg-surface-100 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-surface-100 dark:bg-surface-200 rounded-full overflow-hidden">
                 <div className="h-full rounded-full transition-all"
                   style={{ width: `${Math.min(c.pct, 100)}%`, backgroundColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length] }} />
               </div>
@@ -276,7 +278,7 @@ function ExpenseView({ report }: { report: ExpenseReport }) {
           ))}
         </div>
       </div>
-      <div className="text-[10px] text-surface-400 text-center">Period: {report.period}</div>
+      <div className="text-[10px] text-surface-400 font-mono text-center">Period: {report.period}</div>
     </div>
   );
 }
@@ -290,46 +292,46 @@ function CashFlowView({ report }: { report: CashFlowReport }) {
           { label: 'Inflow', value: report.inflow, color: 'text-positive' },
           { label: 'Outflow', value: report.outflow, color: 'text-risk' },
           { label: 'Net Cash Flow', value: report.net, color: report.net >= 0 ? 'text-positive' : 'text-risk' },
-          { label: 'Opening Balance', value: report.opening_balance, color: 'text-surface-900' },
-          { label: 'Closing Balance', value: report.closing_balance, color: 'text-surface-900' },
+          { label: 'Opening Balance', value: report.opening_balance, color: 'text-surface-900 dark:text-surface-100' },
+          { label: 'Closing Balance', value: report.closing_balance, color: 'text-surface-900 dark:text-surface-100' },
         ].map((m) => (
-          <div key={m.label} className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-4">
-            <p className="text-xs text-surface-500 mb-1">{m.label}</p>
-            <p className={clsx('text-lg font-semibold tabular-nums', m.color)}>{fmtCurrency(m.value)}</p>
+          <div key={m.label} className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-4">
+            <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">{m.label}</p>
+            <p className={clsx('text-lg font-bold tabular-nums font-mono', m.color)}>{fmtCurrency(m.value)}</p>
           </div>
         ))}
       </div>
-      <div className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-5">
-        <h3 className="text-sm font-semibold text-surface-900 mb-3">Cash Flow Summary</h3>
+      <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-5 md:p-6">
+        <h3 className="text-sm font-bold text-surface-900 dark:text-surface-100 mb-3">Cash Flow Summary</h3>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <p className="text-xs text-surface-500 mb-1">Money In</p>
-            <div className="h-3 bg-surface-100 rounded-full overflow-hidden">
+            <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Money In</p>
+            <div className="h-3 bg-surface-100 dark:bg-surface-200 rounded-full overflow-hidden">
               <div className="h-full bg-positive rounded-full" style={{
                 width: `${report.inflow + report.outflow ? (report.inflow / (report.inflow + report.outflow)) * 100 : 50}%`,
               }} />
             </div>
-            <p className="text-sm font-medium text-positive mt-1 tabular-nums">{fmtCurrency(report.inflow)}</p>
+            <p className="text-sm font-semibold text-positive mt-1 tabular-nums font-mono">{fmtCurrency(report.inflow)}</p>
           </div>
           <div>
-            <p className="text-xs text-surface-500 mb-1">Money Out</p>
-            <div className="h-3 bg-surface-100 rounded-full overflow-hidden">
+            <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Money Out</p>
+            <div className="h-3 bg-surface-100 dark:bg-surface-200 rounded-full overflow-hidden">
               <div className="h-full bg-risk rounded-full" style={{
                 width: `${report.inflow + report.outflow ? (report.outflow / (report.inflow + report.outflow)) * 100 : 50}%`,
               }} />
             </div>
-            <p className="text-sm font-medium text-risk mt-1 tabular-nums">{fmtCurrency(report.outflow)}</p>
+            <p className="text-sm font-semibold text-risk mt-1 tabular-nums font-mono">{fmtCurrency(report.outflow)}</p>
           </div>
           <div>
-            <p className="text-xs text-surface-500 mb-1">Net Position</p>
-            <p className={clsx('text-2xl font-bold tabular-nums mt-2',
+            <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Net Position</p>
+            <p className={clsx('text-2xl font-extrabold tabular-nums font-mono mt-1',
               report.net >= 0 ? 'text-positive' : 'text-risk')}>
               {report.net >= 0 ? '+' : ''}{fmtCurrency(report.net)}
             </p>
           </div>
         </div>
       </div>
-      <div className="text-[10px] text-surface-400 text-center">Period: {report.period}</div>
+      <div className="text-[10px] text-surface-400 font-mono text-center">Period: {report.period}</div>
     </div>
   );
 }
@@ -338,19 +340,19 @@ function CashFlowView({ report }: { report: CashFlowReport }) {
 function SummaryView({ report }: { report: BusinessSummary }) {
   return (
     <div className="space-y-4">
-      <div className="bg-ai-light rounded-[var(--radius-card)] p-5">
+      <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 p-5 md:p-6 shadow-[var(--shadow-card)]">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4 text-ai" />
-          <h3 className="text-sm font-semibold text-surface-900">AI Business Summary</h3>
+          <h3 className="text-sm font-bold text-surface-900 dark:text-surface-100">AI Business Summary</h3>
         </div>
-        <p className="text-sm text-surface-700 leading-relaxed">{report.ai_summary}</p>
+        <p className="text-sm text-surface-700 dark:text-surface-300 leading-relaxed">{report.ai_summary}</p>
       </div>
       {report.highlights.length > 0 && (
-        <div className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-5">
-          <h3 className="text-sm font-semibold text-positive mb-3">Highlights</h3>
+        <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-5 md:p-6">
+          <h3 className="text-sm font-bold text-positive mb-3">Highlights</h3>
           <ul className="space-y-2">
             {report.highlights.map((h, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-surface-700">
+               <li key={i} className="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-300">
                 <ArrowUpRight className="w-4 h-4 text-positive shrink-0 mt-0.5" />
                 {h}
               </li>
@@ -359,11 +361,11 @@ function SummaryView({ report }: { report: BusinessSummary }) {
         </div>
       )}
       {report.concerns.length > 0 && (
-        <div className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-5">
-          <h3 className="text-sm font-semibold text-risk mb-3">Concerns</h3>
+        <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-5 md:p-6">
+          <h3 className="text-sm font-bold text-risk mb-3">Concerns</h3>
           <ul className="space-y-2">
             {report.concerns.map((c, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-surface-700">
+              <li key={i} className="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-300">
                 <ArrowDownRight className="w-4 h-4 text-risk shrink-0 mt-0.5" />
                 {c}
               </li>
@@ -372,11 +374,11 @@ function SummaryView({ report }: { report: BusinessSummary }) {
         </div>
       )}
       {report.recommendations.length > 0 && (
-        <div className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-5">
-          <h3 className="text-sm font-semibold text-brand-600 mb-3">Recommendations</h3>
+        <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-5 md:p-6">
+          <h3 className="text-sm font-bold text-brand-600 mb-3">Recommendations</h3>
           <ul className="space-y-2">
             {report.recommendations.map((r, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-surface-700">
+              <li key={i} className="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-300">
                 <span className="w-5 h-5 rounded-full bg-brand-50 text-brand-600 text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
                 {r}
               </li>
@@ -384,7 +386,7 @@ function SummaryView({ report }: { report: BusinessSummary }) {
           </ul>
         </div>
       )}
-      <div className="text-[10px] text-surface-400 text-center">Period: {report.period}</div>
+      <div className="text-[10px] text-surface-400 font-mono text-center">Period: {report.period}</div>
     </div>
   );
 }

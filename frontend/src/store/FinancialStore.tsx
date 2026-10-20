@@ -31,6 +31,8 @@ import type {
   NextBestMove,
   SmartAction,
   Transaction,
+  TransactionBatchImportRequest,
+  TransactionBatchImportResponse,
   TransactionCreate,
   TransactionUpdate,
   User,
@@ -67,6 +69,8 @@ interface FinancialActions {
   markNotificationRead: (id: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
   updateSettings: (s: AppSettings) => Promise<void>;
+  updateBusiness: (b: Partial<Business>) => Promise<Business>;
+  importTransactionsBatch: (req: TransactionBatchImportRequest) => Promise<TransactionBatchImportResponse>;
   updateInsightStatus: (id: string, status: string) => Promise<void>;
   askAI: (message: string) => Promise<ChatResponse>;
 }
@@ -204,6 +208,19 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
     } catch { /* non-critical */ }
   }, []);
 
+  const updateBusinessAction = useCallback(async (b: Partial<Business>): Promise<Business> => {
+    const updated = await api.updateBusiness(b);
+    setBusiness(updated);
+    await refreshAll();
+    return updated;
+  }, [refreshAll]);
+
+  const importTransactionsBatchAction = useCallback(async (req: TransactionBatchImportRequest): Promise<TransactionBatchImportResponse> => {
+    const res = await api.importTransactionsBatch(req);
+    await refreshAll();
+    return res;
+  }, [refreshAll]);
+
   const updateInsightStatus = useCallback(async (id: string, status: string) => {
     await api.updateInsightStatus(id, status);
   }, []);
@@ -231,7 +248,10 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
     refreshAll, addTransaction, editTransaction, removeTransaction,
     addInvoice, editInvoice, removeInvoice,
     markNotificationRead, markAllNotificationsRead,
-    updateSettings: updateSettingsAction, updateInsightStatus,
+    updateSettings: updateSettingsAction,
+    updateBusiness: updateBusinessAction,
+    importTransactionsBatch: importTransactionsBatchAction,
+    updateInsightStatus,
     askAI,
   };
 

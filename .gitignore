@@ -11,7 +11,17 @@ frontend/release/
 # Python
 __pycache__/
 *.pyc
+
+# Environment & Secrets
 .env
+.env.*
+!.env.example
+
+# Databases & Local State
+*.db
+*.sqlite
+*.sqlite3
+accora.db
 
 # IDE / OS
 .vscode/

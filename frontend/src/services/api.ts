@@ -23,6 +23,8 @@ import type {
   PLReport,
   SmartAction,
   Transaction,
+  TransactionBatchImportRequest,
+  TransactionBatchImportResponse,
   TransactionCreate,
   TransactionUpdate,
   User,
@@ -42,10 +44,36 @@ function resolveBase(): string {
 const BASE = resolveBase();
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accora_auth_token') : null;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...((options?.headers as Record<string, string>) || {}),
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers,
   });
+
+  if (res.status === 401) {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('accora_auth_token');
+      localStorage.removeItem('accora_auth_user');
+      const hash = window.location.hash;
+      if (
+        !hash.includes('login') &&
+        !hash.includes('signup') &&
+        hash !== '' &&
+        hash !== '#/'
+      ) {
+        window.location.hash = '#/login?expired=1';
+      }
+    }
+  }
+
   if (!res.ok) {
     const detail = await res.text();
     throw new Error(`API ${res.status}: ${detail}`);
@@ -55,6 +83,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 // Business & User
 export const getBusiness = () => request<Business>('/business');
+export const updateBusiness = (body: Partial<Business>) =>
+  request<Business>('/business', { method: 'PUT', body: JSON.stringify(body) });
 export const getUser = () => request<User>('/user');
 
 // Transactions — full CRUD
@@ -77,6 +107,12 @@ export const getTransactions = (params?: {
 
 export const createTransaction = (body: TransactionCreate) =>
   request<Transaction>('/transactions', { method: 'POST', body: JSON.stringify(body) });
+
+export const importTransactionsBatch = (body: TransactionBatchImportRequest) =>
+  request<TransactionBatchImportResponse>('/transactions/batch', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
 
 export const updateTransaction = (id: string, body: TransactionUpdate) =>
   request<Transaction>(`/transactions/${id}`, { method: 'PUT', body: JSON.stringify(body) });

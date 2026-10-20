@@ -1,25 +1,29 @@
 import { useFinancial } from '../store/FinancialStore';
 import {
   TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight,
-  AlertTriangle, Lightbulb, Shield,
+  Shield, AlertTriangle, Lightbulb,
 } from 'lucide-react';
 
 export default function BusinessSnapshot() {
   const { latest, health, cashFlow, insights, nextBestMove } = useFinancial();
-  if (!latest || !health) return null;
 
-  const topRisk = insights.find((i) => i.type === 'risk' || i.severity === 'high');
-  const topOpportunity = insights.find((i) => i.type === 'opportunity');
+  if (!latest || !health) return null;
 
   const revTrend = latest.revenue_change_pct > 0 ? 'up' : latest.revenue_change_pct < 0 ? 'down' : 'flat';
   const profTrend = latest.profit_change_pct > 0 ? 'up' : latest.profit_change_pct < 0 ? 'down' : 'flat';
 
+  const topRisk = insights.find((i) => i.severity === 'high');
+  const topOpportunity = insights.find((i) => i.type === 'opportunity');
+
   return (
-    <div className="bg-surface-card rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-6">
-      <h2 className="text-sm font-semibold text-surface-900 mb-4 flex items-center gap-2">
-        <Shield className="w-4 h-4 text-brand-600" />
-        Business Snapshot
-      </h2>
+    <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-6 transition-all hover:border-surface-300 font-sans">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xs font-bold text-surface-500 uppercase tracking-wider flex items-center gap-2">
+          <Shield className="w-4 h-4 text-brand-600" />
+          Business Health Snapshot
+        </h2>
+        <span className="text-[10px] text-surface-400 font-mono">Executive Summary</span>
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         {/* Revenue Trend */}
@@ -31,10 +35,10 @@ export default function BusinessSnapshot() {
           </div>
           <div>
             <p className="text-[10px] text-surface-400 uppercase tracking-wide">Revenue</p>
-            <p className="text-sm font-semibold text-surface-900 flex items-center gap-1">
+            <p className="text-sm font-semibold text-surface-900 flex items-center gap-1 font-mono">
               {revTrend === 'up' ? 'Growing' : revTrend === 'down' ? 'Declining' : 'Flat'}
               {latest.revenue_change_pct !== 0 && (
-                <span className={`text-[10px] font-medium flex items-center ${revTrend === 'up' ? 'text-positive' : 'text-risk'}`}>
+                <span className={`text-[10px] font-medium flex items-center tabular-nums ${revTrend === 'up' ? 'text-positive' : 'text-risk'}`}>
                   {revTrend === 'up'
                     ? <ArrowUpRight className="w-3 h-3" />
                     : <ArrowDownRight className="w-3 h-3" />}
@@ -54,10 +58,10 @@ export default function BusinessSnapshot() {
           </div>
           <div>
             <p className="text-[10px] text-surface-400 uppercase tracking-wide">Profit</p>
-            <p className="text-sm font-semibold text-surface-900 flex items-center gap-1">
+            <p className="text-sm font-semibold text-surface-900 flex items-center gap-1 font-mono">
               {profTrend === 'up' ? 'Growing' : profTrend === 'down' ? 'Declining' : 'Flat'}
               {latest.profit_change_pct !== 0 && (
-                <span className={`text-[10px] font-medium flex items-center ${profTrend === 'up' ? 'text-positive' : 'text-risk'}`}>
+                <span className={`text-[10px] font-medium flex items-center tabular-nums ${profTrend === 'up' ? 'text-positive' : 'text-risk'}`}>
                   {profTrend === 'up'
                     ? <ArrowUpRight className="w-3 h-3" />
                     : <ArrowDownRight className="w-3 h-3" />}
@@ -88,7 +92,7 @@ export default function BusinessSnapshot() {
           <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
             health.overall >= 70 ? 'bg-positive-light' : health.overall >= 50 ? 'bg-warning-light' : 'bg-risk-light'
           }`}>
-            <span className={`text-sm font-bold ${
+            <span className={`text-sm font-bold font-mono tabular-nums ${
               health.overall >= 70 ? 'text-positive' : health.overall >= 50 ? 'text-warning' : 'text-risk'
             }`}>
               {health.overall.toFixed(0)}
@@ -102,8 +106,8 @@ export default function BusinessSnapshot() {
       </div>
 
       {/* Top Risk & Opportunity */}
-      {(topRisk || topOpportunity) && (
-        <div className="mt-5 pt-4 border-t border-surface-100 space-y-2.5">
+      {(topRisk || topOpportunity || nextBestMove) && (
+        <div className="mt-5 pt-4 border-t border-surface-200/70 space-y-2.5">
           {topRisk && (
             <div className="flex items-start gap-2.5">
               <AlertTriangle className="w-3.5 h-3.5 text-risk shrink-0 mt-0.5" />

@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useFinancial } from '../store/FinancialStore';
 import InsightCard from '../components/InsightCard';
 import NextBestMoveCard from '../components/NextBestMoveCard';
 import * as api from '../services/api';
 import { clsx } from 'clsx';
-import { AlertTriangle, CheckCircle2, Lightbulb, TrendingUp, Sparkles, Filter } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Lightbulb, TrendingUp, Sparkles } from 'lucide-react';
 
 const TABS = [
   { key: 'all', label: 'All', icon: Sparkles },
@@ -33,7 +33,7 @@ export default function IntelligencePage() {
     }).catch(() => { /* non-critical */ });
   }, []);
 
-  const getStatus = (id: string) => localStatuses[id] ?? 'new';
+  const getStatus = useCallback((id: string) => localStatuses[id] ?? 'new', [localStatuses]);
 
   const filtered = useMemo(() => {
     return insights.filter((ins) => {
@@ -41,7 +41,7 @@ export default function IntelligencePage() {
       if (statusFilter !== 'all' && getStatus(ins.id) !== statusFilter) return false;
       return true;
     });
-  }, [insights, typeFilter, statusFilter, localStatuses]);
+  }, [insights, typeFilter, statusFilter, getStatus]);
 
   const handleStatusChange = async (id: string, status: string) => {
     setLocalStatuses((prev) => ({ ...prev, [id]: status }));
@@ -55,12 +55,19 @@ export default function IntelligencePage() {
   }, [insights]);
 
   return (
-    <div className="p-4 md:p-6 pb-24 md:pb-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center gap-2">
-        <Sparkles className="w-5 h-5 text-ai" />
+    <div className="p-4 md:p-6 pb-24 md:pb-6 max-w-7xl mx-auto space-y-6 font-sans">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-200">
         <div>
-          <h1 className="text-xl font-bold text-surface-900">Accora Intelligence</h1>
-          <p className="text-xs text-surface-500 mt-0.5">AI-powered analysis of risks, opportunities, and trends in your financial data</p>
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-ai" />
+            <h1 className="text-xl md:text-2xl font-bold text-surface-900 dark:text-surface-100 tracking-tight">
+              Accora Intelligence
+            </h1>
+          </div>
+          <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
+            AI-powered analysis of risks, opportunities, and trends in your financial data
+          </p>
         </div>
       </div>
 
@@ -68,32 +75,43 @@ export default function IntelligencePage() {
       <NextBestMoveCard />
 
       {/* Summary Bar */}
-      <div className="flex flex-wrap items-center gap-3 text-xs">
-        <span className="px-3 py-1.5 rounded-lg bg-risk-light text-risk font-medium">{counts.risk + counts.anomaly} Risks</span>
-        <span className="px-3 py-1.5 rounded-lg bg-positive-light text-positive font-medium">{counts.opportunity} Opportunities</span>
-        <span className="px-3 py-1.5 rounded-lg bg-brand-50 text-brand-600 font-medium">{counts.trend} Trends</span>
-        <span className="px-3 py-1.5 rounded-lg bg-positive-light text-positive font-medium">{counts.positive} Wins</span>
+      <div className="flex flex-wrap items-center gap-2.5 text-xs">
+        <span className="px-3 py-1.5 rounded-lg bg-risk-light text-risk border border-risk/20 font-semibold tabular-nums font-mono">
+          {counts.risk + counts.anomaly} Risks
+        </span>
+        <span className="px-3 py-1.5 rounded-lg bg-positive-light text-positive border border-positive/20 font-semibold tabular-nums font-mono">
+          {counts.opportunity} Opportunities
+        </span>
+        <span className="px-3 py-1.5 rounded-lg bg-brand-50 text-brand-600 border border-brand-200 font-semibold tabular-nums font-mono">
+          {counts.trend} Trends
+        </span>
+        <span className="px-3 py-1.5 rounded-lg bg-positive-light text-positive border border-positive/20 font-semibold tabular-nums font-mono">
+          {counts.positive} Wins
+        </span>
       </div>
 
-      {/* Type Tabs */}
+      {/* Type Tabs & Status Filters */}
       <div className="flex flex-wrap items-center gap-2">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           return (
             <button key={tab.key} onClick={() => setTypeFilter(tab.key)}
-              className={clsx('inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors',
-                typeFilter === tab.key ? 'bg-brand-600 text-white' : 'bg-surface-100 text-surface-600 hover:bg-surface-200')}>
+              className={clsx('inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer',
+                typeFilter === tab.key
+                  ? 'bg-brand-600 text-white shadow-xs'
+                  : 'bg-surface-card border border-surface-200 text-surface-600 dark:text-surface-300 hover:bg-surface-100')}>
               <Icon className="w-3.5 h-3.5" /> {tab.label}
             </button>
           );
         })}
-        <span className="ml-2 h-4 w-px bg-surface-200" />
+        <div className="hidden sm:block w-px h-5 bg-surface-200 mx-1" />
         <div className="flex items-center gap-1">
-          <Filter className="w-3.5 h-3.5 text-surface-400" />
           {STATUS_TABS.map((s) => (
             <button key={s.key} onClick={() => setStatusFilter(s.key)}
-              className={clsx('px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors',
-                statusFilter === s.key ? 'bg-surface-800 text-white' : 'bg-surface-100 text-surface-500 hover:bg-surface-200')}>
+              className={clsx('px-2.5 py-1 text-xs font-medium rounded-lg transition-colors cursor-pointer',
+                statusFilter === s.key
+                  ? 'bg-surface-800 text-white'
+                  : 'text-surface-500 hover:text-surface-900 hover:bg-surface-100')}>
               {s.label}
             </button>
           ))}
@@ -102,33 +120,33 @@ export default function IntelligencePage() {
 
       {/* Insights Grid */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16">
+        <div className="text-center py-16 bg-surface-card rounded-[var(--radius-card)] border border-surface-200 p-8">
           <Sparkles className="w-10 h-10 text-surface-300 mx-auto mb-3" />
-          <p className="text-sm text-surface-500 font-medium">No insights match the current filters</p>
-          <p className="text-xs text-surface-400 mt-1">Try changing the type or status filter to see more results.</p>
+          <p className="text-sm text-surface-500 font-medium">No insights match your filters</p>
+          <p className="text-xs text-surface-400 mt-1">Try selecting a different category or status.</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {filtered.map((ins) => {
-            const status = getStatus(ins.id);
-            return (
-              <div key={ins.id} className={clsx(
-                'transition-opacity',
-                status === 'resolved' && 'opacity-50',
-              )}>
-                <InsightCard insight={ins} />
-                <div className="flex items-center gap-2 mt-2 ml-11">
-                  {(['new', 'reviewed', 'resolved'] as const).map((s) => (
-                    <button key={s} onClick={() => handleStatusChange(ins.id, s)}
-                      className={clsx('px-2.5 py-1 text-[10px] font-medium rounded-md transition-colors',
-                        status === s ? 'bg-surface-800 text-white' : 'bg-surface-100 text-surface-500 hover:bg-surface-200')}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </button>
-                  ))}
-                </div>
+        <div className="grid md:grid-cols-2 gap-4">
+          {filtered.map((ins) => (
+            <div key={ins.id} className="relative group">
+              <InsightCard insight={ins} />
+              {/* Status Action Buttons */}
+              <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {getStatus(ins.id) !== 'resolved' && (
+                  <button onClick={() => handleStatusChange(ins.id, 'resolved')}
+                    className="px-2 py-0.5 text-[10px] font-semibold bg-positive-light text-positive border border-positive/30 rounded-md hover:bg-positive/20 transition-colors cursor-pointer">
+                    Resolve
+                  </button>
+                )}
+                {getStatus(ins.id) === 'new' && (
+                  <button onClick={() => handleStatusChange(ins.id, 'reviewed')}
+                    className="px-2 py-0.5 text-[10px] font-semibold bg-surface-100 text-surface-600 rounded-md hover:bg-surface-200 transition-colors cursor-pointer">
+                    Review
+                  </button>
+                )}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
     </div>
