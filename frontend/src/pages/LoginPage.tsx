@@ -1,3 +1,4 @@
+import { getCurrentYear } from '../utils/date';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -330,7 +331,7 @@ export default function LoginPage() {
 
       {/* Footer */}
       <footer className="relative z-10 py-6 text-center text-xs text-slate-500 border-t border-slate-800/80">
-        <p>&copy; {new Date().getFullYear()} Accora Financial Technologies. Bank-grade 256-bit encryption.</p>
+        <p>&copy; {getCurrentYear()} Accora Financial Technologies. Bank-grade 256-bit encryption.</p>
       </footer>
 
       {/* Forgot Password Modal */}

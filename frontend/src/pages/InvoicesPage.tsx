@@ -1,3 +1,4 @@
+import { getCurrentDate } from '../utils/date';
 import { useState, useCallback } from 'react';
 import { useFinancial } from '../store/FinancialStore';
 import { fmtCurrency, fmtDate } from '../utils/format';
@@ -25,7 +26,7 @@ const getInitialInvoice = (): InvoiceCreate => ({
   items: [emptyItem()],
   tax_rate: 0,
   status: 'draft',
-  issue_date: new Date().toISOString().split('T')[0],
+  issue_date: getCurrentDate(),
   due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
   notes: '',
 });
@@ -113,7 +114,7 @@ export default function InvoicesPage() {
   };
 
   const markPaid = async (inv: Invoice) => {
-    await editInvoice(inv.id, { status: 'paid', paid_date: new Date().toISOString().split('T')[0] });
+    await editInvoice(inv.id, { status: 'paid', paid_date: getCurrentDate() });
     showToast('Invoice marked as paid');
   };
 

@@ -1,3 +1,4 @@
+import { getCurrentDate } from '../utils/date';
 import { useState, useCallback } from 'react';
 import { useFinancial } from '../store/FinancialStore';
 import { fmtCurrency, fmtDate } from '../utils/format';
@@ -22,7 +23,7 @@ export default function TransactionsPage() {
   const [showImport, setShowImport] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<TransactionCreate>({
-    date: new Date().toISOString().split('T')[0],
+    date: getCurrentDate(),
     description: '',
     category: '',
     type: 'expense',
@@ -64,7 +65,7 @@ export default function TransactionsPage() {
 
   const resetForm = () => {
     setForm({
-      date: new Date().toISOString().split('T')[0],
+      date: getCurrentDate(),
       description: '', category: '', type: 'expense', amount: 0, status: 'completed', notes: '',
     });
     setShowForm(false);
