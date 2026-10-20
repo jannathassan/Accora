@@ -32,16 +32,33 @@ import type {
   WhatIfResult,
 } from '../types';
 
-/** Resolve API base URL — works in both browser and Electron contexts. */
-function resolveBase(): string {
+/**
+ * Resolves the backend API base URL:
+ * 1. Checks `VITE_API_URL` (configured for deployment). Normalizes trailing slashes
+ *    and ensures `/api/v1` is cleanly attached without duplication.
+ * 2. Electron loads from file:// where relative paths cannot reach the backend,
+ *    defaulting to `http://localhost:8000/api/v1`.
+ * 3. Default for local web development: returns `/api/v1` to leverage Vite's dev proxy.
+ */
+export function resolveApiBase(): string {
+  const envUrl = (import.meta.env.VITE_API_URL || '').trim();
+  if (envUrl) {
+    const clean = envUrl.replace(/\/+$/, '');
+    if (clean.endsWith('/api/v1')) {
+      return clean;
+    }
+    return `${clean}/api/v1`;
+  }
+
   // Electron loads from file:// where relative paths cannot reach the backend.
   if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
     return 'http://localhost:8000/api/v1';
   }
+
   return '/api/v1';
 }
 
-const BASE = resolveBase();
+export const BASE = resolveApiBase();
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('accora_auth_token') : null;
@@ -53,7 +70,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE}${path}`, {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const res = await fetch(`${BASE}${normalizedPath}`, {
     ...options,
     headers,
   });

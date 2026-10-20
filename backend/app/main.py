@@ -23,6 +23,7 @@ app = FastAPI(
     version=settings.app_version,
     description="AI-powered financial intelligence for small businesses.",
     lifespan=lifespan,
+    debug=settings.debug,
 )
 
 app.add_middleware(

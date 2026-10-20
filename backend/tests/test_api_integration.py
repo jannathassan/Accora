@@ -9,7 +9,15 @@ from fastapi.testclient import TestClient
 
 from app.core.config import settings
 from app.core.database import init_db
+from app.core.rate_limit import auth_rate_limiter
 from app.main import app
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limits():
+    auth_rate_limiter.reset()
+    yield
+    auth_rate_limiter.reset()
 
 
 @pytest.fixture(scope="module")
@@ -18,13 +26,16 @@ def test_client():
     fd, temp_db = tempfile.mkstemp(suffix=".db")
     os.close(fd)
     orig_db = settings.database_path
+    orig_demo = settings.demo_mode
     settings.database_path = temp_db
-    init_db(temp_db)
+    settings.demo_mode = True
+    init_db(temp_db, seed_demo=True)
 
     with TestClient(app) as client:
         yield client
 
     settings.database_path = orig_db
+    settings.demo_mode = orig_demo
     try:
         os.remove(temp_db)
     except Exception:

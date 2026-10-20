@@ -13,6 +13,7 @@ from app.core.database import (
     db_get_user_by_email,
     init_db,
 )
+from app.core.rate_limit import auth_rate_limiter
 from app.core.security import (
     generate_salt,
     hash_password,
@@ -22,18 +23,30 @@ from app.core.security import (
 from app.main import app
 
 
+@pytest.fixture(autouse=True)
+def reset_rate_limits():
+    auth_rate_limiter.reset()
+    yield
+    auth_rate_limiter.reset()
+
+
 @pytest.fixture(scope="module")
 def client():
     # Use an isolated temporary database for test suite
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         test_db_path = f.name
 
+    orig_db = settings.database_path
+    orig_demo = settings.demo_mode
     settings.database_path = test_db_path
-    init_db(test_db_path)
+    settings.demo_mode = True
+    init_db(test_db_path, seed_demo=True)
 
     with TestClient(app) as test_client:
         yield test_client
 
+    settings.database_path = orig_db
+    settings.demo_mode = orig_demo
     if os.path.exists(test_db_path):
         try:
             os.remove(test_db_path)

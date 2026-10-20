@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.core.auth import get_current_user, security_scheme
+from app.core.config import settings
 from app.core.database import (
     db_create_session,
     db_create_user,
@@ -13,6 +14,7 @@ from app.core.database import (
     db_get_user_by_email,
     db_get_user_by_id,
 )
+from app.core.rate_limit import check_auth_rate_limit
 from app.core.security import (
     create_session_token,
     generate_salt,
@@ -37,6 +39,7 @@ auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
     response_model=AuthResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Register a new user account with isolated business workspace",
+    dependencies=[Depends(check_auth_rate_limit)],
 )
 async def signup(req: SignupRequest) -> AuthResponse:
     # 1. Validate password complexity rules
@@ -88,6 +91,7 @@ async def signup(req: SignupRequest) -> AuthResponse:
     "/login",
     response_model=AuthResponse,
     summary="Authenticate with email and password",
+    dependencies=[Depends(check_auth_rate_limit)],
 )
 async def login(req: LoginRequest) -> AuthResponse:
     # 1. Fetch user by email
@@ -135,8 +139,15 @@ async def login(req: LoginRequest) -> AuthResponse:
     "/demo-login",
     response_model=AuthResponse,
     summary="Authenticate as the demo user with real session token in SQLite",
+    dependencies=[Depends(check_auth_rate_limit)],
 )
 async def demo_login() -> AuthResponse:
+    if not settings.demo_mode:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Demo login is disabled.",
+        )
+
     demo_email = "ayesha@brightpixel.pk"
     row = db_get_user_by_email(demo_email)
     if not row:

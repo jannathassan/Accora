@@ -41,9 +41,8 @@ DEFAULT_DB_FILE = BACKEND_DIR / settings.database_path
 
 
 def get_db_path(override_path: str | None = None) -> Path:
-    if override_path:
-        return Path(override_path)
-    p = Path(settings.database_path)
+    raw_path = override_path if override_path is not None else settings.database_path
+    p = Path(raw_path)
     if p.is_absolute():
         return p
     return BACKEND_DIR / p
@@ -53,12 +52,25 @@ def get_db_path(override_path: str | None = None) -> Path:
 def get_db(db_path: str | None = None) -> Generator[sqlite3.Connection, None, None]:
     """Context manager for SQLite connections with foreign keys and row factory."""
     path = get_db_path(db_path)
-    conn = sqlite3.connect(str(path))
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON;")
     try:
+        conn = sqlite3.connect(str(path))
+    except (sqlite3.OperationalError, OSError) as e:
+        raise RuntimeError(
+            f"Unable to connect to database at '{path}': {e}. "
+            f"Ensure the persistent disk is mounted and writable."
+        ) from e
+
+    conn.row_factory = sqlite3.Row
+    try:
+        conn.execute("PRAGMA foreign_keys = ON;")
         yield conn
         conn.commit()
+    except (sqlite3.OperationalError, OSError) as e:
+        conn.rollback()
+        raise RuntimeError(
+            f"Database operation failed on '{path}': {e}. "
+            f"Ensure persistent disk storage is healthy and writable."
+        ) from e
     except Exception:
         conn.rollback()
         raise
@@ -66,9 +78,26 @@ def get_db(db_path: str | None = None) -> Generator[sqlite3.Connection, None, No
         conn.close()
 
 
-def init_db(db_path: str | None = None) -> None:
-    """Initialize database tables, indexes, and seed initial demo account if needed."""
-    with get_db(db_path) as conn:
+def init_db(db_path: str | None = None, seed_demo: bool | None = None) -> None:
+    """Initialize database tables, indexes, and seed demo account if enabled.
+
+    Verifies that the configured database location is available and writable.
+    Fails clearly with RuntimeError if the directory cannot be created or accessed,
+    or if the SQLite database cannot be opened/written to.
+    Never silently falls back to a temporary or local database.
+    """
+    path = get_db_path(db_path)
+
+    # Ensure parent directory exists or can be created
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        raise RuntimeError(
+            f"Database directory '{path.parent}' cannot be created or accessed: {e}. "
+            f"Please verify persistent disk mount permissions and ACCORA_DATABASE_PATH configuration."
+        ) from e
+
+    with get_db(str(path)) as conn:
         conn.execute("PRAGMA journal_mode = WAL;")
 
         # Businesses table
@@ -218,8 +247,10 @@ def init_db(db_path: str | None = None) -> None:
         # Migrate any missing columns in businesses table
         _migrate_businesses_table(conn)
 
-        # Seed Demo User & Business if not yet existing
-        _seed_demo_account(conn)
+        # Seed Demo User & Business if enabled and not yet existing
+        should_seed = settings.demo_mode if seed_demo is None else seed_demo
+        if should_seed:
+            _seed_demo_account(conn)
 
 
 def _migrate_businesses_table(conn: sqlite3.Connection) -> None:

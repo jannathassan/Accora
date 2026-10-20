@@ -8,8 +8,16 @@ from fastapi.testclient import TestClient
 
 from app.core.config import settings
 from app.core.database import init_db
+from app.core.rate_limit import auth_rate_limiter
 from app.main import app
 from app.models.financial import TransactionType, TransactionStatus
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limits():
+    auth_rate_limiter.reset()
+    yield
+    auth_rate_limiter.reset()
 
 
 @pytest.fixture(scope="module")

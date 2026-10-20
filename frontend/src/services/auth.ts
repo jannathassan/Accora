@@ -7,6 +7,7 @@
  */
 
 import type { User } from '../types';
+import { resolveApiBase } from './api';
 
 export interface AuthSession {
   token: string;
@@ -73,13 +74,6 @@ export function validatePassword(password: string): PasswordValidationResult {
     hasSpecial,
     feedback,
   };
-}
-
-function resolveApiBase(): string {
-  if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
-    return 'http://localhost:8000/api/v1';
-  }
-  return '/api/v1';
 }
 
 const STORAGE_KEY_USER = 'accora_auth_user';

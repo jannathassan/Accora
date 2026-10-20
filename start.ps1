@@ -25,6 +25,11 @@ Write-Host ''
 $backendDir = Join-Path $root 'backend'
 Write-Host '  [1/2] Starting backend on http://127.0.0.1:8000' -ForegroundColor White
 
+# Default to demo mode enabled for local one-click demo script if not explicitly set
+if (-not $env:ACCORA_DEMO_MODE) {
+    $env:ACCORA_DEMO_MODE = 'true'
+}
+
 $pythonExe = Join-Path $backendDir '.venv\Scripts\python.exe'
 if (-not (Test-Path $pythonExe)) {
     $pythonExe = 'python'

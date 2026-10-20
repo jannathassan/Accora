@@ -11,6 +11,7 @@ frontend/release/
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # Environment & Secrets
 .env
@@ -31,4 +32,3 @@ Thumbs.db
 
 # Logs
 *.log
-venv/
