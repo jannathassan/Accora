@@ -1,321 +1,458 @@
-import { useFinancial } from '../store/FinancialStore';
-import { useTheme } from '../store/ThemeProvider';
-import { fmtCurrency, periodLabel } from '../utils/format';
 import { Link } from 'react-router-dom';
-import MetricCard from '../components/MetricCard';
-import HealthScore from '../components/HealthScore';
-import NextBestMoveCard from '../components/NextBestMoveCard';
-import CashFlowAlert from '../components/CashFlowAlert';
-import ActionCenter from '../components/ActionCenter';
-import BusinessSnapshot from '../components/BusinessSnapshot';
-import ForecastSection from '../components/ForecastSection';
+import { useMoneyStore } from '../store/moneyStore';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell,
-} from 'recharts';
-import {
-  DollarSign, TrendingUp, TrendingDown, Percent, Clock, Wallet,
-  Sparkles, Info,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  PiggyBank,
+  AlertCircle,
+  CheckCircle2,
+  Calendar,
+  ArrowRight,
+  Plus,
 } from 'lucide-react';
-
-const PIE_COLORS = ['#7c3aed', '#12b76a', '#f79009', '#a78bfa', '#f04438', '#06aed4'];
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
 
 export default function DashboardPage() {
   const {
-    business, metrics, latest, loading, setCopilotOpen,
-  } = useFinancial();
+    activePersonaKey,
+    balance,
+    monthIn,
+    monthOut,
+    monthKept,
+    health,
+    bills,
+    invoices,
+    committees,
+    alerts,
+    checklist,
+    transactions,
+    foreignBankShare,
+    taxRate,
+  } = useMoneyStore();
 
-  const { theme } = useTheme();
-  const chartGrid = theme === 'dark' ? '#28213b' : theme === 'high-contrast' ? '#b4b4c4' : '#e8e2f2';
-  const chartText = theme === 'dark' ? '#9687b8' : theme === 'high-contrast' ? '#000000' : '#736484';
-  const tooltipBg = theme === 'dark' ? '#1d182e' : '#ffffff';
-  const tooltipBorder = theme === 'dark' ? '#3b3156' : theme === 'high-contrast' ? '#000000' : '#e8e2f2';
+  // 6 Months In vs Out for Chart
+  const chartData: { month: string; in: number; out: number }[] = [];
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-surface-500 font-sans">Loading financial data...</p>
-        </div>
-      </div>
-    );
+  for (let m = 5; m >= 0; m--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - m);
+    const ym = d.toISOString().slice(0, 7);
+    const monthName = d.toLocaleDateString('en-US', { month: 'short' });
+
+    const totalIn = transactions
+      .filter((t) => t.type === 'in' && t.date.slice(0, 7) === ym)
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const totalOut = transactions
+      .filter((t) => t.type === 'out' && t.date.slice(0, 7) === ym)
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    chartData.push({
+      month: monthName,
+      in: totalIn,
+      out: totalOut,
+    });
   }
 
-  const currency = business?.currency ?? 'PKR';
-  const chartData = metrics.map((m) => ({
-    period: periodLabel(m.period),
-    revenue: m.revenue,
-    expenses: m.expenses,
-    profit: m.profit,
-  }));
+  // Checklist progress (5 items)
+  const checklistItems = [
+    { key: 'firstIncomeAdded', label: 'Add first income', done: checklist.firstIncomeAdded },
+    { key: 'firstSpendingAdded', label: 'Add first spending', done: checklist.firstSpendingAdded },
+    { key: 'budgetSet', label: 'Set a budget', done: checklist.budgetSet },
+    { key: 'questionAsked', label: 'Ask ACCORA a question', done: checklist.questionAsked },
+    { key: 'affordabilityChecked', label: 'Try “Can I Afford It?”', done: checklist.affordabilityChecked },
+  ];
+  const completedCount = checklistItems.filter((c) => c.done).length;
 
-  const expenseBreakdown = latest?.expense_breakdown
-    ? Object.entries(latest.expense_breakdown)
-        .sort(([, a], [, b]) => b - a)
-        .map(([name, value]) => ({ name, value }))
-    : [];
+  const upcomingBills = bills.filter((b) => !b.paid).slice(0, 3);
+  const unpaidInvoices = invoices.filter((i) => !i.paid);
 
   return (
-    <>
-      <div className="p-4 md:p-6 pb-24 md:pb-6 max-w-7xl mx-auto space-y-6 font-sans">
-        {/* ── Header ─────────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-surface-200">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-surface-900 tracking-tight font-sans">
-                {business?.name ?? 'Executive Financial Dashboard'}
-              </h1>
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-100 text-brand-600 dark:text-brand-300 border border-brand-200 dark:border-brand-500/30 uppercase tracking-wider font-mono">
-                Active Ledger
-              </span>
-            </div>
-            <p className="text-xs text-surface-500 mt-1 flex items-center gap-2 font-sans">
-              <span>{business?.industry || 'Business Finance'}</span>
-              <span>&middot;</span>
-              <span className="font-semibold text-surface-700">Base Currency: {currency}</span>
-            </p>
-          </div>
-          <button
-            onClick={() => setCopilotOpen(true)}
-            title="Ask Accora Core AI anything about your business"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs md:text-sm font-semibold rounded-xl active:scale-[0.98] transition-all shadow-sm group cursor-pointer font-sans"
+    <div className="space-y-6 max-w-6xl mx-auto pb-16 font-sans">
+      
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D2839] tracking-tight">
+            My Money Dashboard
+          </h1>
+          <p className="text-sm text-[#5B6785] mt-1">
+            Your money at a glance. Everything updates automatically when you add an entry.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link
+            to="/app/transactions"
+            className="btn-lime text-xs py-2 px-4 shadow-2xs font-bold"
           >
-            <Sparkles className="w-4 h-4 text-brand-200 group-hover:rotate-12 transition-transform" />
-            <span>Ask Financial Copilot</span>
-          </button>
-        </div>
-
-        {/* ── Estimated Baseline Banner ─────────────────────────── */}
-        {latest?.is_estimated && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs font-sans">
-            <div className="flex items-start sm:items-center gap-2.5">
-              <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 sm:mt-0" />
-              <div>
-                <span className="font-semibold text-amber-600 dark:text-amber-400 mr-1.5 font-mono">
-                  [Estimated Baseline from Setup]
-                </span>
-                <span className="text-surface-700">
-                  Dashboard metrics, health score, and cash forecast are currently projected from your Business Profile setup figures. Import transactions or add records to unlock historical reporting.
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0 font-sans">
-              <Link
-                to="/app/transactions"
-                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors shadow-sm"
-              >
-                Import CSV / Transactions
-              </Link>
-              <Link
-                to="/app/settings"
-                className="px-3 py-1.5 border border-surface-200 hover:bg-surface-100 rounded-lg transition-colors text-surface-700 font-medium"
-              >
-                Settings
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* ── Top-level KPI Row ─────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 md:gap-4">
-          <MetricCard
-            label="Cash Balance"
-            value={fmtCurrency(latest?.cash_balance ?? 0, currency)}
-            icon={<Wallet className="w-4 h-4" />}
-            iconBg="bg-brand-50"
-            iconText="text-brand-600"
-          />
-          <MetricCard
-            label="Monthly Revenue"
-            value={fmtCurrency(latest?.revenue ?? 0, currency)}
-            changePct={latest?.revenue_change_pct}
-            icon={<DollarSign className="w-4 h-4" />}
-            iconBg="bg-positive-light"
-            iconText="text-positive"
-          />
-          <MetricCard
-            label="Operating Expenses"
-            value={fmtCurrency(latest?.expenses ?? 0, currency)}
-            changePct={latest?.expenses_change_pct}
-            icon={<TrendingDown className="w-4 h-4" />}
-            iconBg="bg-risk-light"
-            iconText="text-risk"
-          />
-          <MetricCard
-            label="Net Profit"
-            value={fmtCurrency(latest?.profit ?? 0, currency)}
-            changePct={latest?.profit_change_pct}
-            icon={<TrendingUp className="w-4 h-4" />}
-            iconBg="bg-positive-light"
-            iconText="text-positive"
-          />
-          <MetricCard
-            label="Profit Margin"
-            value={`${((latest?.margin ?? 0) * 100).toFixed(1)}%`}
-            icon={<Percent className="w-4 h-4" />}
-            iconBg="bg-brand-50"
-            iconText="text-brand-600"
-          />
-          <MetricCard
-            label="Outstanding"
-            value={fmtCurrency(latest?.outstanding ?? 0, currency)}
-            icon={<Clock className="w-4 h-4" />}
-            iconBg="bg-warning-light"
-            iconText="text-warning"
-          />
-        </div>
-
-        {/* ── Main Grid ────────────────────────────────────────── */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left 2 cols: Charts + Forecast */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Revenue vs Expenses Chart */}
-            <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-6 transition-all hover:border-surface-300">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-2 border-b border-surface-200/80">
-                <div>
-                  <h2 className="text-xs font-bold text-surface-500 uppercase tracking-wider font-sans">
-                    Revenue vs. Expenses Trend
-                  </h2>
-                  <p className="text-xs text-surface-500 mt-0.5 font-sans">Historical monthly performance</p>
-                </div>
-                <div className="flex items-center gap-4 text-xs font-sans">
-                  <span className="flex items-center gap-1.5 text-positive font-medium">
-                    <span className="w-2.5 h-2.5 rounded-full bg-positive" /> Revenue
-                  </span>
-                  <span className="flex items-center gap-1.5 text-risk font-medium">
-                    <span className="w-2.5 h-2.5 rounded-full bg-risk" /> Expenses
-                  </span>
-                  <span className="flex items-center gap-1.5 text-brand-600 font-medium">
-                    <span className="w-2.5 h-2.5 rounded-full bg-brand-600" /> Profit
-                  </span>
-                </div>
-              </div>
-
-              <div className="h-64 sm:h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.25} />
-                        <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#f04438" stopOpacity={0.2} />
-                        <stop offset="100%" stopColor="#f04438" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
-                    <XAxis dataKey="period" tick={{ fontSize: 11, fill: chartText }} />
-                    <YAxis tick={{ fontSize: 11, fill: chartText }} tickFormatter={(v) => fmtCurrency(v)} />
-                    <Tooltip
-                      formatter={(v: any) => `${currency} ${Number(v ?? 0).toLocaleString()}`}
-                      contentStyle={{
-                        fontSize: 12,
-                        borderRadius: 10,
-                        border: `1px solid ${tooltipBorder}`,
-                        backgroundColor: tooltipBg,
-                        color: chartText,
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#7c3aed"
-                      strokeWidth={2}
-                      fill="url(#revGrad)"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="expenses"
-                      stroke="#f04438"
-                      strokeWidth={2}
-                      fill="url(#expGrad)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Expense Breakdown Pie + Forecast */}
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Expense Breakdown */}
-              <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-6 transition-all hover:border-surface-300">
-                <h2 className="text-xs font-bold text-surface-500 uppercase tracking-wider mb-1 font-sans">
-                  Expense Distribution
-                </h2>
-                <p className="text-xs text-surface-500 mb-3 font-sans">Current month breakdown</p>
-
-                {expenseBreakdown.length > 0 ? (
-                  <>
-                    <div className="h-44">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={expenseBreakdown}
-                            dataKey="value"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={45}
-                            outerRadius={70}
-                            paddingAngle={2}
-                          >
-                            {expenseBreakdown.map((_, i) => (
-                              <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            formatter={(v: any) => `${currency} ${Number(v ?? 0).toLocaleString()}`}
-                            contentStyle={{
-                              fontSize: 11,
-                              borderRadius: 8,
-                              border: `1px solid ${tooltipBorder}`,
-                              backgroundColor: tooltipBg,
-                              color: chartText,
-                            }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-2">
-                      {expenseBreakdown.map((item, i) => (
-                        <div key={item.name} className="flex items-center gap-2 text-xs">
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
-                          />
-                          <span className="text-surface-600 truncate">{item.name}</span>
-                          <span className="font-semibold text-surface-900 ml-auto font-mono tabular-nums">
-                            {fmtCurrency(item.value, currency)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-xs text-surface-400 py-10 text-center">No expense data available</p>
-                )}
-              </div>
-
-              {/* Business Snapshot Mini Summary */}
-              <BusinessSnapshot />
-            </div>
-
-            {/* Forecast Section */}
-            <ForecastSection />
-          </div>
-
-          {/* Right col: Insights, Action Center, Health Score */}
-          <div className="space-y-6">
-            <NextBestMoveCard />
-            <CashFlowAlert />
-            <HealthScore />
-            <ActionCenter />
-          </div>
+            <Plus className="w-3.5 h-3.5 mr-1" />
+            <span>Add Entry</span>
+          </Link>
+          <Link
+            to="/app/ask"
+            className="btn-outline text-xs py-2 px-3.5 bg-white"
+          >
+            <span>Ask ACCORA</span>
+          </Link>
         </div>
       </div>
-    </>
+
+      {/* ── "Get Started" 5-Step Checklist (Section 5) ── */}
+      {completedCount < 5 && (
+        <div className="accora-card bg-white border-[#E2E8F7] space-y-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-bold text-[#1D2839]">
+              Get started: {completedCount} of 5 done
+            </span>
+            <span className="text-[#0B5CE6] font-semibold">
+              {completedCount * 20}% completed
+            </span>
+          </div>
+
+          <div className="w-full h-2.5 rounded-full bg-[#E2E8F7] overflow-hidden">
+            <div
+              className="h-full bg-[#0B5CE6] transition-all duration-300"
+              style={{ width: `${completedCount * 20}%` }}
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-[#5B6785] pt-1">
+            {checklistItems.map((item, idx) => (
+              <span key={idx} className="flex items-center gap-1.5">
+                {item.done ? (
+                  <CheckCircle2 className="w-4 h-4 text-[#A3D508] shrink-0" />
+                ) : (
+                  <span className="w-4 h-4 rounded-full border border-[#5B6785] inline-block shrink-0" />
+                )}
+                <span className={item.done ? 'text-[#1D2839] font-medium' : ''}>
+                  {item.label}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── 4 Main KPI Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Money In */}
+        <div className="accora-card bg-white border-[#E2E8F7] p-5">
+          <div className="flex items-center justify-between text-xs text-[#5B6785] font-semibold mb-1">
+            <span>Money in (this month)</span>
+            <TrendingUp className="w-4 h-4 text-[#A3D508]" />
+          </div>
+          <div className="text-2xl font-extrabold text-[#1D2839] tabular-nums">
+            PKR {monthIn.toLocaleString()}
+          </div>
+          <p className="text-[11px] text-[#5B6785] mt-1">
+            Total recorded inflows
+          </p>
+        </div>
+
+        {/* Money Out */}
+        <div className="accora-card bg-white border-[#E2E8F7] p-5">
+          <div className="flex items-center justify-between text-xs text-[#5B6785] font-semibold mb-1">
+            <span>Money out (this month)</span>
+            <TrendingDown className="w-4 h-4 text-[#FD614F]" />
+          </div>
+          <div className="text-2xl font-extrabold text-[#FD614F] tabular-nums">
+            PKR {monthOut.toLocaleString()}
+          </div>
+          <p className="text-[11px] text-[#5B6785] mt-1">
+            Total spending & bills
+          </p>
+        </div>
+
+        {/* Kept this Month */}
+        <div className="accora-card bg-white border-[#E2E8F7] p-5">
+          <div className="flex items-center justify-between text-xs text-[#5B6785] font-semibold mb-1">
+            <span>Kept this month</span>
+            <PiggyBank className="w-4 h-4 text-[#0B5CE6]" />
+          </div>
+          <div className={`text-2xl font-extrabold tabular-nums ${monthKept >= 0 ? 'text-[#0B5CE6]' : 'text-[#FD614F]'}`}>
+            {monthKept >= 0 ? '+' : ''}PKR {monthKept.toLocaleString()}
+          </div>
+          <p className="text-[11px] text-[#5B6785] mt-1">
+            {monthKept >= 0 ? 'Net savings surplus' : 'Operating cash deficit'}
+          </p>
+        </div>
+
+        {/* Total Money Available */}
+        <div className="accora-card bg-white border-[#E2E8F7] p-5">
+          <div className="flex items-center justify-between text-xs text-[#5B6785] font-semibold mb-1">
+            <span>Money you have</span>
+            <Wallet className="w-4 h-4 text-[#1D2839]" />
+          </div>
+          <div className="text-2xl font-extrabold text-[#1D2839] tabular-nums">
+            PKR {balance.toLocaleString()}
+          </div>
+          <p className="text-[11px] text-[#5B6785] mt-1">
+            Cash, bank, and wallet total
+          </p>
+        </div>
+      </div>
+
+      {/* ── Health Score & Alerts Bell Grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Health Score Card */}
+        <div
+          className={`accora-card border p-6 ${
+            health.verdict === 'healthy'
+              ? 'bg-[#f3fbd9]/40 border-[#A3D508]'
+              : health.verdict === 'warning'
+              ? 'bg-[#fff9e6]/50 border-[#f79009]'
+              : 'bg-[#ffefed]/50 border-[#FD614F]'
+          }`}
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#5B6785]">
+                  Money Health Score
+                </span>
+                <span
+                  title="A simple score from 0 to 100 based on how much of your monthly income you keep."
+                  className="text-xs text-[#5B6785] cursor-help"
+                >
+                  ⓘ
+                </span>
+              </div>
+              <div className="text-4xl font-extrabold text-[#1D2839] mt-2">
+                {health.score} <span className="text-lg font-normal text-[#5B6785]">/ 100</span>
+              </div>
+            </div>
+
+            <div className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-white border border-[#E2E8F7]">
+              {health.verdict === 'healthy' && 'Healthy'}
+              {health.verdict === 'warning' && 'Attention'}
+              {health.verdict === 'risk' && 'High Risk'}
+            </div>
+          </div>
+
+          <p className="text-sm text-[#1D2839] font-medium mt-3 leading-relaxed">
+            {health.summary}
+          </p>
+
+          <div className="mt-4 pt-3 border-t border-[#E2E8F7] space-y-1.5">
+            <span className="text-[11px] font-bold text-[#5B6785] uppercase tracking-wider block">
+              3 Helpful Tips:
+            </span>
+            {health.tips.map((tip, idx) => (
+              <p key={idx} className="text-xs text-[#1D2839] flex items-start gap-2">
+                <span className="text-[#0B5CE6] font-bold">•</span>
+                <span>{tip}</span>
+              </p>
+            ))}
+          </div>
+        </div>
+
+        {/* 🔔 Alerts Bell Card */}
+        <div className="accora-card bg-white border-[#E2E8F7] p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-[#1D2839] flex items-center gap-2">
+              <span>🔔</span>
+              <span>Alerts & Notifications</span>
+            </h2>
+            <span className="text-xs text-[#5B6785]">
+              {alerts.length} active
+            </span>
+          </div>
+
+          {alerts.length > 0 ? (
+            <div className="space-y-2.5 max-h-56 overflow-y-auto">
+              {alerts.map((alt, idx) => (
+                <div
+                  key={idx}
+                  className="p-3 rounded-xl bg-[#F4F7FC] border border-[#E2E8F7] text-xs text-[#1D2839] flex items-start gap-2.5"
+                >
+                  <AlertCircle className="w-4 h-4 text-[#FD614F] shrink-0 mt-0.5" />
+                  <span>{alt}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-[#5B6785] text-xs space-y-1">
+              <CheckCircle2 className="w-8 h-8 text-[#A3D508] mx-auto mb-2" />
+              <p className="font-semibold text-[#1D2839]">All clear!</p>
+              <p>Nothing needs your attention right now.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── 6-Month In vs. Out Bar Chart ── */}
+      <div className="accora-card bg-white border-[#E2E8F7] p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-[#1D2839]">
+              Last 6 Months (Money In vs. Money Out)
+            </h2>
+            <p className="text-xs text-[#5B6785]">Amounts in Pakistani Rupee (PKR)</p>
+          </div>
+          <Link
+            to="/app/forecast"
+            className="text-xs font-bold text-[#0B5CE6] hover:underline flex items-center gap-1"
+          >
+            <span>See Future Forecast</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F7" />
+              <XAxis dataKey="month" stroke="#5B6785" fontSize={12} tickLine={false} />
+              <YAxis
+                stroke="#5B6785"
+                fontSize={12}
+                tickLine={false}
+                tickFormatter={(val) => `PKR ${(val / 1000).toFixed(0)}k`}
+              />
+              <Tooltip
+                formatter={(val: any) => [`PKR ${Number(val).toLocaleString()}`, '']}
+                contentStyle={{ borderRadius: 12, border: '1px solid #E2E8F7', fontSize: 12 }}
+              />
+              <Legend
+                wrapperStyle={{ fontSize: 12, paddingTop: 10 }}
+                formatter={(value) => (value === 'in' ? 'Money In' : 'Money Out')}
+              />
+              <Bar dataKey="in" name="in" fill="#A3D508" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="out" name="out" fill="#FD614F" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* ── Bottom Section: Coming Up & Persona-Specific Widgets ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Upcoming Bills */}
+        <div className="accora-card bg-white border-[#E2E8F7] p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-[#1D2839]">
+              Coming Up (Unpaid Bills)
+            </h2>
+            <Link to="/app/invoices" className="text-xs text-[#0B5CE6] font-semibold hover:underline">
+              View all
+            </Link>
+          </div>
+
+          {upcomingBills.length > 0 ? (
+            <div className="space-y-3">
+              {upcomingBills.map((b) => (
+                <div
+                  key={b.id}
+                  className="p-3 rounded-xl bg-[#F4F7FC] border border-[#E2E8F7] flex items-center justify-between"
+                >
+                  <div>
+                    <h3 className="text-xs font-bold text-[#1D2839]">{b.name}</h3>
+                    <p className="text-[11px] text-[#5B6785] flex items-center gap-1 mt-0.5">
+                      <Calendar className="w-3 h-3" />
+                      Due on {b.dueDate}
+                    </p>
+                  </div>
+                  <span className="text-xs font-extrabold text-[#FD614F]">
+                    PKR {b.amount.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-[#5B6785] py-4 text-center">
+              No unpaid bills coming up.
+            </p>
+          )}
+        </div>
+
+        {/* Persona-Tailored Widget */}
+        <div className="accora-card bg-white border-[#E2E8F7] p-6 space-y-4">
+          {activePersonaKey === 'shop' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-[#1D2839]">Wholesale Receivables</h2>
+                <Link to="/app/invoices" className="text-xs text-[#0B5CE6] font-semibold hover:underline">
+                  Invoices
+                </Link>
+              </div>
+              <p className="text-xs text-[#5B6785]">Clients who owe your shop payment:</p>
+              {unpaidInvoices.map((inv) => (
+                <div key={inv.id} className="p-3 rounded-xl bg-[#F4F7FC] border border-[#E2E8F7] flex justify-between items-center text-xs">
+                  <div>
+                    <strong className="text-[#1D2839] block">{inv.client}</strong>
+                    <span className="text-[11px] text-[#5B6785]">Due: {inv.dueDate}</span>
+                  </div>
+                  <span className="font-bold text-[#0B5CE6]">PKR {inv.amount.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activePersonaKey === 'free' && (
+            <div className="space-y-3">
+              <h2 className="text-base font-bold text-[#1D2839]">Freelancer FBR Set-Aside</h2>
+              <p className="text-xs text-[#5B6785]">
+                {foreignBankShare}% of payments received through banking channels. Set aside ~{taxRate}% for annual filing.
+              </p>
+              <div className="p-3.5 rounded-xl bg-[#F4F7FC] border border-[#E2E8F7] flex justify-between items-center">
+                <span className="text-xs text-[#1D2839] font-medium">Estimated tax set-aside:</span>
+                <strong className="text-sm text-[#0B5CE6]">PKR {Math.round(monthIn * (taxRate / 100)).toLocaleString()}</strong>
+              </div>
+              <Link to="/app/tax" className="btn-outline text-xs py-2 w-full text-center block">
+                Open Tax Helper
+              </Link>
+            </div>
+          )}
+
+          {activePersonaKey === 'home' && (
+            <div className="space-y-3">
+              <h2 className="text-base font-bold text-[#1D2839]">Family Committee (Kameti)</h2>
+              {committees.length > 0 ? (
+                <div className="p-3.5 rounded-xl bg-[#F4F7FC] border border-[#E2E8F7] space-y-2 text-xs">
+                  <div className="flex justify-between font-bold text-[#1D2839]">
+                    <span>{committees[0].name}</span>
+                    <span>PKR {committees[0].monthlyAmount.toLocaleString()} / mo</span>
+                  </div>
+                  <p className="text-[#5B6785]">
+                    Your payout turn: <strong>Month #{committees[0].myTurn}</strong> (Payout: PKR {(committees[0].monthlyAmount * committees[0].members).toLocaleString()})
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-[#5B6785]">No active committee.</p>
+              )}
+              <Link to="/app/committee" className="btn-outline text-xs py-2 w-full text-center block">
+                Manage Committees
+              </Link>
+            </div>
+          )}
+
+          {activePersonaKey === 'pro' && (
+            <div className="space-y-3">
+              <h2 className="text-base font-bold text-[#1D2839]">Monthly Budget Health</h2>
+              <p className="text-xs text-[#5B6785]">
+                Your monthly house rent and family groceries are on track. Aim to keep PKR 30,000+ each month for savings goals.
+              </p>
+              <Link to="/app/budgets" className="btn-outline text-xs py-2 w-full text-center block">
+                View Budget &amp; Goals
+              </Link>
+            </div>
+          )}
+        </div>
+
+      </div>
+
+    </div>
   );
 }

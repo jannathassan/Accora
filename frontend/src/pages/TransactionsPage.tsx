@@ -1,320 +1,424 @@
-import { getCurrentDate } from '../utils/date';
-import { useState, useCallback } from 'react';
-import { useFinancial } from '../store/FinancialStore';
-import { fmtCurrency, fmtDate } from '../utils/format';
-import type { Transaction, TransactionCreate, TransactionType } from '../types';
-import { clsx } from 'clsx';
+import { useState, useMemo } from 'react';
+import { useMoneyStore } from '../store/moneyStore';
+import { guessCategory } from '../utils/calculations';
 import {
-  Plus, Search, Trash2, Edit3, X, Check, Filter, Receipt, ArrowUpDown, Upload
+  Plus,
+  Search,
+  Trash2,
+  Download,
+  Repeat,
+  Wallet,
+  Building,
+  Coins,
 } from 'lucide-react';
-import CsvImportModal from '../components/CsvImportModal';
-
-type SortKey = 'date' | 'amount';
-type SortDir = 'asc' | 'desc';
 
 export default function TransactionsPage() {
   const {
-    transactions, loading, addTransaction, editTransaction, removeTransaction,
-  } = useFinancial();
+    transactions,
+    activePersonaKey,
+    addTransaction,
+    deleteTransaction,
+  } = useMoneyStore();
 
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('');
-  const [showForm, setShowForm] = useState(false);
-  const [showImport, setShowImport] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<TransactionCreate>({
-    date: getCurrentDate(),
-    description: '',
-    category: '',
-    type: 'expense',
-    amount: 0,
-    status: 'completed',
-    notes: '',
-  });
-  const [touched, setTouched] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey>('date');
-  const [sortDir, setSortDir] = useState<SortDir>('desc');
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<'all' | 'in' | 'out'>('all');
+  const [showAddForm, setShowAddForm] = useState(false);
 
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2500);
-  }, []);
+  // Form State
+  const [formType, setFormType] = useState<'in' | 'out'>('out');
+  const [formAmount, setFormAmount] = useState('');
+  const [formNote, setFormNote] = useState('');
+  const [formCategory, setFormCategory] = useState('');
+  const [formDate, setFormDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [formAccount, setFormAccount] = useState<'cash' | 'bank' | 'wallet'>('cash');
+  const [formRepeat, setFormRepeat] = useState(false);
 
-  const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else { setSortKey(key); setSortDir('desc'); }
+  // Categories based on profile (Section 6)
+  const isHousehold = activePersonaKey === 'home';
+  const categories = useMemo(() => {
+    if (isHousehold) {
+      return ['Groceries', 'School fees', 'Utilities', 'Medical', 'Transport', 'Committee', 'Shopping', 'Other'];
+    }
+    return ['Stock', 'Rent', 'Salaries', 'Utilities', 'Ads', 'Software', 'Transport', 'Groceries', 'Sales', 'Client payment', 'Other'];
+  }, [isHousehold]);
+
+  // Handle Note Input with Auto-guess Category
+  const handleNoteChange = (text: string) => {
+    setFormNote(text);
+    if (!formCategory || formCategory === 'Other') {
+      const guessed = guessCategory(text);
+      if (guessed && guessed !== 'Other') {
+        setFormCategory(guessed);
+      }
+    }
   };
 
-  const filtered = transactions
-    .filter((t) => {
-      if (typeFilter && t.type !== typeFilter) return false;
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amt = parseFloat(formAmount) || 0;
+    if (amt <= 0) return;
+
+    const assignedCategory = formCategory || guessCategory(formNote) || 'Other';
+
+    await addTransaction({
+      amount: amt,
+      type: formType,
+      category: assignedCategory,
+      note: formNote.trim() || assignedCategory,
+      date: formDate,
+      account: formAccount,
+      repeatMonthly: formRepeat,
+    });
+
+    // Reset Form
+    setFormAmount('');
+    setFormNote('');
+    setFormCategory('');
+    setFormRepeat(false);
+    setShowAddForm(false);
+  };
+
+  // Filtered & Searched Rows
+  const filteredRows = useMemo(() => {
+    return transactions.filter((t) => {
+      if (typeFilter !== 'all' && t.type !== typeFilter) return false;
       if (search) {
         const q = search.toLowerCase();
-        return t.description.toLowerCase().includes(q) || t.category.toLowerCase().includes(q);
+        return (
+          t.note.toLowerCase().includes(q) ||
+          t.category.toLowerCase().includes(q) ||
+          t.amount.toString().includes(q)
+        );
       }
       return true;
-    })
-    .sort((a, b) => {
-      const dir = sortDir === 'asc' ? 1 : -1;
-      if (sortKey === 'date') return a.date < b.date ? -dir : dir;
-      return (a.amount - b.amount) * dir;
     });
+  }, [transactions, typeFilter, search]);
 
-  const resetForm = () => {
-    setForm({
-      date: getCurrentDate(),
-      description: '', category: '', type: 'expense', amount: 0, status: 'completed', notes: '',
-    });
-    setShowForm(false);
-    setEditingId(null);
-    setTouched(false);
-  };
+  // Monthly totals for filtered view
+  const totalIn = filteredRows.filter((t) => t.type === 'in').reduce((s, t) => s + t.amount, 0);
+  const totalOut = filteredRows.filter((t) => t.type === 'out').reduce((s, t) => s + t.amount, 0);
 
-  const isValid = form.description.trim() !== '' && form.category.trim() !== '' && form.amount > 0;
-  const showErrors = touched && !isValid;
+  // CSV Export
+  const handleExportCsv = () => {
+    const headers = ['Date', 'Type', 'Category', 'Description/Note', 'Account', 'Amount (PKR)'];
+    const rows = filteredRows.map((t) => [
+      t.date,
+      t.type === 'in' ? 'Income' : 'Spending',
+      t.category,
+      `"${t.note.replace(/"/g, '""')}"`,
+      t.account || 'cash',
+      t.amount,
+    ]);
 
-  const handleSubmit = async () => {
-    setTouched(true);
-    if (!isValid || submitting) return;
-    setSubmitting(true);
-    try {
-      if (editingId) {
-        await editTransaction(editingId, form);
-        showToast('Transaction updated');
-      } else {
-        await addTransaction(form);
-        showToast('Transaction added');
-      }
-      resetForm();
-    } catch { showToast('Failed to save transaction'); }
-    finally { setSubmitting(false); }
-  };
-
-  const handleDelete = (t: Transaction) => {
-    setPendingDelete(t.id);
-  };
-
-  const confirmDelete = (t: Transaction) => {
-    setPendingDelete(null);
-    removeTransaction(t.id).then(() => showToast('Transaction deleted'));
-  };
-
-  const startEdit = (t: Transaction) => {
-    setForm({
-      date: t.date, description: t.description, category: t.category,
-      type: t.type, amount: t.amount, status: t.status, notes: t.notes,
-    });
-    setEditingId(t.id);
-    setShowForm(true);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...rows].map((e) => e.join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `accora-transactions-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <div className="p-4 md:p-6 pb-24 md:pb-6 max-w-7xl mx-auto space-y-4 font-sans">
-      {/* Toast */}
-      {toast && (
-        <div className="toast-enter fixed top-4 right-4 z-50 px-4 py-2.5 bg-surface-900 text-white text-xs font-semibold rounded-lg shadow-lg">
-          {toast}
-        </div>
-      )}
-
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-200">
+    <div className="space-y-6 max-w-6xl mx-auto pb-16 font-sans">
+      
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl md:text-2xl font-bold text-surface-900 dark:text-surface-100 tracking-tight">
-              Transactions
-            </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-100 dark:bg-surface-200/50 border border-surface-200 text-surface-600 dark:text-surface-300 text-[11px] font-medium">
-              {transactions.length} transactions
-            </span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e8f0fe] text-[#0B5CE6] text-xs font-bold uppercase tracking-wider mb-2">
+            <span>Tool #2</span>
           </div>
-          <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
-            Keep track of your company's income and expenses
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D2839]">
+            Income &amp; Spending Tracker
+          </h1>
+          <p className="text-sm text-[#5B6785] mt-1">
+            Add what comes in and goes out. The category auto-fills as you type the note.
           </p>
         </div>
-        <div className="flex items-center gap-2.5">
+
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowImport(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 border border-surface-200 hover:border-surface-300 bg-surface-card hover:bg-surface-50 text-surface-800 dark:text-surface-200 text-xs md:text-sm font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="btn-lime text-xs py-2 px-4 shadow-2xs font-bold cursor-pointer"
           >
-            <Upload className="w-4 h-4 text-surface-500" />
-            <span>Import CSV</span>
+            <Plus className="w-3.5 h-3.5 mr-1" />
+            <span>Add Entry</span>
           </button>
           <button
-            onClick={() => { resetForm(); setShowForm(true); }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs md:text-sm font-semibold rounded-xl shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+            onClick={handleExportCsv}
+            className="btn-outline text-xs py-2 px-3.5 bg-white cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Transaction</span>
+            <Download className="w-3.5 h-3.5 mr-1" />
+            <span>Download CSV</span>
           </button>
         </div>
       </div>
 
-      {/* Filters + Sort Bar */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search transactions..."
-            aria-label="Search transactions"
-            className="w-full pl-9 pr-3 py-2 bg-surface-card border border-surface-200 rounded-xl text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-surface-900 dark:text-surface-100 placeholder:text-surface-400"
-          />
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Filter className="w-4 h-4 text-surface-400" />
-          {(['', 'income', 'expense'] as const).map((t) => (
+      {/* ── Add / Edit Transaction Form ── */}
+      {showAddForm && (
+        <form
+          onSubmit={handleSave}
+          className="accora-card bg-white border-[#E2E8F7] space-y-4 animate-in fade-in duration-150"
+        >
+          <div className="flex items-center justify-between border-b border-[#E2E8F7] pb-3">
+            <h2 className="text-base font-bold text-[#1D2839]">Record New Entry</h2>
             <button
-              key={t || 'all'}
-              onClick={() => setTypeFilter(t)}
-              className={clsx(
-                'px-3 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer',
-                typeFilter === t
-                  ? 'bg-brand-600 text-white shadow-xs'
-                  : 'bg-surface-card border border-surface-200 text-surface-600 dark:text-surface-300 hover:bg-surface-100',
-              )}
+              type="button"
+              onClick={() => setShowAddForm(false)}
+              className="text-xs text-[#5B6785] hover:text-[#1D2839]"
             >
-              {t ? t.charAt(0).toUpperCase() + t.slice(1) : 'All'}
+              Cancel
             </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-1 ml-auto">
-          <ArrowUpDown className="w-3.5 h-3.5 text-surface-400" />
-          {([['date', 'Date'], ['amount', 'Amount']] as [SortKey, string][]).map(([key, label]) => (
-            <button key={key} onClick={() => toggleSort(key)}
-              className={clsx(
-                'px-3 py-1.5 text-xs font-medium rounded-xl transition-colors cursor-pointer',
-                sortKey === key
-                  ? 'bg-surface-800 text-white border border-transparent'
-                  : 'bg-surface-card border border-surface-200 text-surface-600 dark:text-surface-300 hover:bg-surface-100',
-              )}>
-              {label}{sortKey === key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-            </button>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      {/* Add/Edit Form */}
-      {showForm && (
-        <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-4 md:p-5 space-y-3 transition-all">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-surface-900 dark:text-surface-100">
-              {editingId ? 'Edit Transaction' : 'New Transaction'}
-            </h3>
-            <button onClick={resetForm} className="p-1 hover:bg-surface-100 rounded transition-colors">
-              <X className="w-4 h-4 text-surface-500" />
+          {/* Type Toggle */}
+          <div className="grid grid-cols-2 gap-3 max-w-sm">
+            <button
+              type="button"
+              onClick={() => setFormType('out')}
+              className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                formType === 'out'
+                  ? 'bg-[#ffefed] text-[#FD614F] border-[#ffd4cf] shadow-xs'
+                  : 'bg-[#F4F7FC] text-[#5B6785] border-transparent'
+              }`}
+            >
+              Money Out (Spending)
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormType('in')}
+              className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                formType === 'in'
+                  ? 'bg-[#f3fbd9] text-[#1D2839] border-[#A3D508] shadow-xs'
+                  : 'bg-[#F4F7FC] text-[#5B6785] border-transparent'
+              }`}
+            >
+              Money In (Income)
             </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })}
-              aria-label="Date"
-              className="px-3 py-2 bg-surface-50 dark:bg-surface-100/50 border border-surface-200 rounded-lg text-xs md:text-sm text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30" />
-            <input placeholder="Description" value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              aria-label="Description"
-              className={clsx('px-3 py-2 bg-surface-50 dark:bg-surface-100/50 border rounded-lg text-xs md:text-sm text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30',
-                showErrors && !form.description.trim() ? 'border-risk' : 'border-surface-200')} />
-            <input placeholder="Category" value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-              aria-label="Category"
-              className={clsx('px-3 py-2 bg-surface-50 dark:bg-surface-100/50 border rounded-lg text-xs md:text-sm text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30',
-                showErrors && !form.category.trim() ? 'border-risk' : 'border-surface-200')} />
-            <input type="number" placeholder="Amount" value={form.amount || ''}
-              onChange={(e) => setForm({ ...form, amount: parseFloat(e.target.value) || 0 })}
-              aria-label="Amount"
-              className={clsx('px-3 py-2 bg-surface-50 dark:bg-surface-100/50 border rounded-lg text-xs md:text-sm text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30',
-                showErrors && form.amount <= 0 ? 'border-risk' : 'border-surface-200')} />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+            <div>
+              <label className="block text-[#5B6785] font-semibold mb-1">
+                Amount (PKR) *
+              </label>
+              <input
+                type="number"
+                min="1"
+                required
+                placeholder="e.g. 5000"
+                value={formAmount}
+                onChange={(e) => setFormAmount(e.target.value)}
+                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl text-sm font-bold bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#5B6785] font-semibold mb-1">
+                Note / Description (auto-picks category)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Groceries from mart, client payment"
+                value={formNote}
+                onChange={(e) => handleNoteChange(e.target.value)}
+                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl text-sm bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#5B6785] font-semibold mb-1">
+                Category
+              </label>
+              <select
+                value={formCategory}
+                onChange={(e) => setFormCategory(e.target.value)}
+                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl text-xs bg-white min-h-[38px]"
+              >
+                <option value="">Auto-Detect ({guessCategory(formNote)})</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[#5B6785] font-semibold mb-1">
+                Date
+              </label>
+              <input
+                type="date"
+                value={formDate}
+                onChange={(e) => setFormDate(e.target.value)}
+                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl text-xs bg-white min-h-[38px]"
+              />
+            </div>
           </div>
-          {showErrors && (
-            <p className="text-xs text-risk">Please fill in description, category, and a positive amount.</p>
-          )}
-          <div className="flex items-center gap-3">
-            <div className="flex gap-1.5">
-              {(['income', 'expense'] as TransactionType[]).map((t) => (
-                <button key={t} onClick={() => setForm({ ...form, type: t })}
-                  className={clsx('px-3 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-colors',
-                    form.type === t 
-                      ? (t === 'income' ? 'bg-positive text-white' : 'bg-risk text-white') 
-                      : 'bg-surface-100 text-surface-600 hover:bg-surface-200')}>
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
-                </button>
+
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-[#E2E8F7]">
+            <div className="flex items-center gap-4 text-xs">
+              <span className="font-semibold text-[#5B6785]">Account:</span>
+              {(['cash', 'bank', 'wallet'] as const).map((acc) => (
+                <label key={acc} className="flex items-center gap-1.5 cursor-pointer capitalize">
+                  <input
+                    type="radio"
+                    name="account"
+                    checked={formAccount === acc}
+                    onChange={() => setFormAccount(acc)}
+                    className="accent-[#0B5CE6]"
+                  />
+                  <span>{acc}</span>
+                </label>
               ))}
             </div>
-            <button onClick={handleSubmit} disabled={submitting}
-              className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs md:text-sm font-semibold rounded-lg active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer">
-              <Check className="w-4 h-4" /> {submitting ? 'Saving...' : editingId ? 'Update' : 'Add'}
+
+            <label className="flex items-center gap-2 text-xs text-[#1D2839] font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formRepeat}
+                onChange={(e) => setFormRepeat(e.target.checked)}
+                className="rounded accent-[#0B5CE6]"
+              />
+              <span className="flex items-center gap-1">
+                <Repeat className="w-3.5 h-3.5 text-[#0B5CE6]" />
+                Repeat monthly (auto-schedules next 2 months)
+              </span>
+            </label>
+
+            <button type="submit" className="btn-primary text-xs py-2 px-6">
+              Save Entry
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* ── Filters & Summary Bar ── */}
+      <div className="accora-card bg-white border-[#E2E8F7] p-4 space-y-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          
+          {/* Search Box */}
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-[#5B6785] absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by note, category, or amount…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 border border-[#E2E8F7] rounded-xl text-xs bg-[#F4F7FC] focus:bg-white"
+            />
+          </div>
+
+          {/* Type Filter Buttons */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setTypeFilter('all')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${
+                typeFilter === 'all' ? 'bg-[#0B5CE6] text-white' : 'bg-[#F4F7FC] text-[#5B6785]'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setTypeFilter('in')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${
+                typeFilter === 'in' ? 'bg-[#f3fbd9] text-[#1D2839] border border-[#A3D508]' : 'bg-[#F4F7FC] text-[#5B6785]'
+              }`}
+            >
+              Money In
+            </button>
+            <button
+              onClick={() => setTypeFilter('out')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${
+                typeFilter === 'out' ? 'bg-[#ffefed] text-[#FD614F] border border-[#ffd4cf]' : 'bg-[#F4F7FC] text-[#5B6785]'
+              }`}
+            >
+              Money Out
             </button>
           </div>
         </div>
-      )}
 
-      {/* Transaction List */}
-      <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 dark:border-surface-200/50 shadow-[var(--shadow-card)] overflow-hidden transition-colors">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-6 h-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+        {/* Totals Summary */}
+        <div className="flex flex-wrap items-center justify-between text-xs pt-2 border-t border-[#E2E8F7] text-[#5B6785]">
+          <span>Showing <strong>{filteredRows.length}</strong> entries</span>
+          <div className="flex items-center gap-4">
+            <span>In: <strong className="text-[#1D2839]">PKR {totalIn.toLocaleString()}</strong></span>
+            <span>Out: <strong className="text-[#FD614F]">PKR {totalOut.toLocaleString()}</strong></span>
+            <span>Net: <strong className={totalIn >= totalOut ? 'text-[#0B5CE6]' : 'text-[#FD614F]'}>
+              PKR {(totalIn - totalOut).toLocaleString()}
+            </strong></span>
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <Receipt className="w-10 h-10 text-surface-300 mx-auto mb-3" />
-            <p className="text-sm text-surface-500 font-medium">No transactions found</p>
-            <p className="text-xs text-surface-400 mt-1">Try adjusting your filters or add a new transaction.</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-surface-100 dark:divide-surface-200/30">
-            {filtered.slice(0, 100).map((t) => (
-              <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-50 transition-colors group">
-                <div className={clsx(
-                  'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold',
-                  t.type === 'income' 
-                    ? 'bg-positive-light text-positive border border-positive/20' 
-                    : 'bg-risk-light text-risk border border-risk/20',
-                )}>
-                  {t.type === 'income' ? '+' : '-'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-surface-900 dark:text-surface-100 truncate">{t.description}</p>
-                  <p className="text-[11px] text-surface-400">{t.category} &middot; {fmtDate(t.date)}</p>
-                </div>
-                <span className={clsx(
-                  'text-sm font-semibold tabular-nums font-mono',
-                  t.type === 'income' ? 'text-positive' : 'text-risk',
-                )}>
-                  {t.type === 'income' ? '+' : '-'}{fmtCurrency(t.amount)}
-                </span>
-                {pendingDelete === t.id ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-surface-500">Delete?</span>
-                    <button onClick={() => confirmDelete(t)}
-                      className="px-2 py-1 text-xs font-semibold bg-risk text-white rounded-md hover:bg-risk/90 transition-colors cursor-pointer">
-                      Yes
-                    </button>
-                    <button onClick={() => setPendingDelete(null)}
-                      className="px-2 py-1 text-xs font-medium bg-surface-100 text-surface-600 rounded-md hover:bg-surface-200 transition-colors cursor-pointer">
-                      No
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => startEdit(t)} className="p-1.5 hover:bg-surface-100 rounded transition-colors cursor-pointer" title="Edit">
-                      <Edit3 className="w-3.5 h-3.5 text-surface-400 hover:text-surface-600" />
-                    </button>
-                    <button onClick={() => handleDelete(t)} className="p-1.5 hover:bg-risk-light rounded transition-colors cursor-pointer" title="Delete" aria-label="Delete transaction">
-                      <Trash2 className="w-3.5 h-3.5 text-risk" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        </div>
       </div>
 
-      <CsvImportModal isOpen={showImport} onClose={() => setShowImport(false)} />
+      {/* ── Transactions Table ── */}
+      <div className="accora-card bg-white border-[#E2E8F7] p-0 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left">
+            <thead>
+              <tr className="border-b border-[#E2E8F7] text-[#5B6785] bg-[#F4F7FC]">
+                <th className="py-3 px-4 font-bold">Date</th>
+                <th className="py-3 px-4 font-bold">Note / Description</th>
+                <th className="py-3 px-4 font-bold">Category</th>
+                <th className="py-3 px-4 font-bold">Account</th>
+                <th className="py-3 px-4 font-bold text-right">Amount (PKR)</th>
+                <th className="py-3 px-4 font-bold text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRows.length > 0 ? (
+                filteredRows.slice(0, 100).map((t) => (
+                  <tr
+                    key={t.id}
+                    className="border-b border-[#E2E8F7]/70 hover:bg-[#F4F7FC]/50 transition-colors"
+                  >
+                    <td className="py-3 px-4 font-mono text-[#5B6785]">{t.date}</td>
+                    <td className="py-3 px-4 font-semibold text-[#1D2839]">{t.note}</td>
+                    <td className="py-3 px-4">
+                      <span className="px-2.5 py-1 rounded-md bg-[#F4F7FC] border border-[#E2E8F7] text-[11px] font-medium text-[#1D2839]">
+                        {t.category}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-[#5B6785] capitalize">
+                      <span className="flex items-center gap-1">
+                        {t.account === 'bank' && <Building className="w-3 h-3" />}
+                        {t.account === 'wallet' && <Wallet className="w-3 h-3" />}
+                        {(!t.account || t.account === 'cash') && <Coins className="w-3 h-3" />}
+                        <span>{t.account || 'cash'}</span>
+                      </span>
+                    </td>
+                    <td
+                      className={`py-3 px-4 font-bold text-right tabular-nums text-sm ${
+                        t.type === 'in' ? 'text-[#1D2839]' : 'text-[#FD614F]'
+                      }`}
+                    >
+                      {t.type === 'in' ? '+' : '−'}PKR {t.amount.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <button
+                        onClick={() => deleteTransaction(t.id)}
+                        className="p-1.5 rounded-lg text-[#5B6785] hover:text-[#FD614F] hover:bg-[#ffefed] transition-colors"
+                        title="Delete entry"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-[#5B6785] text-xs">
+                    No entries match your search. Add your first transaction above!
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   );
 }

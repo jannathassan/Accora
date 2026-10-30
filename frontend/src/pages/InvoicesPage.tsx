@@ -1,363 +1,430 @@
-import { getCurrentDate } from '../utils/date';
-import { useState, useCallback } from 'react';
-import { useFinancial } from '../store/FinancialStore';
-import { fmtCurrency, fmtDate } from '../utils/format';
-import type { Invoice, InvoiceCreate, InvoiceItem } from '../types';
-import { clsx } from 'clsx';
+import { useState } from 'react';
+import { useMoneyStore } from '../store/moneyStore';
 import {
-  Plus, Search, Trash2, Edit3, X, Check, FileText, CheckCircle2, Clock, AlertTriangle, Filter
+  Plus,
+  Check,
+  Copy,
+  Printer,
+  AlertTriangle,
 } from 'lucide-react';
-
-const STATUS_CONFIG: Record<string, { bg: string; text: string; icon: typeof CheckCircle2; label: string }> = {
-  paid:    { bg: 'bg-positive-light border border-positive/30', text: 'text-positive', icon: CheckCircle2, label: 'Paid' },
-  pending: { bg: 'bg-warning-light border border-warning/30',   text: 'text-warning',   icon: Clock,        label: 'Pending' },
-  overdue: { bg: 'bg-risk-light border border-risk/30',      text: 'text-risk',    icon: AlertTriangle,label: 'Overdue' },
-  sent:    { bg: 'bg-brand-50 border border-brand-200',      text: 'text-brand-600',   icon: FileText,     label: 'Sent' },
-  draft:   { bg: 'bg-surface-100 border border-surface-200',     text: 'text-surface-500',   icon: FileText,     label: 'Draft' },
-};
-
-const emptyItem = (): InvoiceItem => ({
-  id: crypto.randomUUID(), description: '', quantity: 1, unit_price: 0, amount: 0,
-});
-
-const getInitialInvoice = (): InvoiceCreate => ({
-  client_name: '',
-  client_email: '',
-  items: [emptyItem()],
-  tax_rate: 0,
-  status: 'draft',
-  issue_date: getCurrentDate(),
-  due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
-  notes: '',
-});
 
 export default function InvoicesPage() {
   const {
-    invoices, invoiceSummary, loading, addInvoice, editInvoice, removeInvoice,
-  } = useFinancial();
+    invoices,
+    bills,
+    addInvoice,
+    markInvoicePaid,
+    addBill,
+    markBillPaid,
+    showToast,
+  } = useMoneyStore();
 
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<InvoiceCreate>(getInitialInvoice);
-  const [touched, setTouched] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'owed' | 'bills'>('owed');
+  const [showAddInvoice, setShowAddInvoice] = useState(false);
+  const [showAddBill, setShowAddBill] = useState(false);
 
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2500);
-  }, []);
-
-  const filtered = invoices.filter((inv) => {
-    if (statusFilter && inv.status !== statusFilter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      return inv.client_name.toLowerCase().includes(q) || inv.invoice_number.toLowerCase().includes(q);
-    }
-    return true;
+  // New Invoice Form
+  const [invClient, setInvClient] = useState('');
+  const [invAmount, setInvAmount] = useState('');
+  const [invDueDate, setInvDueDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    return d.toISOString().slice(0, 10);
   });
+  const [invTaxPct, setInvTaxPct] = useState('0');
 
-  const resetForm = () => {
-    setForm(getInitialInvoice());
-    setShowForm(false);
-    setEditingId(null);
-    setTouched(false);
-  };
+  // New Bill Form
+  const [billName, setBillName] = useState('');
+  const [billAmount, setBillAmount] = useState('');
+  const [billDueDate, setBillDueDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [billRepeat, setBillRepeat] = useState(true);
 
-  const updateItem = (idx: number, field: keyof InvoiceItem, value: string | number) => {
-    const items = [...form.items];
-    const item = { ...items[idx], [field]: value };
-    if (field === 'quantity' || field === 'unit_price') {
-      item.amount = item.quantity * item.unit_price;
-    }
-    items[idx] = item;
-    setForm({ ...form, items });
-  };
+  const handleCreateInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amt = parseFloat(invAmount) || 0;
+    if (!invClient || amt <= 0) return;
 
-  const addItem = () => setForm({ ...form, items: [...form.items, emptyItem()] });
-  const removeItem = (idx: number) => {
-    if (form.items.length <= 1) return;
-    setForm({ ...form, items: form.items.filter((_, i) => i !== idx) });
-  };
-
-  const invoiceIsValid = form.client_name.trim() !== '' && form.items.length > 0 && !form.items.some((i) => !i.description.trim() || i.amount <= 0);
-  const showInvoiceErrors = touched && !invoiceIsValid;
-
-  const handleSubmit = async () => {
-    setTouched(true);
-    if (!invoiceIsValid || submitting) return;
-    setSubmitting(true);
-    try {
-      if (editingId) {
-        await editInvoice(editingId, form);
-        showToast('Invoice updated');
-      } else {
-        await addInvoice(form);
-        showToast('Invoice created');
-      }
-      resetForm();
-    } catch { showToast('Failed to save invoice'); }
-    finally { setSubmitting(false); }
-  };
-
-  const startEdit = (inv: Invoice) => {
-    setForm({
-      client_name: inv.client_name, client_email: inv.client_email,
-      items: inv.items, tax_rate: inv.tax_rate, status: inv.status,
-      issue_date: inv.issue_date, due_date: inv.due_date, notes: inv.notes,
+    await addInvoice({
+      client: invClient.trim(),
+      amount: amt,
+      taxPercent: parseFloat(invTaxPct) || 0,
+      dueDate: invDueDate,
+      status: 'sent',
     });
-    setEditingId(inv.id);
-    setShowForm(true);
+
+    setInvClient('');
+    setInvAmount('');
+    setShowAddInvoice(false);
   };
 
-  const markPaid = async (inv: Invoice) => {
-    await editInvoice(inv.id, { status: 'paid', paid_date: getCurrentDate() });
-    showToast('Invoice marked as paid');
+  const handleCreateBill = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amt = parseFloat(billAmount) || 0;
+    if (!billName || amt <= 0) return;
+
+    await addBill({
+      name: billName.trim(),
+      amount: amt,
+      dueDate: billDueDate,
+      repeatMonthly: billRepeat,
+    });
+
+    setBillName('');
+    setBillAmount('');
+    setShowAddBill(false);
   };
 
-  const handleDelete = (inv: Invoice) => {
-    setPendingDelete(inv.id);
+  // WhatsApp Reminder Generator (Section 6)
+  const handleCopyReminder = (client: string, amount: number, dueDate: string) => {
+    const text = `Assalam o Alaikum ${client}, this is a gentle reminder regarding invoice for PKR ${amount.toLocaleString()} due on ${dueDate}. Please let me know once processed. Thank you!`;
+    navigator.clipboard.writeText(text);
+    showToast({
+      message: 'Polite reminder copied! Ready to paste into WhatsApp.',
+    });
   };
 
-  const confirmDelete = (inv: Invoice) => {
-    setPendingDelete(null);
-    removeInvoice(inv.id).then(() => showToast('Invoice deleted'));
+  const handlePrintPdf = () => {
+    window.print();
   };
 
-  const subtotal = form.items.reduce((s, i) => s + i.amount, 0);
-  const total = subtotal + subtotal * (form.tax_rate || 0);
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   return (
-    <div className="p-4 md:p-6 pb-24 md:pb-6 max-w-7xl mx-auto space-y-4 font-sans">
-      {/* Toast */}
-      {toast && (
-        <div className="toast-enter fixed top-4 right-4 z-50 px-4 py-2.5 bg-surface-900 text-white text-xs font-semibold rounded-lg shadow-lg">
-          {toast}
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-200">
+    <div className="space-y-6 max-w-6xl mx-auto pb-16 font-sans">
+      
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl md:text-2xl font-bold text-surface-900 dark:text-surface-100 tracking-tight">
-              Invoices
-            </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-100 dark:bg-surface-200/50 border border-surface-200 text-surface-600 dark:text-surface-300 text-[11px] font-medium">
-              {invoices.length} invoices
-            </span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e8f0fe] text-[#0B5CE6] text-xs font-bold uppercase tracking-wider mb-2">
+            <span>Tool #3</span>
           </div>
-          <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
-            Manage client billing, accounts receivable, and payment statuses
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D2839]">
+            Bills &amp; Invoices
+          </h1>
+          <p className="text-sm text-[#5B6785] mt-1">
+            Track money owed to you by clients, and recurring bills you must pay on time.
           </p>
         </div>
-        <button
-          onClick={() => { resetForm(); setShowForm(true); }}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs md:text-sm font-semibold rounded-xl shadow-xs active:scale-[0.98] transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Create Invoice</span>
-        </button>
-      </div>
 
-      {/* Summary Cards */}
-      {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 p-4 animate-pulse">
-              <div className="h-3 w-16 bg-surface-200 rounded mb-2" />
-              <div className="h-5 w-24 bg-surface-200 rounded" />
-            </div>
-          ))}
-        </div>
-      ) : invoiceSummary && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {[
-            { label: 'Total Invoiced', value: invoiceSummary.total_invoiced, color: 'text-surface-900 dark:text-surface-100' },
-            { label: 'Paid', value: invoiceSummary.total_paid, color: 'text-positive' },
-            { label: 'Pending', value: invoiceSummary.total_pending, color: 'text-warning' },
-            { label: 'Overdue', value: invoiceSummary.total_overdue, color: 'text-risk' },
-          ].map((s) => (
-            <div key={s.label} className="relative overflow-hidden bg-surface-card rounded-[var(--radius-card)] border border-surface-200 dark:border-surface-200/50 shadow-[var(--shadow-card)] p-4 hover:border-brand-400/40 transition-all group">
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-600 via-brand-400 to-transparent opacity-60" />
-              <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">{s.label}</p>
-              <p className={clsx('text-lg font-bold tabular-nums font-mono', s.color)}>{fmtCurrency(s.value)}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search invoices..."
-            aria-label="Search invoices"
-            className="w-full pl-9 pr-3 py-2 bg-surface-card border border-surface-200 rounded-xl text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-surface-900 dark:text-surface-100 placeholder:text-surface-400"
-          />
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Filter className="w-4 h-4 text-surface-400" />
-          {(['', 'paid', 'pending', 'overdue', 'sent', 'draft'] as const).map((s) => (
-            <button
-              key={s || 'all'}
-              onClick={() => setStatusFilter(s)}
-              className={clsx(
-                'px-3 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer',
-                statusFilter === s
-                  ? 'bg-brand-600 text-white shadow-xs'
-                  : 'bg-surface-card border border-surface-200 text-surface-600 dark:text-surface-300 hover:bg-surface-100',
-              )}
-            >
-              {s ? s.charAt(0).toUpperCase() + s.slice(1) : 'All'}
-            </button>
-          ))}
+        {/* Tab Switcher */}
+        <div className="flex items-center gap-1.5 p-1 bg-[#F4F7FC] rounded-xl border border-[#E2E8F7]">
+          <button
+            onClick={() => setActiveTab('owed')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'owed'
+                ? 'bg-white text-[#0B5CE6] shadow-xs'
+                : 'text-[#5B6785] hover:text-[#1D2839]'
+            }`}
+          >
+            Money Owed to Me ({invoices.filter((i) => !i.paid).length})
+          </button>
+          <button
+            onClick={() => setActiveTab('bills')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'bills'
+                ? 'bg-white text-[#0B5CE6] shadow-xs'
+                : 'text-[#5B6785] hover:text-[#1D2839]'
+            }`}
+          >
+            Bills I Must Pay ({bills.filter((b) => !b.paid).length})
+          </button>
         </div>
       </div>
 
-      {/* Create/Edit Form */}
-      {showForm && (
-        <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-4 md:p-5 space-y-3 transition-all">
+      {/* ── Tab 1: Money Owed to Me (Invoices) ── */}
+      {activeTab === 'owed' && (
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-surface-900 dark:text-surface-100">
-              {editingId ? 'Edit Invoice' : 'New Invoice'}
-            </h3>
-            <button onClick={resetForm} className="p-1 hover:bg-surface-100 rounded transition-colors"><X className="w-4 h-4 text-surface-500" /></button>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <input placeholder="Client Name" value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })}
-              aria-label="Client Name"
-              className={clsx('px-3 py-2 bg-surface-50 dark:bg-surface-100/50 border rounded-lg text-xs md:text-sm text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500',
-                showInvoiceErrors && !form.client_name.trim() ? 'border-risk' : 'border-surface-200')} />
-            <input placeholder="Client Email" value={form.client_email} onChange={(e) => setForm({ ...form, client_email: e.target.value })}
-              aria-label="Client Email"
-              className="px-3 py-2 bg-surface-50 dark:bg-surface-100/50 border border-surface-200 rounded-lg text-xs md:text-sm text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
-            <input type="date" value={form.issue_date} onChange={(e) => setForm({ ...form, issue_date: e.target.value })}
-              aria-label="Issue Date"
-              className="px-3 py-2 bg-surface-50 dark:bg-surface-100/50 border border-surface-200 rounded-lg text-xs md:text-sm text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
-            <input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })}
-              aria-label="Due Date"
-              className="px-3 py-2 bg-surface-50 dark:bg-surface-100/50 border border-surface-200 rounded-lg text-xs md:text-sm text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
-          </div>
-          {showInvoiceErrors && (
-            <p className="text-xs text-risk">Please fill in client name and ensure all line items have descriptions and positive amounts.</p>
-          )}
-          {/* Line items */}
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-surface-700 dark:text-surface-300">Line Items</p>
-            {form.items.map((item, idx) => (
-              <div key={item.id} className="flex flex-col md:flex-row md:items-center gap-2">
-                <input placeholder="Description" value={item.description} onChange={(e) => updateItem(idx, 'description', e.target.value)}
-                  aria-label={`Item ${idx + 1} description`}
-                  className="flex-1 px-3 py-1.5 bg-surface-50 dark:bg-surface-100/50 border border-surface-200 rounded-lg text-xs md:text-sm text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 flex-1 md:flex-none">
-                    <span className="text-[10px] text-surface-400 md:hidden">Qty</span>
-                    <input type="number" placeholder="Qty" value={item.quantity || ''} onChange={(e) => updateItem(idx, 'quantity', parseFloat(e.target.value) || 0)}
-                      aria-label={`Item ${idx + 1} quantity`}
-                      className="w-full md:w-16 px-2 py-1.5 bg-surface-50 dark:bg-surface-100/50 border border-surface-200 rounded-lg text-xs md:text-sm text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-1 md:flex-none">
-                    <span className="text-[10px] text-surface-400 md:hidden">Price</span>
-                    <input type="number" placeholder="Price" value={item.unit_price || ''} onChange={(e) => updateItem(idx, 'unit_price', parseFloat(e.target.value) || 0)}
-                      aria-label={`Item ${idx + 1} price`}
-                      className="w-full md:w-24 px-2 py-1.5 bg-surface-50 dark:bg-surface-100/50 border border-surface-200 rounded-lg text-xs md:text-sm text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
-                  </div>
-                  <span className="w-24 text-right text-xs font-semibold tabular-nums font-mono hidden md:block text-surface-900 dark:text-surface-100">{fmtCurrency(item.amount)}</span>
-                  <button onClick={() => removeItem(idx)} className="p-1 hover:bg-risk-light rounded transition-colors cursor-pointer" aria-label={`Remove item ${idx + 1}`}><X className="w-3.5 h-3.5 text-risk" /></button>
-                </div>
-                <span className="text-right text-xs font-semibold tabular-nums font-mono md:hidden text-surface-900 dark:text-surface-100">{fmtCurrency(item.amount)}</span>
-              </div>
-            ))}
-            <button onClick={addItem} className="text-xs text-brand-600 hover:underline font-semibold cursor-pointer">+ Add Line Item</button>
-          </div>
-          <div className="flex items-center justify-between pt-2 border-t border-surface-100">
-            <div className="text-xs space-x-3 text-surface-500 dark:text-surface-400">
-              <span>Subtotal: <strong className="text-surface-900 dark:text-surface-100 tabular-nums font-mono">{fmtCurrency(subtotal)}</strong></span>
-              {(form.tax_rate ?? 0) > 0 && (
-                <>
-                  <span>|</span>
-                  <span>Tax ({((form.tax_rate ?? 0) * 100).toFixed(1)}%): <strong className="text-surface-900 dark:text-surface-100 tabular-nums font-mono">{fmtCurrency(subtotal * (form.tax_rate ?? 0))}</strong></span>
-                </>
-              )}
-              <span>|</span>
-              <span>Total: <strong className="text-surface-900 dark:text-surface-100 tabular-nums font-mono font-bold">{fmtCurrency(total)}</strong></span>
-            </div>
-            <button onClick={handleSubmit} disabled={submitting}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs md:text-sm font-semibold rounded-lg active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer">
-              <Check className="w-4 h-4" /> {submitting ? 'Saving...' : editingId ? 'Update' : 'Create'}
+            <h2 className="text-base font-bold text-[#1D2839]">Client Invoices &amp; Receivables</h2>
+            <button
+              onClick={() => setShowAddInvoice(!showAddInvoice)}
+              className="btn-lime text-xs py-2 px-4 shadow-2xs font-bold cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              <span>Create Invoice</span>
             </button>
+          </div>
+
+          {showAddInvoice && (
+            <form
+              onSubmit={handleCreateInvoice}
+              className="accora-card bg-white border-[#E2E8F7] space-y-4 animate-in fade-in duration-150"
+            >
+              <h3 className="font-bold text-sm text-[#1D2839]">New Client Invoice</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <label className="block text-[#5B6785] font-semibold mb-1">Client Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Hassan Traders"
+                    value={invClient}
+                    onChange={(e) => setInvClient(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[#5B6785] font-semibold mb-1">Amount (PKR) *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    placeholder="e.g. 85000"
+                    value={invAmount}
+                    onChange={(e) => setInvAmount(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[#5B6785] font-semibold mb-1">Due Date</label>
+                  <input
+                    type="date"
+                    value={invDueDate}
+                    onChange={(e) => setInvDueDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[#5B6785] font-semibold mb-1">Tax / Withholding %</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="30"
+                    value={invTaxPct}
+                    onChange={(e) => setInvTaxPct(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#E2E8F7]">
+                <button
+                  type="button"
+                  onClick={() => setShowAddInvoice(false)}
+                  className="btn-outline text-xs py-2 px-4"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary text-xs py-2 px-5">
+                  Save &amp; Send Invoice
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Invoices List */}
+          <div className="accora-card bg-white border-[#E2E8F7] p-0 overflow-hidden">
+            <table className="w-full text-xs text-left">
+              <thead>
+                <tr className="border-b border-[#E2E8F7] text-[#5B6785] bg-[#F4F7FC]">
+                  <th className="py-3 px-4 font-bold">Client</th>
+                  <th className="py-3 px-4 font-bold">Due Date</th>
+                  <th className="py-3 px-4 font-bold">Status</th>
+                  <th className="py-3 px-4 font-bold text-right">Amount (PKR)</th>
+                  <th className="py-3 px-4 font-bold text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoices.length > 0 ? (
+                  invoices.map((inv) => {
+                    const isOverdue = !inv.paid && inv.dueDate < todayStr;
+                    return (
+                      <tr key={inv.id} className="border-b border-[#E2E8F7]/70 hover:bg-[#F4F7FC]/40">
+                        <td className="py-3.5 px-4 font-bold text-[#1D2839]">{inv.client}</td>
+                        <td className="py-3.5 px-4 font-mono text-[#5B6785]">{inv.dueDate}</td>
+                        <td className="py-3.5 px-4">
+                          {inv.paid ? (
+                            <span className="inline-flex items-center gap-1 text-[#1D2839] font-bold bg-[#A3D508] px-2.5 py-0.5 rounded-full text-[10px]">
+                              <Check className="w-3 h-3" /> Paid
+                            </span>
+                          ) : isOverdue ? (
+                            <span className="inline-flex items-center gap-1 text-[#FD614F] font-bold bg-[#ffefed] px-2.5 py-0.5 rounded-full text-[10px] border border-[#ffd4cf]">
+                              <AlertTriangle className="w-3 h-3" /> Overdue
+                            </span>
+                          ) : (
+                            <span className="text-[#0B5CE6] font-bold bg-[#e8f0fe] px-2.5 py-0.5 rounded-full text-[10px]">
+                              Sent
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 font-extrabold text-right tabular-nums text-sm text-[#1D2839]">
+                          PKR {inv.amount.toLocaleString()}
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {!inv.paid && (
+                              <>
+                                <button
+                                  onClick={() => markInvoicePaid(inv.id)}
+                                  className="btn-lime text-[11px] py-1 px-2.5 font-bold"
+                                  title="Marking paid automatically adds to Income Tracker"
+                                >
+                                  Mark Paid
+                                </button>
+                                <button
+                                  onClick={() => handleCopyReminder(inv.client, inv.amount, inv.dueDate)}
+                                  className="btn-outline text-[11px] py-1 px-2.5 flex items-center gap-1"
+                                  title="Copy polite WhatsApp text"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                  <span>WhatsApp</span>
+                                </button>
+                              </>
+                            )}
+                            <button
+                              onClick={() => handlePrintPdf()}
+                              className="p-1.5 text-[#5B6785] hover:text-[#0B5CE6] rounded-lg cursor-pointer"
+                              title="Print / Save PDF"
+                            >
+                              <Printer className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-[#5B6785]">
+                      No invoices recorded yet. Create one above!
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {/* Invoice List */}
-      <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-6 h-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+      {/* ── Tab 2: Bills I Must Pay ── */}
+      {activeTab === 'bills' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-[#1D2839]">Bills I Must Pay</h2>
+            <button
+              onClick={() => setShowAddBill(!showAddBill)}
+              className="btn-lime text-xs py-2 px-4 shadow-2xs font-bold cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              <span>New Bill</span>
+            </button>
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <FileText className="w-10 h-10 text-surface-300 mx-auto mb-3" />
-            <p className="text-sm text-surface-500 font-medium">No invoices found</p>
-            <p className="text-xs text-surface-400 mt-1">Create your first invoice to get started.</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-surface-100">
-            {filtered.map((inv) => {
-              const cfg = STATUS_CONFIG[inv.status] ?? STATUS_CONFIG.draft;
-              const Icon = cfg.icon;
-              return (
-                <div key={inv.id} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-50 transition-colors group">
-                  <div className={clsx('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', cfg.bg)}>
-                    <Icon className={clsx('w-4 h-4', cfg.text)} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-surface-900 dark:text-surface-100 truncate">{inv.client_name}</p>
-                    <p className="text-[11px] text-surface-400">{inv.invoice_number} &middot; Due {fmtDate(inv.due_date)}</p>
-                  </div>
-                  <span className={clsx('text-[11px] font-semibold px-2 py-0.5 rounded-full', cfg.bg, cfg.text)}>{cfg.label}</span>
-                  <span className="text-sm font-semibold tabular-nums font-mono text-surface-900 dark:text-surface-100">{fmtCurrency(inv.total)}</span>
-                  {pendingDelete === inv.id ? (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-surface-500">Delete?</span>
-                      <button onClick={() => confirmDelete(inv)}
-                        className="px-2 py-1 text-xs font-semibold bg-risk text-white rounded-md hover:bg-risk/90 transition-colors cursor-pointer">
-                        Yes
-                      </button>
-                      <button onClick={() => setPendingDelete(null)}
-                        className="px-2 py-1 text-xs font-medium bg-surface-100 text-surface-600 rounded-md hover:bg-surface-200 transition-colors cursor-pointer">
-                        No
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                      {inv.status !== 'paid' && (
-                        <button onClick={() => markPaid(inv)} className="p-1.5 hover:bg-positive-light rounded transition-colors cursor-pointer" title="Mark Paid">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-positive" />
-                        </button>
-                      )}
-                      <button onClick={() => startEdit(inv)} className="p-1.5 hover:bg-surface-100 rounded transition-colors cursor-pointer" title="Edit">
-                        <Edit3 className="w-3.5 h-3.5 text-surface-400 hover:text-surface-600" />
-                      </button>
-                      <button onClick={() => handleDelete(inv)} className="p-1.5 hover:bg-risk-light rounded transition-colors cursor-pointer" title="Delete" aria-label="Delete invoice">
-                        <Trash2 className="w-3.5 h-3.5 text-risk" />
-                      </button>
-                    </div>
-                  )}
+
+          {showAddBill && (
+            <form
+              onSubmit={handleCreateBill}
+              className="accora-card bg-white border-[#E2E8F7] space-y-4 animate-in fade-in duration-150"
+            >
+              <h3 className="font-bold text-sm text-[#1D2839]">New Expense Bill</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <label className="block text-[#5B6785] font-semibold mb-1">Bill Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Shop rent, Electricity, Internet"
+                    value={billName}
+                    onChange={(e) => setBillName(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl"
+                  />
                 </div>
-              );
-            })}
+                <div>
+                  <label className="block text-[#5B6785] font-semibold mb-1">Amount (PKR) *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    placeholder="e.g. 15000"
+                    value={billAmount}
+                    onChange={(e) => setBillAmount(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[#5B6785] font-semibold mb-1">Due Date</label>
+                  <input
+                    type="date"
+                    value={billDueDate}
+                    onChange={(e) => setBillDueDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-[#E2E8F7]">
+                <label className="flex items-center gap-2 text-xs text-[#1D2839] font-medium cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={billRepeat}
+                    onChange={(e) => setBillRepeat(e.target.checked)}
+                    className="rounded accent-[#0B5CE6]"
+                  />
+                  <span>Repeat monthly bill</span>
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddBill(false)}
+                    className="btn-outline text-xs py-2 px-4"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-primary text-xs py-2 px-5">
+                    Save Bill
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* Bills List */}
+          <div className="accora-card bg-white border-[#E2E8F7] p-0 overflow-hidden">
+            <table className="w-full text-xs text-left">
+              <thead>
+                <tr className="border-b border-[#E2E8F7] text-[#5B6785] bg-[#F4F7FC]">
+                  <th className="py-3 px-4 font-bold">Bill Name</th>
+                  <th className="py-3 px-4 font-bold">Due Date</th>
+                  <th className="py-3 px-4 font-bold text-right">Amount (PKR)</th>
+                  <th className="py-3 px-4 font-bold text-center">Status / Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bills.length > 0 ? (
+                  bills.map((b) => (
+                    <tr key={b.id} className="border-b border-[#E2E8F7]/70 hover:bg-[#F4F7FC]/40">
+                      <td className="py-3.5 px-4 font-bold text-[#1D2839]">{b.name}</td>
+                      <td className="py-3.5 px-4 font-mono text-[#5B6785]">{b.dueDate}</td>
+                      <td className="py-3.5 px-4 font-extrabold text-right tabular-nums text-sm text-[#FD614F]">
+                        PKR {b.amount.toLocaleString()}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        {b.paid ? (
+                          <span className="inline-flex items-center gap-1 text-[#1D2839] font-bold bg-[#A3D508] px-2.5 py-0.5 rounded-full text-[10px]">
+                            <Check className="w-3 h-3" /> Paid
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => markBillPaid(b.id)}
+                            className="btn-lime text-[11px] py-1 px-3 font-bold"
+                            title="Marking paid automatically adds a spending transaction"
+                          >
+                            Mark Paid
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-[#5B6785]">
+                      No bills recorded.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
     </div>
   );
 }

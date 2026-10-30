@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { BRAND_MASCOT } from '../assets/brand';
-import { useFinancial } from '../store/FinancialStore';
+import { useMoneyStore } from '../store/moneyStore';
 
 interface ChatMessage {
   id: string;
@@ -12,7 +12,16 @@ interface ChatMessage {
 }
 
 export default function AskAccoraPage() {
-  const { transactions, invoices } = useFinancial();
+  const {
+    transactions,
+    invoices,
+    bills,
+    balance,
+    monthIn,
+    monthOut,
+    taxRate,
+  } = useMoneyStore();
+
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -28,7 +37,7 @@ export default function AskAccoraPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Suggested question chips per profile
+  // Suggested question chips per profile (Section 6)
   const questionChips = [
     'Why did my spending go up?',
     'How much can I save this month?',
@@ -38,65 +47,86 @@ export default function AskAccoraPage() {
     'What is my current balance?',
   ];
 
-  // Deterministic local answer engine (grounded in user's real numbers)
+  // Deterministic calculation engine grounded strictly in user data
   const generateGroundedAnswer = (q: string): { text: string; basedOn?: string } => {
     const l = q.toLowerCase();
-    const totalIn = transactions.filter(t => t.type === 'income').reduce((a, b) => a + b.amount, 0);
-    const totalOut = transactions.filter(t => t.type === 'expense').reduce((a, b) => a + b.amount, 0);
-    const balance = totalIn - totalOut;
 
-    if (l.includes('spend') || l.includes('went up') || l.includes('expense')) {
-      const topCat = 'Stock & Inventory';
+    if (/spend|spent|expens|up/.test(l) && !/afford/.test(l)) {
+      // Find top expense category
+      const catTotals: Record<string, number> = {};
+      transactions
+        .filter((t) => t.type === 'out')
+        .forEach((t) => {
+          catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
+        });
+
+      const topCatEntry = Object.entries(catTotals).sort(([, a], [, b]) => b - a)[0];
+      const topCat = topCatEntry ? topCatEntry[0] : 'General spending';
+      const topAmt = topCatEntry ? topCatEntry[1] : 0;
+
       return {
-        text: `Your spending this month is PKR ${totalOut.toLocaleString()}. The highest category is ${topCat}. You are keeping about ${totalIn > 0 ? Math.round(((totalIn - totalOut)/totalIn)*100) : 0}% of earnings.`,
+        text: `Your recorded spending this month is PKR ${monthOut.toLocaleString()}. Your highest expense category is ${topCat} (PKR ${topAmt.toLocaleString()}). You keep about ${monthIn > 0 ? Math.round(((monthIn - monthOut) / monthIn) * 100) : 0}% of earnings.`,
         basedOn: 'Your actual income and spending entries for this month.',
       };
     }
 
-    if (l.includes('save') || l.includes('saving')) {
-      const monthlySavings = Math.max(0, totalIn - totalOut);
+    if (/save|saving/.test(l)) {
+      const netSavings = monthIn - monthOut;
       return {
-        text: monthlySavings > 0
-          ? `At your current pace, you can save about PKR ${monthlySavings.toLocaleString()} each month. Keep your utility and dining spending under control to increase this.`
-          : 'Right now your expenses match or exceed your income. Check your Budget tool to trim non-essential spending.',
-        basedOn: 'Your average monthly income minus spending records.',
+        text: netSavings > 0
+          ? `At your current pace, you can save about PKR ${netSavings.toLocaleString()} each month. You can allocate this toward your savings goals in the Budget & Goals tool.`
+          : 'Right now your recorded expenses match or exceed your income. Check your Budget tool to trim non-essential categories.',
+        basedOn: 'Your current monthly income minus spending records.',
       };
     }
 
-    if (l.includes('bill') || l.includes('due')) {
+    if (/bill|due/.test(l)) {
+      const unpaidBills = bills.filter((b) => !b.paid);
       return {
-        text: 'You have 1 upcoming bill: Shop rent (PKR 35,000) due on the 28th. All other recorded bills are marked paid.',
-        basedOn: 'Bills & Invoices ledger.',
+        text: unpaidBills.length > 0
+          ? `You have ${unpaidBills.length} unpaid bill(s): ${unpaidBills.map((b) => `${b.name} (PKR ${b.amount.toLocaleString()} due ${b.dueDate})`).join(', ')}.`
+          : 'All clear! You have no unpaid bills due right now. 🎉',
+        basedOn: 'Bills I Must Pay ledger.',
       };
     }
 
-    if (l.includes('owe') || l.includes('client') || l.includes('invoice')) {
-      const unpaidInvoices = invoices.filter(i => i.status !== 'paid');
-      const owedTotal = unpaidInvoices.reduce((a, b) => a + b.total, 0) || 85000;
+    if (/owe|owed|invoice|client/.test(l)) {
+      const unpaidInvoices = invoices.filter((i) => !i.paid);
+      const totalOwed = unpaidInvoices.reduce((a, b) => a + b.amount, 0);
+
       return {
-        text: `Clients currently owe you PKR ${owedTotal.toLocaleString()} across ${unpaidInvoices.length || 1} pending invoice(s). You can send a polite 1-click WhatsApp reminder from the Invoices tool.`,
-        basedOn: 'Money owed to me (Invoices tab).',
+        text: unpaidInvoices.length > 0
+          ? `Clients currently owe you PKR ${totalOwed.toLocaleString()} across ${unpaidInvoices.length} invoice(s): ${unpaidInvoices.map((i) => `${i.client} (PKR ${i.amount.toLocaleString()})`).join(', ')}. You can copy a polite WhatsApp reminder from Bills & Invoices.`
+          : 'Nobody owes you money right now. All recorded invoices are marked paid.',
+        basedOn: 'Money Owed to Me (Invoices tab).',
       };
     }
 
-    if (l.includes('tax')) {
-      const taxEstimate = Math.round(totalIn * 0.015);
+    if (/tax/.test(l)) {
+      const taxEstimate = Math.round(monthIn * (taxRate / 100));
       return {
-        text: `At a 1.5% planning set-aside rate, you should set aside approximately PKR ${taxEstimate.toLocaleString()} from your PKR ${totalIn.toLocaleString()} income so far. Confirm actual tax brackets with FBR or your tax consultant.`,
-        basedOn: 'Tax Helper July–June fiscal entries.',
+        text: `At a ${taxRate}% set-aside rate, you should set aside approximately PKR ${taxEstimate.toLocaleString()} from your PKR ${monthIn.toLocaleString()} monthly income. Always confirm actual tax brackets with FBR or your tax consultant.`,
+        basedOn: 'Tax Helper July–June fiscal estimate.',
       };
     }
 
-    if (l.includes('balance') || l.includes('have') || l.includes('cash')) {
+    if (/balance|have|cash/.test(l)) {
       return {
-        text: `Your current estimated net cash is PKR ${balance.toLocaleString()} across your recorded bank, wallet, and cash entries.`,
+        text: `You have approximately PKR ${balance.toLocaleString()} in net cash across your recorded cash, bank, and wallet entries.`,
         basedOn: 'Net sum of all verified income and expense entries.',
       };
     }
 
+    if (/afford/.test(l)) {
+      return {
+        text: 'Use the “Can I Afford It?” tool in the sidebar. It tests purchases against your emergency cash buffer and monthly savings rate.',
+        basedOn: 'ACCORA Affordability Evaluator.',
+      };
+    }
+
     return {
-      text: 'I can help answer questions about your spending trends, potential savings, due bills, client payments, tax estimates, or whether you can afford a purchase. Tap one of the suggested chips above!',
-      basedOn: 'ACCORA intelligence assistant.',
+      text: 'I can answer questions about your spending, savings, due bills, client payments, tax estimates, or current balance. Try tapping one of the suggested question chips above!',
+      basedOn: 'ACCORA Intelligence helper.',
     };
   };
 
@@ -114,7 +144,6 @@ export default function AskAccoraPage() {
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
 
-    // Instant grounded answer
     setTimeout(() => {
       const ans = generateGroundedAnswer(q);
       const accoraMsg: ChatMessage = {
@@ -125,12 +154,13 @@ export default function AskAccoraPage() {
         time: 'Just now',
       };
       setMessages((prev) => [...prev, accoraMsg]);
-    }, 250);
+    }, 200);
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-16 flex flex-col h-[calc(100vh-140px)]">
-      {/* Header */}
+    <div className="space-y-6 max-w-4xl mx-auto pb-16 flex flex-col h-[calc(100vh-140px)] font-sans">
+      
+      {/* ── Header ── */}
       <div>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e8f0fe] text-[#0B5CE6] text-xs font-bold uppercase tracking-wider mb-2">
           <span>Tool #6</span>
@@ -143,7 +173,7 @@ export default function AskAccoraPage() {
         </p>
       </div>
 
-      {/* Suggested Question Chips */}
+      {/* ── Suggested Question Chips ── */}
       <div className="flex flex-wrap gap-2">
         {questionChips.map((chip, idx) => (
           <button
@@ -156,12 +186,14 @@ export default function AskAccoraPage() {
         ))}
       </div>
 
-      {/* Chat Messages Log */}
-      <div className="flex-1 accora-card bg-white border-[#E2E8F7] overflow-y-auto p-4 space-y-4">
+      {/* ── Chat Messages Container ── */}
+      <div className="flex-1 accora-card bg-white border-[#E2E8F7] overflow-y-auto p-4 sm:p-6 space-y-4">
         {messages.map((m) => (
           <div
             key={m.id}
-            className={`flex items-start gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex items-start gap-3 ${
+              m.sender === 'user' ? 'justify-end' : 'justify-start'
+            }`}
           >
             {m.sender === 'accora' && (
               <div className="w-8 h-8 rounded-xl bg-[#F4F7FC] border border-[#E2E8F7] flex items-center justify-center shrink-0 p-1">
@@ -188,7 +220,7 @@ export default function AskAccoraPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Form */}
+      {/* ── Input Box ── */}
       <div className="flex items-center gap-2">
         <input
           type="text"
@@ -200,12 +232,13 @@ export default function AskAccoraPage() {
         />
         <button
           onClick={() => handleSend()}
-          className="btn-primary px-6 min-h-[48px]"
+          className="btn-primary px-6 min-h-[48px] cursor-pointer"
         >
           <Send className="w-4 h-4 mr-2" />
           <span>Ask</span>
         </button>
       </div>
+
     </div>
   );
 }
