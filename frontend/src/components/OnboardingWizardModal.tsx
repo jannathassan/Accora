@@ -1,471 +1,265 @@
 import { useState } from 'react';
-import { useFinancial } from '../store/FinancialStore';
-import { clsx } from 'clsx';
-import {
-  Building2,
-  Wallet,
-  Target,
-  ArrowRight,
-  ArrowLeft,
-  CheckCircle2,
-  Sparkles,
-  HelpCircle,
-} from 'lucide-react';
+import { useMoneyStore } from '../store/moneyStore';
+import { BRAND_MASCOT } from '../assets/brand';
+import { Check, ArrowRight, ArrowLeft } from 'lucide-react';
 
-const CURRENCIES = ['USD', 'EUR', 'GBP', 'PKR', 'AED', 'SAR', 'CAD', 'AUD', 'INR'];
-const BUSINESS_TYPES = [
-  'SaaS / Software',
-  'E-commerce / Retail',
-  'Consulting / Agency',
-  'Healthcare / Biotech',
-  'Manufacturing',
-  'Sole Proprietorship',
-  'Other',
-];
+interface OnboardingWizardModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
-export default function OnboardingWizardModal() {
-  const { business, updateBusiness } = useFinancial();
-
+export default function OnboardingWizardModal({ isOpen, onClose }: OnboardingWizardModalProps) {
+  const { setupCustomUser } = useMoneyStore();
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [submitting, setSubmitting] = useState(false);
 
-  // Form state pre-populated with existing business data
-  const [form, setForm] = useState({
-    name: business?.name || '',
-    industry: business?.industry || 'Technology',
-    business_type: business?.business_type || 'SaaS / Software',
-    country: business?.country || 'United States',
-    currency: business?.currency || 'USD',
-    opening_cash_balance: business?.opening_cash_balance || 0,
-    avg_monthly_revenue: business?.avg_monthly_revenue || 0,
-    monthly_fixed_expenses: business?.monthly_fixed_expenses || 0,
-    monthly_variable_expenses: business?.monthly_variable_expenses || 0,
-    loan_balance: business?.loan_balance || 0,
-    monthly_loan_repayment: business?.monthly_loan_repayment || 0,
-    expected_growth_rate: business?.expected_growth_rate || 15,
-    financial_goals: business?.financial_goals || '',
-  });
+  // Form State
+  const [name, setName] = useState('');
+  const [selectedGroups, setSelectedGroups] = useState<string[]>(['Shop owner']);
+  const [helpGoals, setHelpGoals] = useState<string[]>([
+    'Track spending',
+    'Save money',
+    'See the future forecast',
+  ]);
+  const [startingBalance, setStartingBalance] = useState('50000');
+  const [taxStartMonth] = useState('July');
+  const [currency] = useState('PKR');
+  const [loadSampleData, setLoadSampleData] = useState(true);
 
-  // Only show if business exists and onboarding_completed is false
-  if (!business || business.onboarding_completed) {
-    return null;
-  }
+  if (!isOpen) return null;
 
-  const numVal = (val: unknown) => {
-    const n = parseFloat(String(val));
-    return isNaN(n) ? 0 : n;
+  const whoOptions = [
+    { label: 'Shop or online-seller owner', id: 'Shop owner' },
+    { label: 'Freelancer or side-hustler', id: 'Freelancer' },
+    { label: 'Working professional (salaried)', id: 'Employee' },
+    { label: 'Homemaker (household budget)', id: 'Homemaker' },
+    { label: 'Student or learner', id: 'Student' },
+  ];
+
+  const goalOptions = [
+    'Track spending and where cash went',
+    'Save money and reach targets',
+    'Send invoices and payment reminders',
+    'Plan tax set-aside for FBR',
+    'Manage committees (BC / kameti)',
+    'See the future forecast',
+  ];
+
+  const toggleGroup = (grp: string) => {
+    setSelectedGroups((prev) =>
+      prev.includes(grp) ? prev.filter((g) => g !== grp) : [...prev, grp]
+    );
   };
 
-  const handleSkip = async () => {
-    if (submitting) return;
-    setSubmitting(true);
-    try {
-      await updateBusiness({ onboarding_completed: true });
-    } catch {
-      /* ignore */
-    } finally {
-      setSubmitting(false);
-    }
+  const toggleGoal = (goal: string) => {
+    setHelpGoals((prev) =>
+      prev.includes(goal) ? prev.filter((g) => g !== goal) : [...prev, goal]
+    );
   };
 
-  const handleFinish = async () => {
-    if (submitting) return;
-    setSubmitting(true);
-    try {
-      await updateBusiness({
-        name: form.name.trim() || business.name,
-        industry: form.industry,
-        business_type: form.business_type,
-        country: form.country,
-        currency: form.currency,
-        opening_cash_balance: numVal(form.opening_cash_balance),
-        avg_monthly_revenue: numVal(form.avg_monthly_revenue),
-        monthly_fixed_expenses: numVal(form.monthly_fixed_expenses),
-        monthly_variable_expenses: numVal(form.monthly_variable_expenses),
-        loan_balance: numVal(form.loan_balance),
-        monthly_loan_repayment: numVal(form.monthly_loan_repayment),
-        expected_growth_rate: numVal(form.expected_growth_rate),
-        financial_goals: form.financial_goals.trim(),
-        onboarding_completed: true,
-      });
-    } catch {
-      /* ignore */
-    } finally {
-      setSubmitting(false);
-    }
+  const handleFinish = () => {
+    setupCustomUser({
+      name: name.trim() || 'Friend',
+      role: selectedGroups.join(', ') || 'Entrepreneur',
+      startingBalance: parseFloat(startingBalance) || 0,
+      withSampleData: loadSampleData,
+    });
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-surface-card rounded-2xl shadow-2xl border border-surface-200 w-full max-w-2xl overflow-hidden flex flex-col">
-        {/* Wizard Header */}
-        <div className="px-6 py-5 border-b border-surface-200 bg-surface-50/60 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="bg-white rounded-2xl border border-[#E2E8F7] max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6 text-[#1D2839]">
+        
+        {/* Header with Mascot */}
+        <div className="flex items-center justify-between border-b border-[#E2E8F7] pb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-brand-600 rounded-xl text-white shadow-sm shadow-brand-500/20">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-[#F4F7FC] border border-[#E2E8F7] p-1.5 flex items-center justify-center">
+              <img src={BRAND_MASCOT} alt="Mascot" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-surface-900">Welcome to Accora Core</h2>
-              <p className="text-xs text-surface-500">
-                Let's set up your business profile & financial baseline in 3 quick steps.
-              </p>
+              <h2 className="text-lg font-bold text-[#1D2839]">
+                Let&apos;s set you up (30 seconds)
+              </h2>
+              <p className="text-xs text-[#5B6785]">Step {step} of 3</p>
             </div>
           </div>
+
           <button
-            onClick={handleSkip}
-            disabled={submitting}
-            className="text-xs text-surface-400 hover:text-surface-700 font-medium px-2.5 py-1.5 rounded-lg hover:bg-surface-200/50 transition-colors"
+            onClick={onClose}
+            className="text-xs font-semibold text-[#5B6785] hover:text-[#1D2839] px-2 py-1"
           >
             Skip for now
           </button>
         </div>
 
-        {/* Progress Stepper */}
-        <div className="px-6 pt-4 pb-2 bg-surface-card border-b border-surface-200/60">
-          <div className="flex items-center justify-between max-w-md mx-auto">
-            <div className="flex items-center gap-2">
-              <div
-                className={clsx(
-                  'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all',
-                  step === 1
-                    ? 'bg-brand-600 text-white ring-4 ring-brand-100'
-                    : step > 1
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-surface-200 text-surface-500',
-                )}
-              >
-                {step > 1 ? <CheckCircle2 className="w-4 h-4" /> : '1'}
-              </div>
-              <span className="text-xs font-semibold text-surface-800 hidden sm:inline">Identity</span>
+        {/* Step 1: Who are you? */}
+        {step === 1 && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-[#1D2839] uppercase tracking-wider mb-1">
+                Your Name
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Ayesha, Ali, or Usman"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F7] text-sm text-[#1D2839] bg-white focus:border-[#0B5CE6]"
+              />
             </div>
 
-            <div className={clsx('h-0.5 flex-1 mx-3', step > 1 ? 'bg-emerald-500' : 'bg-surface-200')} />
-
-            <div className="flex items-center gap-2">
-              <div
-                className={clsx(
-                  'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all',
-                  step === 2
-                    ? 'bg-brand-600 text-white ring-4 ring-brand-100'
-                    : step > 2
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-surface-200 text-surface-500',
-                )}
-              >
-                {step > 2 ? <CheckCircle2 className="w-4 h-4" /> : '2'}
+            <div>
+              <label className="block text-xs font-bold text-[#1D2839] uppercase tracking-wider mb-2">
+                1. Who are you? (select one or more)
+              </label>
+              <div className="space-y-2">
+                {whoOptions.map((opt) => {
+                  const selected = selectedGroups.includes(opt.id);
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => toggleGroup(opt.id)}
+                      className={`w-full p-3 rounded-xl border text-left text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                        selected
+                          ? 'bg-[#e8f0fe] border-[#0B5CE6] text-[#0B5CE6]'
+                          : 'bg-[#F4F7FC] border-[#E2E8F7] text-[#1D2839] hover:bg-white'
+                      }`}
+                    >
+                      <span>{opt.label}</span>
+                      {selected && <Check className="w-4 h-4 text-[#0B5CE6]" />}
+                    </button>
+                  );
+                })}
               </div>
-              <span className="text-xs font-semibold text-surface-800 hidden sm:inline">Cash & Run Rate</span>
             </div>
 
-            <div className={clsx('h-0.5 flex-1 mx-3', step > 2 ? 'bg-emerald-500' : 'bg-surface-200')} />
-
-            <div className="flex items-center gap-2">
-              <div
-                className={clsx(
-                  'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all',
-                  step === 3
-                    ? 'bg-brand-600 text-white ring-4 ring-brand-100'
-                    : 'bg-surface-200 text-surface-500',
-                )}
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className="btn-primary text-xs py-2 px-5"
               >
-                3
-              </div>
-              <span className="text-xs font-semibold text-surface-800 hidden sm:inline">Debt & Goals</span>
+                <span>Next</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+              </button>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Wizard Form Body */}
-        <div className="p-6 overflow-y-auto max-h-[60vh] space-y-4">
-          {/* STEP 1: Identity */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <div className="p-3 bg-brand-50/50 border border-brand-200/50 rounded-xl text-xs text-brand-900 flex items-center gap-2.5">
-                <Building2 className="w-4 h-4 text-brand-600 shrink-0" />
-                <span>
-                  Tell us about your business. You can update any of these details later in Settings.
-                </span>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-surface-800 block mb-1">Business Name</label>
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Apex Dynamics Ltd"
-                  className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm bg-surface-card text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-surface-800 block mb-1">Industry</label>
-                  <input
-                    value={form.industry}
-                    onChange={(e) => setForm({ ...form, industry: e.target.value })}
-                    placeholder="e.g. Software, E-commerce, FinTech"
-                    className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm bg-surface-card text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-surface-800 block mb-1">Business Structure</label>
-                  <select
-                    value={form.business_type}
-                    onChange={(e) => setForm({ ...form, business_type: e.target.value })}
-                    className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm bg-surface-card text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                  >
-                    {BUSINESS_TYPES.map((bt) => (
-                      <option key={bt} value={bt}>
-                        {bt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-surface-800 block mb-1">Reporting Currency</label>
-                  <select
-                    value={form.currency}
-                    onChange={(e) => setForm({ ...form, currency: e.target.value })}
-                    className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm bg-surface-card text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 font-semibold"
-                  >
-                    {CURRENCIES.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-surface-800 block mb-1">Country</label>
-                  <input
-                    value={form.country}
-                    onChange={(e) => setForm({ ...form, country: e.target.value })}
-                    placeholder="e.g. United States, Pakistan, UK"
-                    className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm bg-surface-card text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                  />
-                </div>
+        {/* Step 2: What do you want help with? */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-[#1D2839] uppercase tracking-wider mb-2">
+                2. What do you want help with?
+              </label>
+              <div className="space-y-2">
+                {goalOptions.map((goal) => {
+                  const selected = helpGoals.includes(goal);
+                  return (
+                    <button
+                      key={goal}
+                      type="button"
+                      onClick={() => toggleGoal(goal)}
+                      className={`w-full p-2.5 rounded-xl border text-left text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                        selected
+                          ? 'bg-[#f3fbd9] border-[#A3D508] text-[#1D2839]'
+                          : 'bg-[#F4F7FC] border-[#E2E8F7] text-[#5B6785] hover:bg-white'
+                      }`}
+                    >
+                      <span>{goal}</span>
+                      {selected && <Check className="w-4 h-4 text-[#1D2839]" />}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          )}
 
-          {/* STEP 2: Cash & Run Rate */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <div className="p-3 bg-brand-50/50 border border-brand-200/50 rounded-xl text-xs text-brand-900 flex items-center gap-2.5">
-                <Wallet className="w-4 h-4 text-brand-600 shrink-0" />
-                <span>
-                  Baseline averages help Accora Core project runway and cash status before you import transactions.
-                </span>
-              </div>
+            <div className="pt-2 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="btn-outline text-xs py-2 px-4"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
+                <span>Back</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep(3)}
+                className="btn-primary text-xs py-2 px-5"
+              >
+                <span>Next</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+              </button>
+            </div>
+          </div>
+        )}
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-surface-800">
-                    Current Cash & Bank Balance ({form.currency})
-                  </label>
-                  <span className="text-[11px] text-surface-400">Opening working capital</span>
-                </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-xs text-surface-400 font-semibold">
-                    {form.currency}
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    step="any"
-                    value={form.opening_cash_balance}
-                    onChange={(e) =>
-                      setForm({ ...form, opening_cash_balance: numVal(e.target.value) })
-                    }
-                    className="w-full pl-12 pr-3 py-2 border border-surface-200 rounded-lg text-sm bg-surface-card text-surface-900 font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-surface-800 block mb-1">
-                    Avg Monthly Revenue
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    step="any"
-                    value={form.avg_monthly_revenue}
-                    onChange={(e) =>
-                      setForm({ ...form, avg_monthly_revenue: numVal(e.target.value) })
-                    }
-                    className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm bg-surface-card text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-surface-800 block mb-1">
-                    Monthly Fixed Costs
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    step="any"
-                    value={form.monthly_fixed_expenses}
-                    onChange={(e) =>
-                      setForm({ ...form, monthly_fixed_expenses: numVal(e.target.value) })
-                    }
-                    className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm bg-surface-card text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-surface-800 block mb-1">
-                    Monthly Variable Costs
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    step="any"
-                    value={form.monthly_variable_expenses}
-                    onChange={(e) =>
-                      setForm({ ...form, monthly_variable_expenses: numVal(e.target.value) })
-                    }
-                    className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm bg-surface-card text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                  />
-                </div>
-              </div>
-
-              <p className="text-[11px] text-surface-400">
-                <HelpCircle className="w-3.5 h-3.5 inline mr-1 text-surface-400" />
-                These baseline averages are labeled as estimates in your reports until real dated transactions are imported.
+        {/* Step 3: Starting balance & setup */}
+        {step === 3 && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-[#1D2839] uppercase tracking-wider mb-1">
+                3. Money you have right now (optional, PKR)
+              </label>
+              <input
+                type="number"
+                min="0"
+                placeholder="e.g. 50000"
+                value={startingBalance}
+                onChange={(e) => setStartingBalance(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F7] text-sm text-[#1D2839] bg-white focus:border-[#0B5CE6]"
+              />
+              <p className="text-[11px] text-[#5B6785] mt-1">
+                Cash in bank, Nayapay/JazzCash, or at home.
               </p>
             </div>
-          )}
 
-          {/* STEP 3: Debt & Goals */}
-          {step === 3 && (
-            <div className="space-y-4">
-              <div className="p-3 bg-brand-50/50 border border-brand-200/50 rounded-xl text-xs text-brand-900 flex items-center gap-2.5">
-                <Target className="w-4 h-4 text-brand-600 shrink-0" />
-                <span>
-                  Financing information allows Accora Core to distinguish cash flow from accounting profit.
-                </span>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3 bg-[#F4F7FC] rounded-xl border border-[#E2E8F7]">
+                <span className="text-[#5B6785] block font-semibold">Currency</span>
+                <strong className="text-[#1D2839] text-sm">{currency} (Pakistani Rupee)</strong>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-surface-800 block mb-1">
-                    Outstanding Loan Balance ({form.currency})
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    step="any"
-                    value={form.loan_balance}
-                    onChange={(e) =>
-                      setForm({ ...form, loan_balance: numVal(e.target.value) })
-                    }
-                    placeholder="0"
-                    className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm bg-surface-card text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-surface-800 block mb-1">
-                    Monthly Loan Repayment ({form.currency})
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    step="any"
-                    value={form.monthly_loan_repayment}
-                    onChange={(e) =>
-                      setForm({ ...form, monthly_loan_repayment: numVal(e.target.value) })
-                    }
-                    placeholder="0"
-                    className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm bg-surface-card text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-1">
-                  <label className="text-xs font-semibold text-surface-800 block mb-1">
-                    Target Growth Rate (%)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      step="0.5"
-                      min={0}
-                      value={form.expected_growth_rate}
-                      onChange={(e) =>
-                        setForm({ ...form, expected_growth_rate: numVal(e.target.value) })
-                      }
-                      className="w-full pr-8 px-3 py-2 border border-surface-200 rounded-lg text-sm bg-surface-card text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                    />
-                    <span className="absolute right-3 top-2.5 text-xs text-surface-400 font-semibold">%</span>
-                  </div>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-surface-800 block mb-1">
-                    Primary Financial Objective
-                  </label>
-                  <input
-                    value={form.financial_goals}
-                    onChange={(e) => setForm({ ...form, financial_goals: e.target.value })}
-                    placeholder="e.g. Expand gross margin to 35%, secure angel round"
-                    className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm bg-surface-card text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                  />
-                </div>
+              <div className="p-3 bg-[#F4F7FC] rounded-xl border border-[#E2E8F7]">
+                <span className="text-[#5B6785] block font-semibold">Tax Year Starts</span>
+                <strong className="text-[#1D2839] text-sm">{taxStartMonth} 1st (FBR)</strong>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Wizard Footer Actions */}
-        <div className="px-6 py-4 border-t border-surface-200 bg-surface-50/60 flex items-center justify-between">
-          <div>
-            {step > 1 && (
+            <div className="p-3 bg-[#f3fbd9] border border-[#A3D508] rounded-xl">
+              <label className="flex items-center gap-2.5 text-xs text-[#1D2839] font-semibold cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={loadSampleData}
+                  onChange={(e) => setLoadSampleData(e.target.checked)}
+                  className="rounded accent-[#0B5CE6] w-4 h-4"
+                />
+                <span>Fill with 12 months of rich sample data so I can explore first</span>
+              </label>
+            </div>
+
+            <div className="pt-2 flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => setStep((s) => (s - 1) as 1 | 2)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-surface-600 hover:bg-surface-200/50 rounded-lg transition-colors"
+                onClick={() => setStep(2)}
+                className="btn-outline text-xs py-2 px-4"
               >
-                <ArrowLeft className="w-4 h-4" /> Back
+                <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
+                <span>Back</span>
               </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleSkip}
-              disabled={submitting}
-              className="px-3.5 py-2 text-xs font-medium text-surface-600 hover:bg-surface-200/50 rounded-lg transition-colors"
-            >
-              Skip Setup
-            </button>
-
-            {step < 3 ? (
-              <button
-                type="button"
-                onClick={() => setStep((s) => (s + 1) as 2 | 3)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 text-white text-xs font-semibold rounded-lg hover:bg-brand-700 transition-colors shadow-sm"
-              >
-                Continue <ArrowRight className="w-4 h-4" />
-              </button>
-            ) : (
               <button
                 type="button"
                 onClick={handleFinish}
-                disabled={submitting}
-                className="inline-flex items-center gap-1.5 px-5 py-2 bg-brand-600 text-white text-xs font-semibold rounded-lg hover:bg-brand-700 transition-all shadow-sm active:scale-[0.98]"
+                className="btn-lime text-xs py-2 px-6 font-bold"
               >
-                {submitting ? 'Setting Up...' : 'Save & Launch Workspace'}
-                <CheckCircle2 className="w-4 h-4" />
+                <span>Start using ACCORA</span>
               </button>
-            )}
+            </div>
           </div>
-        </div>
+        )}
+
       </div>
     </div>
   );
