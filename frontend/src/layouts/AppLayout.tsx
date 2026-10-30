@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
-import { useFinancial } from '../store/FinancialStore';
+import { useMoneyStore } from '../store/moneyStore';
 import { BRAND_LOGO, BRAND_MASCOT } from '../assets/brand';
 import {
   LayoutDashboard,
@@ -18,7 +18,10 @@ import {
   Plus,
   Menu,
   X,
+  ArrowRight,
+  Undo2,
 } from 'lucide-react';
+import OnboardingWizardModal from '../components/OnboardingWizardModal';
 
 // Exact 10 Tools (Section 3)
 const TOOLS_NAV = [
@@ -35,30 +38,43 @@ const TOOLS_NAV = [
 ];
 
 export default function AppLayout() {
-  const { notifications, addTransaction } = useFinancial();
+  const {
+    isDemo,
+    activePersonaKey,
+    userName,
+    loadPersona,
+    resetDemo,
+    alerts,
+    addTransaction,
+    toasts,
+    dismissToast,
+    tourStep,
+    setTourStep,
+  } = useMoneyStore();
+
   const navigate = useNavigate();
   const location = useLocation();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [isDemoMode, setIsDemoMode] = useState(true);
-  const [activePersonaName, setActivePersonaName] = useState('Ali, shop owner');
+  const [showAlertsDropdown, setShowAlertsDropdown] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Quick Add State
-  const [addType, setAddType] = useState<'income' | 'expense'>('expense');
+  const [addType, setAddType] = useState<'in' | 'out'>('out');
   const [addAmount, setAddAmount] = useState('');
-  const [addCategory] = useState('Groceries');
+  const [addCategory, setAddCategory] = useState('Groceries');
   const [addNote, setAddNote] = useState('');
+  const [addAccount, setAddAccount] = useState<'cash' | 'bank' | 'wallet'>('bank');
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
+  // Sync persona param from URL if present
   useEffect(() => {
-    // Check URL query parameters for demo persona
     const hash = window.location.hash;
-    if (hash.includes('demo=free')) setActivePersonaName('Sara, freelancer');
-    else if (hash.includes('demo=pro')) setActivePersonaName('Usman, employee');
-    else if (hash.includes('demo=home')) setActivePersonaName('Ayesha, homemaker');
-    else if (hash.includes('demo=shop')) setActivePersonaName('Ali, shop owner');
-  }, [location]);
+    if (hash.includes('demo=free') && activePersonaKey !== 'free') loadPersona('free');
+    else if (hash.includes('demo=pro') && activePersonaKey !== 'pro') loadPersona('pro');
+    else if (hash.includes('demo=home') && activePersonaKey !== 'home') loadPersona('home');
+    else if (hash.includes('demo=shop') && activePersonaKey !== 'shop') loadPersona('shop');
+  }, [location, activePersonaKey, loadPersona]);
 
   const handleQuickAdd = async () => {
     const amt = parseFloat(addAmount) || 0;
@@ -68,8 +84,9 @@ export default function AppLayout() {
       amount: amt,
       type: addType,
       category: addCategory,
-      description: addNote || (addType === 'income' ? 'Income' : 'Spending'),
+      note: addNote || (addType === 'in' ? 'Income' : 'Spending'),
       date: new Date().toISOString().slice(0, 10),
+      account: addAccount,
     });
 
     setAddAmount('');
@@ -77,15 +94,34 @@ export default function AppLayout() {
     setShowAddModal(false);
   };
 
-  const handleResetDemo = () => {
-    localStorage.removeItem('accora_demo_data');
-    window.location.reload();
-  };
-
-  const handleStartOwnData = () => {
-    setIsDemoMode(false);
-    navigate('/app');
-  };
+  // 5-step tour definitions
+  const tourSteps = [
+    {
+      title: 'Welcome to ACCORA! 👋',
+      text: 'I am your friendly mascot helper. Let me show you how to navigate your finances in Pakistan.',
+      route: '/app',
+    },
+    {
+      title: '1. My Money Dashboard 🏠',
+      text: 'See your real cash balance, money health score (0-100), and 6-month trends at a glance.',
+      route: '/app',
+    },
+    {
+      title: '2. Income & Spending Tracker ↕️',
+      text: 'Log transactions, auto-suggest categories, and download clean CSVs anytime.',
+      route: '/app/transactions',
+    },
+    {
+      title: '3. Future Forecast & "Can I Afford It?" 📈',
+      text: 'Predict your balance over the next 6 months and test big purchases before committing.',
+      route: '/app/forecast',
+    },
+    {
+      title: '4. Ask ACCORA AI & Committee Tracker 💬',
+      text: 'Chat in plain English with answers calculated strictly from your data, plus manage family kametis!',
+      route: '/app/ask',
+    },
+  ];
 
   return (
     <div className="flex h-screen overflow-hidden font-sans bg-[#F4F7FC] text-[#1D2839]">
@@ -135,7 +171,7 @@ export default function AppLayout() {
             }
           >
             <Settings className="w-4 h-4" />
-            <span>Settings</span>
+            <span>Settings &amp; Help</span>
           </NavLink>
         </div>
       </aside>
@@ -143,24 +179,38 @@ export default function AppLayout() {
       {/* ── Main App Shell ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
-        {/* Demo Mode Top Banner (Section 5) */}
-        {isDemoMode && (
-          <div className="bg-[#1D2839] text-white text-xs px-4 py-2 flex items-center justify-between shrink-0">
+        {/* Demo Mode Top Banner (Section 5B) */}
+        {isDemo && (
+          <div className="bg-[#1D2839] text-white text-xs px-4 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#A3D508] animate-pulse" />
               <span>
-                <strong>You are viewing demo data:</strong> {activePersonaName}
+                <strong>Demo Mode:</strong> Viewing 12 months realistic PKR sample data for{' '}
+                <span className="text-[#A3D508] font-bold">{userName}</span>
               </span>
             </div>
+
             <div className="flex items-center gap-2">
+              {/* Persona Quick Picker */}
+              <select
+                value={activePersonaKey}
+                onChange={(e) => loadPersona(e.target.value as 'shop' | 'free' | 'pro' | 'home')}
+                className="bg-white/10 hover:bg-white/20 text-white rounded px-2 py-0.5 text-xs font-semibold border border-white/20 cursor-pointer focus:outline-none"
+              >
+                <option value="shop" className="text-[#1D2839]">Ali (Shop owner)</option>
+                <option value="free" className="text-[#1D2839]">Sara (Freelancer)</option>
+                <option value="pro" className="text-[#1D2839]">Usman (Salaried employee)</option>
+                <option value="home" className="text-[#1D2839]">Ayesha (Homemaker)</option>
+              </select>
+
               <button
-                onClick={handleStartOwnData}
+                onClick={() => setShowOnboarding(true)}
                 className="px-2.5 py-1 rounded bg-[#0B5CE6] text-white font-semibold hover:bg-[#094bbd] cursor-pointer"
               >
                 Start with my own data
               </button>
               <button
-                onClick={handleResetDemo}
+                onClick={resetDemo}
                 className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-slate-300 font-semibold cursor-pointer"
               >
                 Reset demo
@@ -179,7 +229,7 @@ export default function AppLayout() {
               <Menu className="w-5 h-5" />
             </button>
             <span className="text-sm font-bold text-[#1D2839]">
-              {activePersonaName.split(',')[0]}&apos;s Finances
+              {userName}&apos;s Finances (PKR)
             </span>
           </div>
 
@@ -189,29 +239,54 @@ export default function AppLayout() {
               onClick={() => setShowAddModal(true)}
               className="btn-lime text-xs py-1.5 px-3 flex items-center gap-1.5 shadow-2xs font-bold"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 text-[#1D2839]" />
               <span>+ Add</span>
             </button>
 
             {/* Help / Tour button */}
-            <Link
-              to="/app/ask"
-              className="btn-outline text-xs py-1.5 px-3 flex items-center gap-1.5"
+            <button
+              onClick={() => setTourStep(0)}
+              className="btn-outline text-xs py-1.5 px-3 flex items-center gap-1.5 cursor-pointer"
+              title="Start Interactive Tour"
             >
               <img src={BRAND_MASCOT} alt="Help" className="w-4 h-4 object-contain" />
               <span>? Help</span>
-            </Link>
+            </button>
 
-            {/* Notifications Bell */}
-            <Link
-              to="/app/notifications"
-              className="relative p-2 text-[#5B6785] hover:text-[#1D2839] rounded-lg hover:bg-[#F4F7FC]"
-            >
-              <Bell className="w-4 h-4" />
-              {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#FD614F]" />
+            {/* Notifications Bell with Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowAlertsDropdown(!showAlertsDropdown)}
+                className="relative p-2 text-[#5B6785] hover:text-[#1D2839] rounded-lg hover:bg-[#F4F7FC] cursor-pointer"
+              >
+                <Bell className="w-4 h-4" />
+                {alerts.length > 0 && (
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#FD614F] border-2 border-white" />
+                )}
+              </button>
+
+              {showAlertsDropdown && (
+                <div className="absolute right-0 mt-2 w-80 bg-white border border-[#E2E8F7] rounded-xl shadow-xl z-50 p-4 space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F7]">
+                    <span className="text-xs font-bold text-[#1D2839]">Active Money Alerts</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ffefed] text-[#FD614F]">
+                      {alerts.length} New
+                    </span>
+                  </div>
+                  {alerts.length === 0 ? (
+                    <p className="text-xs text-[#5B6785]">All clear! No pending financial alerts.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {alerts.map((alert, i) => (
+                        <div key={i} className="text-xs p-2.5 rounded-lg bg-[#F4F7FC] border border-[#E2E8F7] text-[#1D2839]">
+                          {alert}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
-            </Link>
+            </div>
           </div>
         </header>
 
@@ -258,7 +333,7 @@ export default function AppLayout() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-[#E2E8F7] p-6 max-w-md w-full shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-base text-[#1D2839]">Add Record</h3>
+              <h3 className="font-bold text-base text-[#1D2839]">Add Money Record</h3>
               <button onClick={() => setShowAddModal(false)} className="p-1 text-[#5B6785]">
                 <X className="w-5 h-5" />
               </button>
@@ -267,9 +342,9 @@ export default function AppLayout() {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setAddType('expense')}
-                className={`py-2 text-xs font-bold rounded-xl border ${
-                  addType === 'expense'
+                onClick={() => setAddType('out')}
+                className={`py-2 text-xs font-bold rounded-xl border cursor-pointer ${
+                  addType === 'out'
                     ? 'bg-[#ffefed] text-[#FD614F] border-[#ffd4cf]'
                     : 'bg-[#F4F7FC] text-[#5B6785] border-transparent'
                 }`}
@@ -278,9 +353,9 @@ export default function AppLayout() {
               </button>
               <button
                 type="button"
-                onClick={() => setAddType('income')}
-                className={`py-2 text-xs font-bold rounded-xl border ${
-                  addType === 'income'
+                onClick={() => setAddType('in')}
+                className={`py-2 text-xs font-bold rounded-xl border cursor-pointer ${
+                  addType === 'in'
                     ? 'bg-[#f3fbd9] text-[#1D2839] border-[#A3D508]'
                     : 'bg-[#F4F7FC] text-[#5B6785] border-transparent'
                 }`}
@@ -297,24 +372,58 @@ export default function AppLayout() {
                 placeholder="e.g. 5000"
                 value={addAmount}
                 onChange={(e) => setAddAmount(e.target.value)}
-                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl text-sm font-bold"
+                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl text-sm font-bold text-[#1D2839]"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <label className="block font-semibold text-[#5B6785] mb-1">Category</label>
+                <select
+                  value={addCategory}
+                  onChange={(e) => setAddCategory(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl bg-white text-[#1D2839]"
+                >
+                  <option value="Groceries">Groceries</option>
+                  <option value="Stock">Stock &amp; Goods</option>
+                  <option value="Rent">Rent</option>
+                  <option value="Utilities">Utilities &amp; Bills</option>
+                  <option value="Salaries">Salaries</option>
+                  <option value="Transport">Transport &amp; Fuel</option>
+                  <option value="Software">Software &amp; Tools</option>
+                  <option value="Medical">Medical</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-[#5B6785] mb-1">Account</label>
+                <select
+                  value={addAccount}
+                  onChange={(e) => setAddAccount(e.target.value as 'cash' | 'bank' | 'wallet')}
+                  className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl bg-white text-[#1D2839]"
+                >
+                  <option value="bank">Bank Account</option>
+                  <option value="wallet">Mobile Wallet</option>
+                  <option value="cash">Cash in hand</option>
+                </select>
+              </div>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-[#5B6785] mb-1">Note / Description</label>
               <input
                 type="text"
-                placeholder="e.g. Groceries, client payment, fuel"
+                placeholder="e.g. Weekly vegetable bazaar, client deposit"
                 value={addNote}
                 onChange={(e) => setAddNote(e.target.value)}
-                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl text-sm"
+                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-xl text-sm text-[#1D2839]"
               />
             </div>
 
             <button
               onClick={handleQuickAdd}
-              className="btn-primary w-full text-xs py-2.5"
+              className="btn-primary w-full text-xs py-2.5 font-bold cursor-pointer"
             >
               Save Record
             </button>
@@ -322,14 +431,124 @@ export default function AppLayout() {
         </div>
       )}
 
+      {/* ── Interactive Mascot Tour Coach Marks (Section 5D) ── */}
+      {tourStep >= 0 && tourStep < tourSteps.length && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border-2 border-[#0B5CE6] p-6 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-start gap-4">
+              <img src={BRAND_MASCOT} alt="ACCORA Mascot" className="w-14 h-14 object-contain shrink-0" />
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#0B5CE6] bg-[#e8f0fe] px-2 py-0.5 rounded-full">
+                  Step {tourStep + 1} of {tourSteps.length}
+                </span>
+                <h3 className="font-bold text-base text-[#1D2839]">
+                  {tourSteps[tourStep].title}
+                </h3>
+                <p className="text-xs text-[#5B6785] leading-relaxed">
+                  {tourSteps[tourStep].text}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-[#E2E8F7]">
+              <button
+                onClick={() => setTourStep(-1)}
+                className="text-xs text-[#5B6785] hover:text-[#1D2839] font-semibold cursor-pointer"
+              >
+                Skip Tour
+              </button>
+
+              <div className="flex items-center gap-2">
+                {tourStep > 0 && (
+                  <button
+                    onClick={() => {
+                      const prev = tourStep - 1;
+                      setTourStep(prev);
+                      navigate(tourSteps[prev].route);
+                    }}
+                    className="btn-outline text-xs py-1.5 px-3 cursor-pointer"
+                  >
+                    Back
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    const next = tourStep + 1;
+                    if (next < tourSteps.length) {
+                      setTourStep(next);
+                      navigate(tourSteps[next].route);
+                    } else {
+                      setTourStep(-1);
+                    }
+                  }}
+                  className="btn-primary text-xs py-1.5 px-4 font-bold flex items-center gap-1 cursor-pointer"
+                >
+                  <span>{tourStep === tourSteps.length - 1 ? 'Got it!' : 'Next'}</span>
+                  {tourStep < tourSteps.length - 1 && <ArrowRight className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Global Toasts Container with Undo & Next-Step Prompts (Section 5) ── */}
+      <div className="fixed bottom-5 left-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className="pointer-events-auto bg-[#1D2839] text-white p-3.5 rounded-xl shadow-xl border border-white/10 text-xs flex items-center justify-between gap-3 animate-in slide-in-from-bottom-2"
+          >
+            <div className="space-y-0.5">
+              <p className="font-medium">{toast.message}</p>
+              {toast.nextStepPrompt && toast.nextStepRoute && (
+                <button
+                  onClick={() => {
+                    navigate(toast.nextStepRoute!);
+                    dismissToast(toast.id);
+                  }}
+                  className="text-[11px] font-bold text-[#A3D508] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <span>{toast.nextStepPrompt}</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {toast.undoAction && (
+                <button
+                  onClick={() => {
+                    toast.undoAction!();
+                    dismissToast(toast.id);
+                  }}
+                  className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                >
+                  <Undo2 className="w-3 h-3" />
+                  <span>Undo</span>
+                </button>
+              )}
+              <button
+                onClick={() => dismissToast(toast.id)}
+                className="text-slate-400 hover:text-white p-0.5"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* ── Floating Mascot Help Button (Section 5) ── */}
-      <Link
-        to="/app/ask"
-        className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-white border-2 border-[#0B5CE6] shadow-lg flex items-center justify-center p-2 hover:scale-105 transition-transform"
-        title="Ask ACCORA Mascot"
+      <button
+        onClick={() => setTourStep(0)}
+        className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-white border-2 border-[#0B5CE6] shadow-lg flex items-center justify-center p-2 hover:scale-105 transition-transform cursor-pointer"
+        title="Replay Interactive Tour with Mascot"
       >
-        <img src={BRAND_MASCOT} alt="Help" className="w-full h-full object-contain" />
-      </Link>
+        <img src={BRAND_MASCOT} alt="Help Mascot" className="w-full h-full object-contain" />
+      </button>
+
+      {/* ── Onboarding Wizard Modal ── */}
+      <OnboardingWizardModal isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
 
     </div>
   );

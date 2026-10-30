@@ -1,21 +1,14 @@
 import { useState } from 'react';
-import { Plus, Check, AlertCircle } from 'lucide-react';
-import { useFinancial } from '../store/FinancialStore';
+import { Plus, Check, Calendar, ShieldCheck, Users } from 'lucide-react';
+import { useMoneyStore } from '../store/moneyStore';
 
 export default function CommitteePage() {
-  const { addTransaction } = useFinancial();
-  const [committees, setCommittees] = useState([
-    {
-      id: 'bc-1',
-      name: 'Family Kameti',
-      monthlyAmount: 10000,
-      members: 10,
-      startMonth: '2026-08',
-      myTurn: 5,
-      paidMonths: [1, 2, 3],
-      receivedPayout: false,
-    },
-  ]);
+  const {
+    committees,
+    addCommittee,
+    markCommitteeMonthPaid,
+    markCommitteePayoutReceived,
+  } = useMoneyStore();
 
   const [showAdd, setShowAdd] = useState(false);
   const [name, setName] = useState('');
@@ -24,66 +17,23 @@ export default function CommitteePage() {
   const [startMonth, setStartMonth] = useState('2026-09');
   const [myTurn, setMyTurn] = useState('4');
 
-  const handleAddCommittee = () => {
+  const handleAddCommittee = async () => {
     const amt = parseFloat(amount) || 0;
     const mem = parseInt(members) || 10;
     const turn = parseInt(myTurn) || 1;
-    if (!name || amt <= 0) return;
+    if (!name.trim() || amt <= 0) return;
 
-    setCommittees(prev => [
-      ...prev,
-      {
-        id: `bc-${Date.now()}`,
-        name,
-        monthlyAmount: amt,
-        members: mem,
-        startMonth,
-        myTurn: turn,
-        paidMonths: [],
-        receivedPayout: false,
-      }
-    ]);
+    await addCommittee({
+      name: name.trim(),
+      monthlyAmount: amt,
+      members: mem,
+      startMonth,
+      myTurn: turn,
+      receivedPayout: false,
+    });
 
     setName('');
     setShowAdd(false);
-  };
-
-  const handleMarkPaid = async (bcId: string, monthIdx: number) => {
-    const bc = committees.find(c => c.id === bcId);
-    if (!bc) return;
-
-    setCommittees(prev => prev.map(c => {
-      if (c.id === bcId && !c.paidMonths.includes(monthIdx)) {
-        return { ...c, paidMonths: [...c.paidMonths, monthIdx] };
-      }
-      return c;
-    }));
-
-    // Auto-create a spending entry per spec!
-    await addTransaction({
-      amount: bc.monthlyAmount,
-      type: 'expense',
-      category: 'Committee',
-      description: `Committee payment (Month ${monthIdx}): ${bc.name}`,
-      date: new Date().toISOString().slice(0, 10),
-    });
-  };
-
-  const handleMarkReceived = async (bcId: string) => {
-    const bc = committees.find(c => c.id === bcId);
-    if (!bc) return;
-
-    const totalPayout = bc.monthlyAmount * bc.members;
-    setCommittees(prev => prev.map(c => c.id === bcId ? { ...c, receivedPayout: true } : c));
-
-    // Auto-create income entry per spec!
-    await addTransaction({
-      amount: totalPayout,
-      type: 'income',
-      category: 'Committee',
-      description: `Committee lump-sum payout received: ${bc.name}`,
-      date: new Date().toISOString().slice(0, 10),
-    });
   };
 
   return (
@@ -97,37 +47,43 @@ export default function CommitteePage() {
           Committee (BC) Tracker
         </h1>
         <p className="text-sm text-[#5B6785] mt-1">
-          Keep track of your traditional Pakistani kameti / committees: payments due, payout turn, and progress. (Tracker only, not a payment handler).
+          Keep track of traditional Pakistani kametis: installments, payout turn, and payouts received.
         </p>
       </div>
 
-      {/* Action to Add Committee */}
-      <div className="flex justify-between items-center">
-        <div className="p-3 bg-[#f3fbd9] border border-[#A3D508] rounded-xl text-xs text-[#1D2839] flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-[#1D2839] shrink-0" />
-          <span>Marking a payment adds a spending entry; receiving payout records income automatically.</span>
+      {/* Tracker Notice per spec */}
+      <div className="p-4 rounded-xl bg-[#f3fbd9] border border-[#A3D508] text-xs text-[#1D2839] flex items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2.5">
+          <ShieldCheck className="w-5 h-5 text-[#1D2839] shrink-0" />
+          <span>
+            <strong>Tracker only, not a payment handler.</strong> Marking a monthly turn as paid records a spending entry; receiving your payout records lump-sum income.
+          </span>
         </div>
         <button
           onClick={() => setShowAdd(!showAdd)}
-          className="btn-primary text-xs py-2 px-4 cursor-pointer"
+          className="btn-lime text-xs py-2 px-4 shrink-0 font-bold flex items-center gap-1.5"
         >
-          <Plus className="w-4 h-4 mr-1.5" />
+          <Plus className="w-4 h-4" />
           <span>New Committee</span>
         </button>
       </div>
 
+      {/* Add New Committee Form */}
       {showAdd && (
         <div className="accora-card bg-white border-[#E2E8F7] space-y-4">
-          <h3 className="font-bold text-sm text-[#1D2839]">Add New Committee</h3>
+          <div className="flex items-center gap-2 pb-2 border-b border-[#E2E8F7]">
+            <Users className="w-4 h-4 text-[#0B5CE6]" />
+            <h3 className="font-bold text-sm text-[#1D2839]">Add New Kameti / Committee</h3>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
             <div>
-              <label className="block text-[#5B6785] mb-1 font-semibold">Name</label>
+              <label className="block text-[#5B6785] mb-1 font-semibold">Committee Name</label>
               <input
                 type="text"
                 placeholder="e.g. Office Kameti"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-lg"
+                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-lg text-sm text-[#1D2839] font-medium"
               />
             </div>
             <div>
@@ -136,7 +92,7 @@ export default function CommitteePage() {
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-lg"
+                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-lg text-sm text-[#1D2839] font-bold"
               />
             </div>
             <div>
@@ -145,7 +101,7 @@ export default function CommitteePage() {
                 type="number"
                 value={members}
                 onChange={(e) => setMembers(e.target.value)}
-                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-lg"
+                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-lg text-sm text-[#1D2839] font-medium"
               />
             </div>
             <div>
@@ -154,7 +110,7 @@ export default function CommitteePage() {
                 type="month"
                 value={startMonth}
                 onChange={(e) => setStartMonth(e.target.value)}
-                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-lg"
+                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-lg text-sm text-[#1D2839] font-medium"
               />
             </div>
             <div>
@@ -165,15 +121,40 @@ export default function CommitteePage() {
                 max={members}
                 value={myTurn}
                 onChange={(e) => setMyTurn(e.target.value)}
-                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-lg"
+                className="w-full px-3 py-2 border border-[#E2E8F7] rounded-lg text-sm text-[#1D2839] font-medium"
               />
             </div>
           </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={() => setShowAdd(false)}
+              className="btn-outline text-xs py-2 px-4"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAddCommittee}
+              className="btn-primary text-xs py-2 px-5 font-bold"
+            >
+              Create Schedule
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {committees.length === 0 && (
+        <div className="accora-card bg-white border-[#E2E8F7] text-center py-12 space-y-3">
+          <Calendar className="w-10 h-10 text-[#5B6785] mx-auto opacity-40" />
+          <h3 className="text-base font-bold text-[#1D2839]">No Committees Added Yet</h3>
+          <p className="text-xs text-[#5B6785] max-w-md mx-auto">
+            Traditional Pakistani BCs / kametis help pool savings with friends or family. Add one to schedule your monthly installments and track your payout month.
+          </p>
           <button
-            onClick={handleAddCommittee}
-            className="btn-lime text-xs py-2 px-5"
+            onClick={() => setShowAdd(true)}
+            className="btn-primary text-xs py-2 px-4 font-bold"
           >
-            Create Schedule
+            Add Your First Committee
           </button>
         </div>
       )}
@@ -181,26 +162,38 @@ export default function CommitteePage() {
       {/* Committees List */}
       <div className="space-y-6">
         {committees.map((bc) => {
-          const totalPaid = bc.paidMonths.length * bc.monthlyAmount;
+          const totalPaid = (bc.paidMonths?.length || 0) * bc.monthlyAmount;
           const totalExpected = bc.monthlyAmount * bc.members;
+          const remainingToPay = Math.max(0, totalExpected - totalPaid);
 
           return (
             <div key={bc.id} className="accora-card bg-white border-[#E2E8F7] space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8F7]">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-[#E2E8F7]">
                 <div>
-                  <h2 className="text-lg font-bold text-[#1D2839]">{bc.name}</h2>
-                  <p className="text-xs text-[#5B6785]">
-                    Monthly: <strong>PKR {bc.monthlyAmount.toLocaleString()}</strong> • {bc.members} members • Payout turn: <strong>Month #{bc.myTurn}</strong>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-[#1D2839]">{bc.name}</h2>
+                    {bc.receivedPayout && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#f3fbd9] text-[#1D2839] border border-[#A3D508]">
+                        Payout Collected
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-[#5B6785] mt-1">
+                    Monthly: <strong>PKR {bc.monthlyAmount.toLocaleString()}</strong> • {bc.members} members • Payout Turn: <strong>Month #{bc.myTurn}</strong> • Starts: {bc.startMonth}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3 text-xs">
+                <div className="flex flex-wrap items-center gap-2.5 text-xs">
                   <div className="px-3 py-1.5 bg-[#F4F7FC] rounded-lg border border-[#E2E8F7]">
                     <span className="text-[#5B6785]">Paid: </span>
                     <strong className="text-[#1D2839]">PKR {totalPaid.toLocaleString()}</strong>
                   </div>
                   <div className="px-3 py-1.5 bg-[#F4F7FC] rounded-lg border border-[#E2E8F7]">
-                    <span className="text-[#5B6785]">Expected Payout: </span>
+                    <span className="text-[#5B6785]">Still to pay: </span>
+                    <strong className="text-[#FD614F]">PKR {remainingToPay.toLocaleString()}</strong>
+                  </div>
+                  <div className="px-3 py-1.5 bg-[#e8f0fe] rounded-lg border border-[#0B5CE6]/20">
+                    <span className="text-[#0B5CE6]">Expected Payout: </span>
                     <strong className="text-[#0B5CE6]">PKR {totalExpected.toLocaleString()}</strong>
                   </div>
                 </div>
@@ -212,34 +205,34 @@ export default function CommitteePage() {
                   <thead>
                     <tr className="border-b border-[#E2E8F7] text-[#5B6785] bg-[#F4F7FC]">
                       <th className="py-2.5 px-3">Month #</th>
-                      <th className="py-2.5 px-3">My Contribution</th>
-                      <th className="py-2.5 px-3">Status</th>
-                      <th className="py-2.5 px-3">Payout Turn</th>
+                      <th className="py-2.5 px-3">Contribution</th>
+                      <th className="py-2.5 px-3">Payment Status</th>
+                      <th className="py-2.5 px-3">Your Payout Turn</th>
                     </tr>
                   </thead>
                   <tbody>
                     {Array.from({ length: bc.members }).map((_, i) => {
                       const monthNum = i + 1;
-                      const isPaid = bc.paidMonths.includes(monthNum);
+                      const isPaid = (bc.paidMonths || []).includes(monthNum);
                       const isMyPayout = monthNum === bc.myTurn;
 
                       return (
-                        <tr key={monthNum} className="border-b border-[#E2E8F7]/60 hover:bg-[#F4F7FC]/40">
+                        <tr key={monthNum} className="border-b border-[#E2E8F7]/60 hover:bg-[#F4F7FC]/40 transition-colors">
                           <td className="py-2.5 px-3 font-semibold text-[#1D2839]">
                             Month {monthNum}
                           </td>
-                          <td className="py-2.5 px-3">
+                          <td className="py-2.5 px-3 font-mono font-medium">
                             PKR {bc.monthlyAmount.toLocaleString()}
                           </td>
                           <td className="py-2.5 px-3">
                             {isPaid ? (
-                              <span className="inline-flex items-center gap-1 text-[#1D2839] font-bold bg-[#A3D508] px-2 py-0.5 rounded-full text-[10px]">
+                              <span className="inline-flex items-center gap-1 text-[#1D2839] font-bold bg-[#A3D508] px-2.5 py-0.5 rounded-full text-[11px]">
                                 <Check className="w-3 h-3" /> Paid
                               </span>
                             ) : (
                               <button
-                                onClick={() => handleMarkPaid(bc.id, monthNum)}
-                                className="btn-outline text-[11px] py-1 px-2.5"
+                                onClick={() => markCommitteeMonthPaid(bc.id, monthNum)}
+                                className="btn-outline text-[11px] py-1 px-3"
                               >
                                 Mark Paid
                               </button>
@@ -248,15 +241,15 @@ export default function CommitteePage() {
                           <td className="py-2.5 px-3">
                             {isMyPayout ? (
                               bc.receivedPayout ? (
-                                <span className="inline-flex items-center gap-1 text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded-full text-[10px] border border-blue-200">
+                                <span className="inline-flex items-center gap-1 text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full text-[11px] border border-emerald-200">
                                   ✓ Payout of PKR {totalExpected.toLocaleString()} Received
                                 </span>
                               ) : (
                                 <button
-                                  onClick={() => handleMarkReceived(bc.id)}
-                                  className="btn-lime text-[11px] py-1 px-3"
+                                  onClick={() => markCommitteePayoutReceived(bc.id)}
+                                  className="btn-lime text-[11px] py-1 px-3 shadow-2xs font-bold"
                                 >
-                                  I got PKR {totalExpected.toLocaleString()}
+                                  Collect PKR {totalExpected.toLocaleString()}
                                 </button>
                               )
                             ) : (
