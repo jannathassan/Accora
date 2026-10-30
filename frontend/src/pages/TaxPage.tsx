@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Download, AlertTriangle, CheckSquare, Info, ShieldCheck } from 'lucide-react';
 import { useMoneyStore } from '../store/moneyStore';
 import { calculateTaxSetAside } from '../utils/calculations';
+import { sanitizeCsvField } from '../utils/format';
 
 export default function TaxPage() {
   const { transactions, taxRate: defaultTaxRate, foreignBankShare: defaultForeignShare, activePersonaKey } = useMoneyStore();
@@ -35,10 +36,10 @@ export default function TaxPage() {
   const handleDownloadCsv = () => {
     const headers = ['Month', 'Total Income (PKR)', `Estimated Set-Aside at ${taxRate}% (PKR)`, 'Transaction Count'];
     const rows = Object.entries(monthlySummary).map(([month, data]) => [
-      month,
-      data.total.toString(),
-      data.setAside.toString(),
-      data.count.toString(),
+      sanitizeCsvField(month),
+      sanitizeCsvField(data.total),
+      sanitizeCsvField(data.setAside),
+      sanitizeCsvField(data.count),
     ]);
 
     const csvContent =

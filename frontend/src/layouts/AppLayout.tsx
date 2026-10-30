@@ -14,6 +14,7 @@ import {
   FileText,
   UploadCloud,
   Bell,
+  AlertTriangle,
   Settings,
   Plus,
   Menu,
@@ -22,6 +23,7 @@ import {
   Undo2,
 } from 'lucide-react';
 import OnboardingWizardModal from '../components/OnboardingWizardModal';
+import { sanitizeCsvField } from '../utils/format';
 
 // Exact 10 Tools (Section 3)
 const TOOLS_NAV = [
@@ -42,6 +44,7 @@ export default function AppLayout() {
     isDemo,
     activePersonaKey,
     userName,
+    transactions,
     loadPersona,
     resetDemo,
     alerts,
@@ -59,6 +62,69 @@ export default function AppLayout() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAlertsDropdown, setShowAlertsDropdown] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOverwriteModal, setShowOverwriteModal] = useState(false);
+  const [pendingPersona, setPendingPersona] = useState<'shop' | 'free' | 'pro' | 'home' | 'reset' | null>(null);
+
+  const personaNames: Record<string, string> = {
+    shop: 'Ali (Shop Owner)',
+    free: 'Sara (Freelancer)',
+    pro: 'Usman (Salaried Employee)',
+    home: 'Ayesha (Homemaker)',
+    reset: 'Default Demo Scenario',
+  };
+
+  const handleSelectPersona = (key: 'shop' | 'free' | 'pro' | 'home') => {
+    // If not demo mode OR user has custom records
+    if (!isDemo || transactions.length !== 12 || userName !== 'Ali') {
+      setPendingPersona(key);
+      setShowOverwriteModal(true);
+    } else {
+      loadPersona(key);
+    }
+  };
+
+  const handleResetClick = () => {
+    if (!isDemo || transactions.length !== 12) {
+      setPendingPersona('reset');
+      setShowOverwriteModal(true);
+    } else {
+      resetDemo();
+    }
+  };
+
+  const executePendingSwitch = () => {
+    if (pendingPersona === 'reset') {
+      resetDemo();
+    } else if (pendingPersona) {
+      loadPersona(pendingPersona);
+    }
+    setPendingPersona(null);
+    setShowOverwriteModal(false);
+  };
+
+  const handleBackupAndSwitch = () => {
+    const headers = ['ID', 'Date', 'Type', 'Category', 'Description', 'Amount (PKR)', 'Account'];
+    const rows = transactions.map((t) => [
+      sanitizeCsvField(t.id),
+      sanitizeCsvField(t.date),
+      sanitizeCsvField(t.type === 'in' ? 'Income' : 'Spending'),
+      sanitizeCsvField(t.category),
+      sanitizeCsvField(t.note),
+      sanitizeCsvField(t.amount),
+      sanitizeCsvField(t.account || 'cash'),
+    ]);
+    const csvContent =
+      'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const encoded = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.href = encoded;
+    link.download = `accora-data-backup-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    executePendingSwitch();
+  };
 
   // Quick Add State
   const [addType, setAddType] = useState<'in' | 'out'>('out');
@@ -194,7 +260,7 @@ export default function AppLayout() {
               {/* Persona Quick Picker */}
               <select
                 value={activePersonaKey}
-                onChange={(e) => loadPersona(e.target.value as 'shop' | 'free' | 'pro' | 'home')}
+                onChange={(e) => handleSelectPersona(e.target.value as 'shop' | 'free' | 'pro' | 'home')}
                 className="bg-white/10 hover:bg-white/20 text-white rounded px-2 py-0.5 text-xs font-semibold border border-white/20 cursor-pointer focus:outline-none"
               >
                 <option value="shop" className="text-[#1D2839]">Ali (Shop owner)</option>
@@ -210,7 +276,7 @@ export default function AppLayout() {
                 Start with my own data
               </button>
               <button
-                onClick={resetDemo}
+                onClick={handleResetClick}
                 className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-slate-300 font-semibold cursor-pointer"
               >
                 Reset demo
@@ -546,6 +612,55 @@ export default function AppLayout() {
       >
         <img src={BRAND_MASCOT} alt="Help Mascot" className="w-full h-full object-contain" />
       </button>
+
+      {/* ── Data Overwrite Confirmation Modal (Fix 3) ── */}
+      {showOverwriteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border-2 border-[#f79009] p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-6 h-6 text-[#f79009] shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-bold text-base text-[#1D2839]">Switch Financial Scenario?</h3>
+                <p className="text-xs text-[#5B6785] mt-1 leading-relaxed">
+                  You have <strong>{transactions.length} custom transactions</strong> in your active workspace. Loading{' '}
+                  <strong>{pendingPersona ? personaNames[pendingPersona] : ''}</strong> will replace your current records with their 12-month sample dataset.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-[#F4F7FC] rounded-xl text-xs text-[#1D2839] border border-[#E2E8F7]">
+              Tip: You can download a CSV backup to keep a permanent copy of your records before switching.
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-2 border-t border-[#E2E8F7]">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowOverwriteModal(false);
+                  setPendingPersona(null);
+                }}
+                className="btn-outline text-xs py-2 px-3 w-full sm:w-auto"
+              >
+                Cancel &amp; Keep Data
+              </button>
+              <button
+                type="button"
+                onClick={handleBackupAndSwitch}
+                className="btn-outline text-xs py-2 px-3 text-[#0B5CE6] border-[#0B5CE6]/30 hover:bg-[#e8f0fe] w-full sm:w-auto font-bold"
+              >
+                Download Backup &amp; Switch
+              </button>
+              <button
+                type="button"
+                onClick={executePendingSwitch}
+                className="btn-primary text-xs py-2 px-3 w-full sm:w-auto font-bold"
+              >
+                Yes, Overwrite
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Onboarding Wizard Modal ── */}
       <OnboardingWizardModal isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />

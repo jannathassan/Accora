@@ -372,13 +372,33 @@ export function evaluateAffordability(
   if (decisionType === 'brk') {
     const weeklyRate = avgIn / 4.33;
     const lostIncome = Math.round(weeklyRate * amount);
-    const remainingCash = currentCash - (amount * (avgOut / 4.33));
+    const remainingCash = Math.round(currentCash - (amount * (avgOut / 4.33)));
     const monthsBuffer = avgOut > 0 ? remainingCash / avgOut : 0;
 
+    if (remainingCash < 0) {
+      return {
+        verdict: 'no',
+        title: 'Not now',
+        message: `Taking ${amount} week(s) off would deplete your cash reserves and leave you in a deficit of PKR ${Math.abs(remainingCash).toLocaleString()}.`,
+        remainingCash,
+        monthsBuffer: 0,
+      };
+    }
+
+    if (monthsBuffer < 2) {
+      return {
+        verdict: 'careful',
+        title: 'Be careful',
+        message: `Taking ${amount} week(s) off will forego about PKR ${lostIncome.toLocaleString()} of income. You will have PKR ${remainingCash.toLocaleString()} remaining, leaving only ${monthsBuffer.toFixed(1)} months of emergency buffer.`,
+        remainingCash,
+        monthsBuffer,
+      };
+    }
+
     return {
-      verdict: monthsBuffer < 2 ? 'careful' : 'yes',
-      title: monthsBuffer < 2 ? 'Be careful' : 'Yes, you can take this break',
-      message: `Taking ${amount} week(s) off will forego about PKR ${lostIncome.toLocaleString()} of income. You will have PKR ${remainingCash.toLocaleString()} remaining.`,
+      verdict: 'yes',
+      title: 'Yes, you can take this break',
+      message: `Taking ${amount} week(s) off will forego about PKR ${lostIncome.toLocaleString()} of income. You will have PKR ${remainingCash.toLocaleString()} remaining, comfortably covering ${monthsBuffer.toFixed(1)} months of expenses.`,
       remainingCash,
       monthsBuffer,
     };

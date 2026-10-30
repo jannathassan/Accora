@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useMoneyStore } from '../store/moneyStore';
 import { SOCIAL_LINKS } from '../config/links';
+import { sanitizeCsvField } from '../utils/format';
 
 export default function SettingsPage() {
   const {
@@ -36,13 +37,13 @@ export default function SettingsPage() {
   const handleExportCsv = () => {
     const headers = ['ID', 'Date', 'Type', 'Category', 'Description', 'Amount (PKR)', 'Account'];
     const rows = transactions.map((t) => [
-      t.id,
-      t.date,
-      t.type,
-      `"${t.category}"`,
-      `"${t.note.replace(/"/g, '""')}"`,
-      t.amount.toString(),
-      t.account || 'cash',
+      sanitizeCsvField(t.id),
+      sanitizeCsvField(t.date),
+      sanitizeCsvField(t.type === 'in' ? 'Income' : 'Spending'),
+      sanitizeCsvField(t.category),
+      sanitizeCsvField(t.note),
+      sanitizeCsvField(t.amount),
+      sanitizeCsvField(t.account || 'cash'),
     ]);
 
     const csvContent =

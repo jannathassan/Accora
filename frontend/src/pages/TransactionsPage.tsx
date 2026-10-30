@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useMoneyStore } from '../store/moneyStore';
 import { guessCategory } from '../utils/calculations';
+import { sanitizeCsvField } from '../utils/format';
 import {
   Plus,
   Search,
@@ -103,12 +104,12 @@ export default function TransactionsPage() {
   const handleExportCsv = () => {
     const headers = ['Date', 'Type', 'Category', 'Description/Note', 'Account', 'Amount (PKR)'];
     const rows = filteredRows.map((t) => [
-      t.date,
-      t.type === 'in' ? 'Income' : 'Spending',
-      t.category,
-      `"${t.note.replace(/"/g, '""')}"`,
-      t.account || 'cash',
-      t.amount,
+      sanitizeCsvField(t.date),
+      sanitizeCsvField(t.type === 'in' ? 'Income' : 'Spending'),
+      sanitizeCsvField(t.category),
+      sanitizeCsvField(t.note),
+      sanitizeCsvField(t.account || 'cash'),
+      sanitizeCsvField(t.amount),
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...rows].map((e) => e.join(',')).join('\n');

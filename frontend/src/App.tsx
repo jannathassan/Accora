@@ -1,5 +1,4 @@
 import { HashRouter, Route, Routes } from 'react-router-dom';
-import { FinancialProvider } from './store/FinancialStore';
 import { MoneyProvider } from './store/moneyStore';
 import { ThemeProvider } from './store/ThemeProvider';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -32,40 +31,38 @@ export default function App() {
     <ThemeProvider>
       <ErrorBoundary>
         <MoneyProvider>
-          <FinancialProvider>
-            <HashRouter>
-              <Routes>
-                {/* Public Landing & Auth */}
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
+          <HashRouter>
+            <Routes>
+              {/* Public Landing & Auth */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
 
-                {/* Authenticated / Demo App Shell */}
-                <Route path="/app" element={<AppLayout />}>
-                  {/* 10 Tools in Exact Pitch Order */}
-                  <Route index element={<DashboardPage />} />
-                  <Route path="transactions" element={<TransactionsPage />} />
-                  <Route path="tracker" element={<TransactionsPage />} />
-                  <Route path="invoices" element={<InvoicesPage />} />
-                  <Route path="forecast" element={<ForecastPage />} />
-                  <Route path="affordability" element={<AffordabilityPage />} />
-                  <Route path="scenarios" element={<AffordabilityPage />} />
-                  <Route path="ask" element={<AskAccoraPage />} />
-                  <Route path="budgets" element={<BudgetsPage />} />
-                  <Route path="committee" element={<CommitteePage />} />
-                  <Route path="tax" element={<TaxPage />} />
-                  <Route path="upload" element={<UploadPage />} />
+              {/* Authenticated / Demo App Shell */}
+              <Route path="/app" element={<AppLayout />}>
+                {/* 10 Tools in Exact Pitch Order */}
+                <Route index element={<DashboardPage />} />
+                <Route path="transactions" element={<TransactionsPage />} />
+                <Route path="tracker" element={<TransactionsPage />} />
+                <Route path="invoices" element={<InvoicesPage />} />
+                <Route path="forecast" element={<ForecastPage />} />
+                <Route path="affordability" element={<AffordabilityPage />} />
+                <Route path="scenarios" element={<AffordabilityPage />} />
+                <Route path="ask" element={<AskAccoraPage />} />
+                <Route path="budgets" element={<BudgetsPage />} />
+                <Route path="committee" element={<CommitteePage />} />
+                <Route path="tax" element={<TaxPage />} />
+                <Route path="upload" element={<UploadPage />} />
 
-                  {/* Additional Settings & Notifications */}
-                  <Route path="settings" element={<SettingsPage />} />
-                  <Route path="notifications" element={<NotificationsPage />} />
-                </Route>
+                {/* Additional Settings & Notifications */}
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
+              </Route>
 
-                {/* Catch-all */}
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </HashRouter>
-          </FinancialProvider>
+              {/* Catch-all */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </HashRouter>
         </MoneyProvider>
       </ErrorBoundary>
     </ThemeProvider>

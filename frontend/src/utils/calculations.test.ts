@@ -10,6 +10,7 @@ import {
   averageMonthlyFlow,
   type TransactionRecord,
 } from './calculations.ts';
+import { sanitizeCsvField } from './format.ts';
 
 describe('ACCORA Financial Calculations (Pakistan PKR)', () => {
   const currentYm = '2026-10';
@@ -92,6 +93,32 @@ describe('ACCORA Financial Calculations (Pakistan PKR)', () => {
       assert.strictEqual(verdict.verdict, 'no');
       assert.strictEqual(verdict.title, 'Not now');
     });
+
+    it('regression: rejects a break when living costs exceed total cash reserve (negative cash)', () => {
+      // Total cash = 235k net + 20k = 255k. 20 weeks cost ~335k -> deficit of ~80k
+      const verdict = evaluateAffordability(sampleTransactions, 'brk', 20, 20000, currentYm);
+      assert.strictEqual(verdict.verdict, 'no');
+      assert.strictEqual(verdict.title, 'Not now');
+      assert.ok(verdict.remainingCash < 0);
+      assert.strictEqual(verdict.remainingCash, Math.round(verdict.remainingCash)); // integer check
+      assert.strictEqual(verdict.monthsBuffer, 0);
+    });
+
+    it('regression: warns when a break leaves less than 2 months emergency buffer', () => {
+      // Total cash = 255k. 10 weeks cost ~167k -> leaves 87k, which is ~1.2 months of ~72.5k spend (< 2)
+      const verdict = evaluateAffordability(sampleTransactions, 'brk', 10, 20000, currentYm);
+      assert.strictEqual(verdict.verdict, 'careful');
+      assert.strictEqual(verdict.title, 'Be careful');
+      assert.ok(verdict.monthsBuffer > 0 && verdict.monthsBuffer < 2);
+    });
+
+    it('regression: approves a break when remaining cash covers 2+ months buffer', () => {
+      // Total cash = 255k. 4 weeks cost ~67k -> leaves ~188k, which is ~2.6 months of ~72.5k spend (>= 2)
+      const verdict = evaluateAffordability(sampleTransactions, 'brk', 4, 20000, currentYm);
+      assert.strictEqual(verdict.verdict, 'yes');
+      assert.strictEqual(verdict.title, 'Yes, you can take this break');
+      assert.ok(verdict.monthsBuffer >= 2);
+    });
   });
 
   describe('4. Tax Helper Set-Aside', () => {
@@ -137,6 +164,28 @@ describe('ACCORA Financial Calculations (Pakistan PKR)', () => {
     it('computes average monthly outflow across trailing 3 months', () => {
       const avgOut = averageMonthlyFlow(sampleTransactions, 'out', currentYm);
       assert.strictEqual(avgOut, 72500);
+    });
+  });
+  describe('7. CSV Export Security (Formula Injection Protection)', () => {
+    it('safely wraps standard text fields in quotes', () => {
+      assert.strictEqual(sanitizeCsvField('Groceries from Imtiaz'), '"Groceries from Imtiaz"');
+      assert.strictEqual(sanitizeCsvField(50000), '"50000"');
+    });
+
+    it('neutralizes spreadsheet formula injection starting with =, +, -, @', () => {
+      assert.strictEqual(sanitizeCsvField('=calc'), '"\'=calc"');
+      assert.strictEqual(sanitizeCsvField('+12345'), '"\'+12345"');
+      assert.strictEqual(sanitizeCsvField('-5000'), '"\'-5000"');
+      assert.strictEqual(sanitizeCsvField('@SUM(A1:B10)'), '"\'@SUM(A1:B10)"');
+    });
+
+    it('escapes internal double quotes properly', () => {
+      assert.strictEqual(sanitizeCsvField('Note with "quotes" inside'), '"Note with ""quotes"" inside"');
+    });
+
+    it('handles undefined and null gracefully without throwing', () => {
+      assert.strictEqual(sanitizeCsvField(undefined), '""');
+      assert.strictEqual(sanitizeCsvField(null), '""');
     });
   });
 });
