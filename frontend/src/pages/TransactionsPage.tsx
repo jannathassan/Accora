@@ -18,6 +18,7 @@ export default function TransactionsPage() {
     activePersonaKey,
     addTransaction,
     deleteTransaction,
+    loadPersona,
   } = useMoneyStore();
 
   const [search, setSearch] = useState('');
@@ -410,7 +411,28 @@ export default function TransactionsPage() {
               ) : (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-[#5B6785] text-xs">
-                    No entries match your search. Add your first transaction above!
+                    <p className="font-semibold text-[#1D2839] mb-1">No transactions found.</p>
+                    <p className="mb-3">Add your first transaction above or load rich sample data to explore:</p>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <button
+                        onClick={() => loadPersona('shop')}
+                        className="btn-outline text-xs py-1 px-3 bg-white"
+                      >
+                        Load Ali (Shop)
+                      </button>
+                      <button
+                        onClick={() => loadPersona('free')}
+                        className="btn-outline text-xs py-1 px-3 bg-white"
+                      >
+                        Load Sara (Freelance)
+                      </button>
+                      <button
+                        onClick={() => loadPersona('pro')}
+                        className="btn-outline text-xs py-1 px-3 bg-white"
+                      >
+                        Load Usman (Employee)
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )}

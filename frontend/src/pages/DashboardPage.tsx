@@ -38,6 +38,7 @@ export default function DashboardPage() {
     transactions,
     foreignBankShare,
     taxRate,
+    loadPersona,
   } = useMoneyStore();
 
   // 6 Months In vs Out for Chart
@@ -140,6 +141,54 @@ export default function DashboardPage() {
                 </span>
               </span>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Empty State / First-time Welcome Banner ── */}
+      {transactions.length === 0 && (
+        <div className="accora-card bg-gradient-to-r from-[#e8f0fe] to-white border-2 border-[#0B5CE6] p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">👋</span>
+            <div>
+              <h2 className="text-lg font-bold text-[#1D2839]">Welcome to your clean money dashboard!</h2>
+              <p className="text-xs text-[#5B6785]">
+                You have no recorded transactions yet. Start fresh with your own records or load a rich demo scenario with 1 click:
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+            <Link
+              to="/app/transactions"
+              className="btn-lime py-1.5 px-3.5 font-bold"
+            >
+              + Add First Entry
+            </Link>
+            <span className="text-[#5B6785] px-1 font-semibold">or load sample:</span>
+            <button
+              onClick={() => loadPersona('shop')}
+              className="btn-outline py-1 px-2.5 bg-white text-xs cursor-pointer"
+            >
+              Ali (Shop)
+            </button>
+            <button
+              onClick={() => loadPersona('free')}
+              className="btn-outline py-1 px-2.5 bg-white text-xs cursor-pointer"
+            >
+              Sara (Freelancer)
+            </button>
+            <button
+              onClick={() => loadPersona('pro')}
+              className="btn-outline py-1 px-2.5 bg-white text-xs cursor-pointer"
+            >
+              Usman (Employee)
+            </button>
+            <button
+              onClick={() => loadPersona('home')}
+              className="btn-outline py-1 px-2.5 bg-white text-xs cursor-pointer"
+            >
+              Ayesha (Homemaker)
+            </button>
           </div>
         </div>
       )}
