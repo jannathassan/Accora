@@ -1,4 +1,4 @@
-/** Accora API client — single point of contact with the backend. */
+/** Accora Core API client — single point of contact with the backend. */
 
 import type {
   AIInsight,
@@ -61,7 +61,9 @@ export function resolveApiBase(): string {
 export const BASE = resolveApiBase();
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accora_auth_token') : null;
+  const token = typeof window !== 'undefined'
+    ? (localStorage.getItem('accora_core_auth_token') || localStorage.getItem('accora_auth_token'))
+    : null;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((options?.headers as Record<string, string>) || {}),
@@ -78,6 +80,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (res.status === 401) {
     if (typeof window !== 'undefined') {
+      localStorage.removeItem('accora_core_auth_token');
+      localStorage.removeItem('accora_core_auth_user');
       localStorage.removeItem('accora_auth_token');
       localStorage.removeItem('accora_auth_user');
       const hash = window.location.hash;

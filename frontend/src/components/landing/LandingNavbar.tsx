@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ArrowRight, Menu, X } from 'lucide-react';
+import { BRAND_LOGO } from '../../assets/brand';
+import { Menu, X } from 'lucide-react';
 import type { ModalType } from './LandingModal';
 
 interface LandingNavbarProps {
-  onOpenModal: (type: ModalType) => void;
+  onOpenModal?: (type: ModalType) => void;
+  onSelectPersona?: (personaKey: string) => void;
 }
 
-export default function LandingNavbar({ onOpenModal }: LandingNavbarProps) {
+export default function LandingNavbar(_props: LandingNavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      setScrolled(window.scrollY > 15);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -27,169 +29,124 @@ export default function LandingNavbar({ onOpenModal }: LandingNavbarProps) {
     }
   };
 
+  const handleTryDemo = () => {
+    setMobileMenuOpen(false);
+    scrollTo('demo-personas');
+  };
+
   return (
     <header
-      className={`fixed top-0 inset-x-0 z-40 transition-all duration-300 ${
+      className={`fixed top-0 inset-x-0 z-50 transition-all duration-200 ${
         scrolled
-          ? 'bg-[#030712]/92 backdrop-blur-xl border-b border-indigo-950/80 shadow-2xl shadow-black/80 py-3.5'
-          : 'bg-transparent border-b border-white/[0.06] py-5'
+          ? 'bg-white/95 backdrop-blur-md border-b border-[#E2E8F7] shadow-sm py-3'
+          : 'bg-[#F4F7FC]/90 backdrop-blur-sm border-b border-[#E2E8F7]/60 py-4'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 flex items-center justify-between">
-        {/* Brand */}
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-900 via-slate-900 to-violet-950 border border-violet-400/40 p-[1px] shadow-[0_0_15px_rgba(139,92,246,0.25)] group-hover:border-violet-300 group-hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all">
-            <div className="w-full h-full bg-[#030712] rounded-[11px] flex items-center justify-center">
-              <Sparkles className="w-4.5 h-4.5 text-violet-300 group-hover:scale-110 transition-transform" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold tracking-tight text-white font-sans">
-              Accora
-            </span>
-            <span className="hidden sm:inline-block text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-400/30 text-violet-300 font-mono">
-              Copilot
-            </span>
-          </div>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+        {/* Brand Logo & Wordmark */}
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <img
+            src={BRAND_LOGO}
+            alt="ACCORA Logo"
+            className="h-9 sm:h-10 w-auto object-contain transition-transform group-hover:scale-105"
+          />
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-300 font-sans">
+        {/* Desktop Navigation Links (Section 4: Home, Tools, How it works, Try demo, Log in, Sign up) */}
+        <nav className="hidden md:flex items-center gap-6 text-[15px] font-medium text-[#1D2839]">
           <button
-            onClick={() => scrollTo('features')}
-            className="hover:text-violet-300 transition-colors cursor-pointer"
+            onClick={() => scrollTo('hero')}
+            className="hover:text-[#0B5CE6] transition-colors cursor-pointer"
           >
-            Features
+            Home
+          </button>
+          <button
+            onClick={() => scrollTo('tools')}
+            className="hover:text-[#0B5CE6] transition-colors cursor-pointer"
+          >
+            Tools
           </button>
           <button
             onClick={() => scrollTo('how-it-works')}
-            className="hover:text-violet-300 transition-colors cursor-pointer"
+            className="hover:text-[#0B5CE6] transition-colors cursor-pointer"
           >
-            How It Works
+            How it works
           </button>
           <button
-            onClick={() => scrollTo('preview')}
-            className="hover:text-violet-300 transition-colors cursor-pointer"
+            onClick={handleTryDemo}
+            className="hover:text-[#0B5CE6] font-semibold text-[#0B5CE6] transition-colors cursor-pointer"
           >
-            Product Preview
-          </button>
-          <button
-            onClick={() => scrollTo('security')}
-            className="hover:text-violet-300 transition-colors cursor-pointer"
-          >
-            Security
-          </button>
-          <button
-            onClick={() => onOpenModal('about')}
-            className="hover:text-violet-300 transition-colors cursor-pointer"
-          >
-            About
+            Try demo
           </button>
         </nav>
 
-        {/* Right Action Buttons */}
-        <div className="hidden md:flex items-center gap-3 font-sans">
+        {/* Action Buttons */}
+        <div className="hidden md:flex items-center gap-3">
           <Link
             to="/login"
-            className="text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 transition-colors"
+            className="text-[15px] font-semibold text-[#1D2839] hover:text-[#0B5CE6] px-3 py-2 transition-colors"
           >
-            Log In
+            Log in
           </Link>
           <Link
             to="/signup"
-            className="px-3.5 py-2 rounded-xl text-xs font-bold text-violet-200 bg-violet-950/40 border border-violet-400/30 hover:bg-violet-900/40 hover:border-violet-300 shadow-sm transition-all active:scale-[0.98]"
+            className="btn-primary text-sm py-2 px-4 shadow-sm"
           >
-            Sign Up
-          </Link>
-          <Link
-            to="/app"
-            className="relative inline-flex items-center gap-2 px-4.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-violet-600 via-indigo-600 to-sky-600 hover:from-violet-500 hover:to-sky-500 border border-violet-400/30 shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_25px_rgba(139,92,246,0.5)] transition-all active:scale-[0.98]"
-          >
-            <span>Launch App</span>
-            <ArrowRight className="w-3.5 h-3.5 text-white" />
+            Sign up
           </Link>
         </div>
 
-        {/* Mobile Menu Toggle */}
-        <div className="flex items-center gap-2 md:hidden">
-          <Link
-            to="/signup"
-            className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-violet-200 bg-violet-950/50 border border-violet-400/30"
-          >
-            Sign Up
-          </Link>
-          <Link
-            to="/app"
-            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 transition-colors"
-          >
-            App
-          </Link>
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle Navigation Menu"
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
+        {/* Mobile Hamburger Button */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 text-[#1D2839] hover:text-[#0B5CE6] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-[#030712]/98 border-b border-indigo-950/80 px-6 py-6 space-y-4 shadow-2xl backdrop-blur-2xl animate-fadeIn">
-          <nav className="flex flex-col space-y-3 text-sm font-medium text-slate-300 font-sans">
+        <div className="md:hidden bg-white border-b border-[#E2E8F7] px-6 py-5 shadow-lg space-y-4 animate-in fade-in duration-150">
+          <div className="flex flex-col space-y-3 font-medium text-[#1D2839]">
             <button
-              onClick={() => scrollTo('features')}
-              className="text-left py-2 hover:text-violet-300 transition-colors"
+              onClick={() => scrollTo('hero')}
+              className="text-left py-2 hover:text-[#0B5CE6]"
             >
-              Features
+              Home
+            </button>
+            <button
+              onClick={() => scrollTo('tools')}
+              className="text-left py-2 hover:text-[#0B5CE6]"
+            >
+              Tools
             </button>
             <button
               onClick={() => scrollTo('how-it-works')}
-              className="text-left py-2 hover:text-violet-300 transition-colors"
+              className="text-left py-2 hover:text-[#0B5CE6]"
             >
-              How It Works
+              How it works
             </button>
             <button
-              onClick={() => scrollTo('preview')}
-              className="text-left py-2 hover:text-violet-300 transition-colors"
+              onClick={handleTryDemo}
+              className="text-left py-2 font-semibold text-[#0B5CE6]"
             >
-              Product Preview
+              Try demo
             </button>
-            <button
-              onClick={() => scrollTo('security')}
-              className="text-left py-2 hover:text-violet-300 transition-colors"
-            >
-              Security
-            </button>
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenModal('about');
-              }}
-              className="text-left py-2 hover:text-violet-300 transition-colors"
-            >
-              About
-            </button>
-          </nav>
-          <div className="pt-4 border-t border-slate-800 flex flex-col gap-2.5 font-sans">
+          </div>
+          <div className="pt-3 border-t border-[#E2E8F7] flex flex-col gap-2.5">
             <Link
               to="/login"
-              className="w-full py-2.5 text-center text-xs font-semibold text-slate-300 hover:text-white bg-slate-900/80 border border-slate-800 rounded-xl"
+              className="btn-outline w-full text-center"
             >
-              Log In
+              Log in
             </Link>
             <Link
               to="/signup"
-              className="w-full py-2.5 text-center text-xs font-bold text-violet-200 bg-violet-950/50 border border-violet-400/40 rounded-xl"
+              className="btn-primary w-full text-center"
             >
-              Sign Up
-            </Link>
-            <Link
-              to="/app"
-              className="w-full py-2.5 text-center text-xs font-bold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl shadow-md"
-            >
-              Launch App
+              Sign up
             </Link>
           </div>
         </div>

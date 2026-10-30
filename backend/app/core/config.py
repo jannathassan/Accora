@@ -8,13 +8,13 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Accora application settings.
+    """Accora Core application settings.
 
     All sensitive values are loaded from environment variables.
     Never hard-code secrets in source code.
     """
 
-    app_name: str = "Accora API"
+    app_name: str = "Accora Core API"
     app_version: str = "0.1.0"
     debug: bool = False
 

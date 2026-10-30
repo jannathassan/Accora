@@ -1,6 +1,6 @@
 /**
  * ErrorBoundary — catches render errors in child components and shows
- * a clean Accora-branded fallback instead of a blank white screen.
+ * a clean Accora Core-branded fallback instead of a blank white screen.
  */
 
 import { Component, type ErrorInfo, type ReactNode } from 'react';
@@ -38,13 +38,13 @@ export default class ErrorBoundary extends Component<Props, State> {
             </div>
             <h1 className="text-xl font-bold text-surface-900 mb-2">Something went wrong</h1>
             <p className="text-sm text-surface-500 mb-6">
-              Accora encountered an unexpected error. You can reload to try again.
+              Accora Core encountered an unexpected error. You can reload to try again.
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors cursor-pointer"
             >
-              Reload Accora
+              Reload Accora Core
             </button>
           </div>
         </div>

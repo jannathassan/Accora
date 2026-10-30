@@ -65,7 +65,7 @@ export default function CopilotPanel({ open, onClose }: Props) {
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div className="flex-1">
-            <h2 className="text-sm font-semibold text-surface-900">Ask Accora</h2>
+            <h2 className="text-sm font-semibold text-surface-900">Ask Accora Core</h2>
             <p className="text-[10px] text-surface-400">AI Financial Copilot</p>
           </div>
           <button onClick={onClose} className="p-1.5 hover:bg-surface-100 rounded-lg transition-colors">
@@ -136,7 +136,7 @@ export default function CopilotPanel({ open, onClose }: Props) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about your business..."
-              aria-label="Ask Accora a question"
+              aria-label="Ask Accora Core a question"
               className="flex-1 px-3.5 py-2.5 bg-surface-50 rounded-lg text-sm border border-surface-200 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-all"
             />
             <button

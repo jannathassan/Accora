@@ -88,8 +88,8 @@ export default function NotificationsPage() {
             return (
               <button key={n.id} onClick={() => handleClick(n)}
                 className={clsx(
-                  'w-full text-left bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-4',
-                  'border-l-4 transition-all hover:border-surface-300 cursor-pointer',
+                  'w-full text-left bg-surface-card rounded-[var(--radius-card)] border border-surface-200 dark:border-surface-200/50 shadow-[var(--shadow-card)] p-4',
+                  'border-l-4 transition-all hover:border-brand-400/40 cursor-pointer group',
                   SEVERITY_COLORS[n.severity] ?? 'border-l-surface-300',
                   n.read ? 'opacity-65' : '',
                 )}>

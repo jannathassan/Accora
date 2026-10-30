@@ -130,7 +130,7 @@ export default function LoginPage() {
               <Sparkles className="w-4 h-4 text-purple-300 group-hover:scale-110 transition-transform" />
             </div>
           </div>
-          <span className="text-xl font-bold tracking-tight text-white font-sans">Accora</span>
+          <span className="text-xl font-bold tracking-tight text-white font-sans">Accora Core</span>
           <span className="hidden sm:inline-flex items-center gap-1 text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300">
             Copilot
           </span>
@@ -161,7 +161,7 @@ export default function LoginPage() {
                 <span>Secure Financial Access</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                Log In to Accora
+                Log In to Accora Core
               </h1>
               <p className="text-xs sm:text-sm text-slate-400">
                 Access your real-time financials, forecasting models, and AI Copilot.
@@ -331,7 +331,7 @@ export default function LoginPage() {
 
       {/* Footer */}
       <footer className="relative z-10 py-6 text-center text-xs text-slate-500 border-t border-slate-800/80">
-        <p>&copy; {getCurrentYear()} Accora Financial Technologies. Bank-grade 256-bit encryption.</p>
+        <p>&copy; {getCurrentYear()} Accora Core Financial Technologies. Bank-grade 256-bit encryption.</p>
       </footer>
 
       {/* Forgot Password Modal */}
@@ -361,7 +361,7 @@ export default function LoginPage() {
               </p>
               <div className="p-3.5 rounded-xl bg-[#030712] border border-slate-800 space-y-2 text-xs text-slate-400 leading-relaxed">
                 <p>
-                  Because Accora manages sensitive deterministic ledger records, password resets must be authorized by an organization administrator.
+                  Because Accora Core manages sensitive deterministic ledger records, password resets must be authorized by an organization administrator.
                 </p>
                 <p>
                   To explore the platform right now, you can use the instant <strong className="text-purple-300">Demo Account Sign-In</strong> button on the login screen.

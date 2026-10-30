@@ -104,7 +104,8 @@ export default function ScenariosPage() {
       </div>
 
       {/* Custom Controls */}
-      <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-5 md:p-6 space-y-4">
+      <div className="relative overflow-hidden bg-surface-card rounded-[var(--radius-card)] border border-surface-200 dark:border-surface-200/50 shadow-[var(--shadow-card)] p-5 md:p-6 space-y-4 group">
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-600 via-brand-400 to-transparent" />
         <h2 className="text-sm font-bold text-surface-900 dark:text-surface-100">Custom Scenario</h2>
         <div className="grid md:grid-cols-3 gap-6">
           <div>

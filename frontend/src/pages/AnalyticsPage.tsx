@@ -80,12 +80,15 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Revenue vs Expenses */}
-      <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-5 md:p-6 transition-all hover:border-surface-300">
+      <div className="relative overflow-hidden bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-5 md:p-6 transition-all hover:border-brand-400/40 group">
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-600 via-brand-400 to-transparent" />
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xs font-bold text-surface-500 dark:text-surface-400 uppercase tracking-wider">
             Revenue vs Expenses
           </h2>
-          <span className="text-[10px] text-surface-400 font-mono">Comparative Trajectory</span>
+          <span className="text-[10px] text-brand-600 dark:text-brand-300 font-mono font-semibold bg-brand-50 dark:bg-brand-500/15 px-2 py-0.5 rounded-full border border-brand-200 dark:border-brand-500/30">
+            Comparative Trajectory
+          </span>
         </div>
         <ResponsiveContainer width="100%" height={260}>
           <AreaChart data={chartData}>

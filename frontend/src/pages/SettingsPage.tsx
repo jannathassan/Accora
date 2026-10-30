@@ -217,7 +217,7 @@ export default function SettingsPage() {
       {saved && (
         <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-xl text-emerald-800 dark:text-emerald-200 text-xs">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>Business profile and financial parameters updated successfully across Accora.</span>
+          <span>Business profile and financial parameters updated successfully across Accora Core.</span>
         </div>
       )}
 
@@ -786,7 +786,7 @@ export default function SettingsPage() {
       <Section
         icon={Brain}
         title="AI Copilot Preferences"
-        description="Fine-tune how Accora's intelligence engine analyzes risks and delivers recommendations."
+        description="Fine-tune how Accora Core's intelligence engine analyzes risks and delivers recommendations."
       >
         <Toggle
           label="Proactive Financial Insights"
@@ -965,9 +965,9 @@ function Toggle({
 }
 
 const THEME_OPTIONS: { key: ThemeMode; icon: React.ElementType; label: string; desc: string }[] = [
-  { key: 'light', icon: Sun, label: 'Light Aurora', desc: 'Clean, luminous canvas with crisp cards and refined azure accents' },
-  { key: 'dark', icon: Moon, label: 'Dark Aurora', desc: 'Deep slate and obsidian palette with luminous aurora highlights' },
-  { key: 'high-contrast', icon: Contrast, label: 'High Contrast Aurora', desc: 'Maximum optical readability with stark borders and high-contrast indicators' },
+  { key: 'light', icon: Sun, label: 'Light Command', desc: 'Pearlescent canvas with soft lavender tinting and crisp command-center elevation' },
+  { key: 'dark', icon: Moon, label: 'Dark Command', desc: 'Deep midnight obsidian with sleek soft violet glow and futuristic AI command accents' },
+  { key: 'high-contrast', icon: Contrast, label: 'High Contrast Matrix', desc: 'High-definition optical precision with razor-sharp borders and accessible semantic indicators' },
 ];
 
 function AppearanceSection() {
@@ -981,7 +981,7 @@ function AppearanceSection() {
         </div>
         <div>
           <h2 className="text-sm font-bold text-surface-900 tracking-tight font-sans">Theme &amp; Appearance</h2>
-          <p className="text-xs text-surface-500 font-sans">Choose how Accora displays across your financial workspace.</p>
+          <p className="text-xs text-surface-500 font-sans">Choose how Accora Core displays across your financial workspace.</p>
         </div>
       </div>
 

@@ -54,12 +54,14 @@ interface FinancialState {
   notifications: AppNotification[];
   settings: AppSettings | null;
   nextBestMove: NextBestMove | null;
+  copilotOpen: boolean;
   loading: boolean;
   error: string | null;
 }
 
 interface FinancialActions {
   refreshAll: () => Promise<void>;
+  setCopilotOpen: (open: boolean) => void;
   addTransaction: (t: TransactionCreate) => Promise<void>;
   editTransaction: (id: string, t: TransactionUpdate) => Promise<void>;
   removeTransaction: (id: string) => Promise<void>;
@@ -95,6 +97,7 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [nextBestMove, setNextBestMove] = useState<NextBestMove | null>(null);
+  const [copilotOpen, setCopilotOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -231,8 +234,8 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       return {
         answer: e instanceof Error
-          ? `Unable to reach Accora AI: ${e.message}. Please ensure the backend is running and try again.`
-          : 'Something went wrong while connecting to Accora AI. Please try again in a moment.',
+          ? `Unable to reach Accora Core AI: ${e.message}. Please ensure the backend is running and try again.`
+          : 'Something went wrong while connecting to Accora Core AI. Please try again in a moment.',
         evidence: [],
         interpretation: 'The AI service is currently unavailable.',
         recommendation: 'Check your connection and try again.',
@@ -244,8 +247,8 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
   const value: FinancialContext = {
     business, user, transactions, metrics, latest, health,
     insights, actions, cashFlow, forecast, invoices, invoiceSummary,
-    notifications, settings, nextBestMove, loading, error,
-    refreshAll, addTransaction, editTransaction, removeTransaction,
+    notifications, settings, nextBestMove, copilotOpen, loading, error,
+    refreshAll, setCopilotOpen, addTransaction, editTransaction, removeTransaction,
     addInvoice, editInvoice, removeInvoice,
     markNotificationRead, markAllNotificationsRead,
     updateSettings: updateSettingsAction,

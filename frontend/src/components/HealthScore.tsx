@@ -10,7 +10,7 @@ export default function HealthScore() {
 
   const color =
     health.overall >= 70 ? '#12b76a' : health.overall >= 50 ? '#f79009' : '#f04438';
-  const ringBg = theme === 'dark' ? '#252a36' : theme === 'high-contrast' ? '#cccccc' : '#e4e7ec';
+  const ringBg = theme === 'dark' ? '#28213b' : theme === 'high-contrast' ? '#cccccc' : '#e8e2f2';
 
   const dims = [
     { label: 'Revenue', value: health.revenue_performance },

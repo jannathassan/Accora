@@ -428,7 +428,7 @@ export default function CsvImportModal({ isOpen, onClose }: CsvImportModalProps)
               <h2 className="text-base font-bold text-surface-900">Import Financial Transactions (CSV)</h2>
               <p className="text-xs text-surface-500">
                 {step === 'upload' && 'Step 1 of 3: Select or drop your bank or accounting CSV file'}
-                {step === 'mapping' && 'Step 2 of 3: Map CSV columns to Accora fields'}
+                {step === 'mapping' && 'Step 2 of 3: Map CSV columns to Accora Core fields'}
                 {step === 'preview' && 'Step 3 of 3: Review data, check duplicates, and confirm import'}
                 {step === 'success' && 'Import Completed'}
               </p>
@@ -485,7 +485,7 @@ export default function CsvImportModal({ isOpen, onClose }: CsvImportModalProps)
                 <ul className="list-disc list-inside space-y-1 text-surface-500">
                   <li>Your file must have a header row with columns like Date, Description, and Amount.</li>
                   <li>Dates in formats such as YYYY-MM-DD or MM/DD/YYYY are supported.</li>
-                  <li>Accora automatically detects and prevents importing duplicate transactions.</li>
+                  <li>Accora Core automatically detects and prevents importing duplicate transactions.</li>
                   <li>Opening cash balance in Settings will automatically reflect newly imported transactions.</li>
                 </ul>
               </div>

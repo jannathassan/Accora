@@ -62,7 +62,7 @@ export default function IntelligencePage() {
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-ai" />
             <h1 className="text-xl md:text-2xl font-bold text-surface-900 dark:text-surface-100 tracking-tight">
-              Accora Intelligence
+              Accora Core Intelligence
             </h1>
           </div>
           <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">

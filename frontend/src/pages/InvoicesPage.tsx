@@ -181,7 +181,8 @@ export default function InvoicesPage() {
             { label: 'Pending', value: invoiceSummary.total_pending, color: 'text-warning' },
             { label: 'Overdue', value: invoiceSummary.total_overdue, color: 'text-risk' },
           ].map((s) => (
-            <div key={s.label} className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-4 hover:border-surface-300 transition-all">
+            <div key={s.label} className="relative overflow-hidden bg-surface-card rounded-[var(--radius-card)] border border-surface-200 dark:border-surface-200/50 shadow-[var(--shadow-card)] p-4 hover:border-brand-400/40 transition-all group">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-600 via-brand-400 to-transparent opacity-60" />
               <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">{s.label}</p>
               <p className={clsx('text-lg font-bold tabular-nums font-mono', s.color)}>{fmtCurrency(s.value)}</p>
             </div>

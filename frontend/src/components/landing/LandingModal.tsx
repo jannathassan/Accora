@@ -1,4 +1,6 @@
-import { X, ShieldCheck, Mail, FileText, Info } from 'lucide-react';
+import { X, ShieldCheck, Mail, FileText } from 'lucide-react';
+import { SOCIAL_LINKS } from '../../config/links';
+import { BRAND_MASCOT } from '../../assets/brand';
 
 export type ModalType = 'about' | 'privacy' | 'terms' | 'contact' | null;
 
@@ -11,79 +13,65 @@ export default function LandingModal({ type, onClose }: LandingModalProps) {
   if (!type) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
       <div 
-        className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl bg-[#0c1222] border border-slate-700/60 p-6 md:p-8 shadow-2xl text-slate-200"
+        className="relative w-full max-w-xl max-h-[85vh] overflow-y-auto rounded-2xl bg-white border border-[#E2E8F7] p-6 md:p-8 shadow-2xl text-[#1D2839]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
           aria-label="Close modal"
-          className="absolute top-5 right-5 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
+          className="absolute top-5 right-5 p-2 rounded-lg text-[#5B6785] hover:text-[#1D2839] hover:bg-[#F4F7FC] transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
         {type === 'about' && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 text-cyan-400 mb-2">
-              <Info className="w-6 h-6" />
-              <h3 className="text-xl font-bold text-white tracking-tight">About Accora</h3>
+            <div className="flex items-center gap-3 text-[#0B5CE6]">
+              <img src={BRAND_MASCOT} alt="Mascot" className="w-8 h-8 object-contain" />
+              <h3 className="text-xl font-bold text-[#1D2839]">About ACCORA</h3>
             </div>
-            <p className="text-sm leading-relaxed text-slate-300">
-              Accora was created to bridge the critical gap between traditional backward-looking accounting 
-              and forward-looking business strategy. For small businesses, creative studios, agencies, and 
-              solo entrepreneurs, hiring a full-time financial analyst or fractional CFO is often cost-prohibitive.
+            <p className="text-sm leading-relaxed text-[#5B6785]">
+              ACCORA is an AI money helper built for shop owners, freelancers, salaried professionals, and homemakers across Pakistan. 
+              Our pitch is simple: <strong>&ldquo;Where did your money go this month?&rdquo;</strong>
             </p>
-            <p className="text-sm leading-relaxed text-slate-300">
-              Accora transforms raw transaction records and billing receipts into real-time health scores, 
-              probabilistic cash-flow forecasts, and proactive strategic recommendations.
+            <p className="text-sm leading-relaxed text-[#5B6785]">
+              Instead of intimidating accounting spreadsheets with debits, credits, and financial jargon, ACCORA answers your questions in plain everyday words and gives you 10 practical tools to keep your hard-earned money under control.
             </p>
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2 mt-4">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-cyan-400">Core Guiding Principles</h4>
-              <ul className="text-xs space-y-1.5 text-slate-300">
-                <li className="flex items-start gap-2">
-                  <span className="text-cyan-400 font-bold">•</span>
-                  <span><strong>Empirical Grounding:</strong> Every AI insight is backed by verified transaction and ledger math.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-cyan-400 font-bold">•</span>
-                  <span><strong>Proactive Intelligence:</strong> We alert you to margin compression and overdue risks before they harm your runway.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-cyan-400 font-bold">•</span>
-                  <span><strong>Privacy First:</strong> Your company ledger belongs exclusively to you.</span>
-                </li>
-              </ul>
+            <div className="p-4 rounded-xl bg-[#F4F7FC] border border-[#E2E8F7] space-y-2 mt-4 text-xs text-[#5B6785]">
+              <div className="font-bold text-[#1D2839] uppercase tracking-wider text-[11px]">
+                Built for Pakistan
+              </div>
+              <p>• All numbers in Pakistani Rupee (PKR)</p>
+              <p>• Household committees (kameti / BC) tracking</p>
+              <p>• FBR tax year planning from July to June</p>
+              <p>• Freelancer foreign remittance bank tracking</p>
             </div>
           </div>
         )}
 
         {type === 'privacy' && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 text-teal-400 mb-2">
+            <div className="flex items-center gap-3 text-[#0B5CE6]">
               <ShieldCheck className="w-6 h-6" />
-              <h3 className="text-xl font-bold text-white tracking-tight">Privacy & Data Governance</h3>
+              <h3 className="text-xl font-bold text-[#1D2839]">Your Data & Privacy</h3>
             </div>
-            <p className="text-sm leading-relaxed text-slate-300">
-              We take the privacy of your financial operations seriously. Financial records represent the lifeblood 
-              of any business, and Accora is built with strict isolation boundaries.
+            <p className="text-sm leading-relaxed text-[#5B6785]">
+              We believe in honest, straightforward data handling.
             </p>
-            <div className="space-y-3 text-xs leading-relaxed text-slate-300">
-              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-                <strong className="text-white block mb-1">1. Zero Model Training on Financial Records</strong>
-                Your transactions, customer names, billing amounts, and balance sheets are never used to train, retrain, 
-                or fine-tune public foundation AI models.
+            <div className="space-y-3 text-xs leading-relaxed text-[#5B6785]">
+              <div className="p-3 rounded-lg bg-[#F4F7FC] border border-[#E2E8F7]">
+                <strong className="text-[#1D2839] block mb-1">1. Local Storage on Your Device</strong>
+                In this prototype demo, all your financial entries, budgets, and invoices remain on your device in your web browser. You can clear them anytime by resetting the demo or clearing browser data.
               </div>
-              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-                <strong className="text-white block mb-1">2. Credential Security</strong>
-                All AI model API keys and infrastructure secrets reside on the server-side environment and are never 
-                transmitted to client web sessions or stored in browser storage.
+              <div className="p-3 rounded-lg bg-[#F4F7FC] border border-[#E2E8F7]">
+                <strong className="text-[#1D2839] block mb-1">2. No Ad Retargeting or Data Selling</strong>
+                We will never sell your financial records to data brokers, lenders, or advertisers.
               </div>
-              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-                <strong className="text-white block mb-1">3. Demo Mode Isolation</strong>
-                In development and demonstration mode, Accora runs against completely synthetic ledger data 
-                generated locally, ensuring zero exposure of sensitive corporate information.
+              <div className="p-3 rounded-lg bg-[#F4F7FC] border border-[#E2E8F7]">
+                <strong className="text-[#1D2839] block mb-1">3. Deterministic Numbers</strong>
+                All health scores, forecasts, and savings recommendations come from verified pure mathematical formulas, never invented by AI.
               </div>
             </div>
           </div>
@@ -91,24 +79,21 @@ export default function LandingModal({ type, onClose }: LandingModalProps) {
 
         {type === 'terms' && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 text-amber-400 mb-2">
+            <div className="flex items-center gap-3 text-[#0B5CE6]">
               <FileText className="w-6 h-6" />
-              <h3 className="text-xl font-bold text-white tracking-tight">Terms of Use & Disclaimer</h3>
+              <h3 className="text-xl font-bold text-[#1D2839]">Terms & Disclaimer</h3>
             </div>
-            <p className="text-sm leading-relaxed text-slate-300">
-              Please review these operational terms regarding the use of the Accora financial platform.
+            <p className="text-sm leading-relaxed text-[#5B6785]">
+              Please note the following important points when using ACCORA:
             </p>
-            <div className="space-y-3 text-xs leading-relaxed text-slate-300">
-              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-                <strong className="text-white block mb-1">Financial Intelligence, Not Certified Tax Advice</strong>
-                Accora provides automated financial analysis, predictive modeling, and strategic suggestions. 
-                It is an informational decision-support tool and does not constitute certified legal, tax, or formal accounting advice. 
-                Important capital allocations should be validated with qualified professionals.
+            <div className="space-y-3 text-xs leading-relaxed text-[#5B6785]">
+              <div className="p-3 rounded-lg bg-[#ffefed] border border-[#ffd4cf] text-[#1D2839]">
+                <strong className="text-[#FD614F] block mb-1">⚠️ Not Legal or Financial Advice</strong>
+                ACCORA provides informational tools, estimates, and budgeting assistance. Tax rules and FBR rates change periodically; always consult a licensed tax advisor or the Federal Board of Revenue before filing tax returns.
               </div>
-              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-                <strong className="text-white block mb-1">Predictive Simulations</strong>
-                Forecasting and What-If simulations are statistical estimations based on historical trend data. 
-                External market changes, client defaults, or unanticipated business events can affect actual outcomes.
+              <div className="p-3 rounded-lg bg-[#F4F7FC] border border-[#E2E8F7]">
+                <strong className="text-[#1D2839] block mb-1">Committee (BC) Tracker Notice</strong>
+                The Committee tool is a record-keeping tracker only. ACCORA does not hold, collect, process, or disburse money or escrow for committees.
               </div>
             </div>
           </div>
@@ -116,38 +101,25 @@ export default function LandingModal({ type, onClose }: LandingModalProps) {
 
         {type === 'contact' && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 text-cyan-400 mb-2">
+            <div className="flex items-center gap-3 text-[#0B5CE6]">
               <Mail className="w-6 h-6" />
-              <h3 className="text-xl font-bold text-white tracking-tight">Connect with the Accora Team</h3>
+              <h3 className="text-xl font-bold text-[#1D2839]">Contact the ACCORA Team</h3>
             </div>
-            <p className="text-sm leading-relaxed text-slate-300">
-              Have questions about Accora, want to explore custom integrations for your business, or have feedback 
-              on our AI financial engine? We would love to hear from you.
+            <p className="text-sm leading-relaxed text-[#5B6785]">
+              We would love to hear feedback from startup judges, mentors, and test users.
             </p>
-            <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">Project:</span>
-                <span className="text-white font-medium">Accora Financial Copilot</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">Technical Inquiries:</span>
-                <span className="text-cyan-400 font-mono text-xs">support@accora.internal</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">Platform Status:</span>
-                <span className="inline-flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Active / Demo Available
-                </span>
-              </div>
+            <div className="p-4 rounded-xl bg-[#F4F7FC] border border-[#E2E8F7] space-y-2 text-xs text-[#5B6785]">
+              <p><strong>Email:</strong> {SOCIAL_LINKS.supportEmail}</p>
+              <p><strong>Prototype URL:</strong> {SOCIAL_LINKS.website}</p>
+              <p><strong>Incubation Presentation:</strong> ACCORA Pitch 2026</p>
             </div>
           </div>
         )}
 
-        <div className="mt-6 pt-4 border-t border-slate-800 flex justify-end">
+        <div className="mt-6 pt-4 border-t border-[#E2E8F7] text-right">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors"
+            className="btn-outline text-xs py-2 px-4"
           >
             Close
           </button>

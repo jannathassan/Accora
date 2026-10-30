@@ -110,7 +110,7 @@ export default function LandingProductPreview() {
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight font-sans">
-            Test-Drive Accora Right Now
+            Test-Drive Accora Core Right Now
           </h2>
 
           <p className="text-slate-400 text-base sm:text-lg leading-relaxed font-sans">
@@ -158,7 +158,7 @@ export default function LandingProductPreview() {
                     <Brain className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white font-sans">Accora AI Financial Copilot</h3>
+                    <h3 className="text-sm font-bold text-white font-sans">Accora Core AI Financial Copilot</h3>
                     <p className="text-[11px] text-slate-400 font-sans">Structured analysis grounded strictly in company ledger data</p>
                   </div>
                 </div>
@@ -579,7 +579,7 @@ export default function LandingProductPreview() {
 
               <div className="p-4 rounded-xl bg-slate-900/60 border border-cyan-950 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <p className="text-xs text-slate-300 font-mono">
-                  Accora includes presets like "Hire Senior Lead at PKR 120K", "Revenue -20% Stress Test", and "Burn Trim -15%".
+                  Accora Core includes presets like "Hire Senior Lead at PKR 120K", "Revenue -20% Stress Test", and "Burn Trim -15%".
                 </p>
                 <Link
                   to="/app/scenarios"

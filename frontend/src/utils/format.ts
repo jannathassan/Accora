@@ -1,4 +1,4 @@
-/** Shared formatting utilities for Accora. */
+/** Shared formatting utilities for Accora Core. */
 
 export function fmtCurrency(n: number, _currency?: string | number): string {
   if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;

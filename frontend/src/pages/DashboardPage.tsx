@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useFinancial } from '../store/FinancialStore';
 import { useTheme } from '../store/ThemeProvider';
 import { fmtCurrency, periodLabel } from '../utils/format';
@@ -10,7 +9,6 @@ import CashFlowAlert from '../components/CashFlowAlert';
 import ActionCenter from '../components/ActionCenter';
 import BusinessSnapshot from '../components/BusinessSnapshot';
 import ForecastSection from '../components/ForecastSection';
-import CopilotPanel from '../components/CopilotPanel';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -24,9 +22,8 @@ const PIE_COLORS = ['#7c3aed', '#12b76a', '#f79009', '#a78bfa', '#f04438', '#06a
 
 export default function DashboardPage() {
   const {
-    business, metrics, latest, loading,
+    business, metrics, latest, loading, setCopilotOpen,
   } = useFinancial();
-  const [copilotOpen, setCopilotOpen] = useState(false);
 
   const { theme } = useTheme();
   const chartGrid = theme === 'dark' ? '#28213b' : theme === 'high-contrast' ? '#b4b4c4' : '#e8e2f2';
@@ -81,7 +78,7 @@ export default function DashboardPage() {
           </div>
           <button
             onClick={() => setCopilotOpen(true)}
-            title="Ask Accora AI anything about your business"
+            title="Ask Accora Core AI anything about your business"
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs md:text-sm font-semibold rounded-xl active:scale-[0.98] transition-all shadow-sm group cursor-pointer font-sans"
           >
             <Sparkles className="w-4 h-4 text-brand-200 group-hover:rotate-12 transition-transform" />
@@ -105,13 +102,13 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-2 shrink-0 font-sans">
               <Link
-                to="/transactions"
+                to="/app/transactions"
                 className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors shadow-sm"
               >
                 Import CSV / Transactions
               </Link>
               <Link
-                to="/settings"
+                to="/app/settings"
                 className="px-3 py-1.5 border border-surface-200 hover:bg-surface-100 rounded-lg transition-colors text-surface-700 font-medium"
               >
                 Settings
@@ -319,12 +316,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* Copilot Panel */}
-      <CopilotPanel
-        open={copilotOpen}
-        onClose={() => setCopilotOpen(false)}
-      />
     </>
   );
 }

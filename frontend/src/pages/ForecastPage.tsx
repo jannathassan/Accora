@@ -129,7 +129,8 @@ export default function ForecastPage() {
             const trend = getTrend(fc.metric);
 
             return (
-              <div key={fc.metric} className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-5 md:p-6 transition-all hover:border-surface-300">
+              <div key={fc.metric} className="relative overflow-hidden bg-surface-card rounded-[var(--radius-card)] border border-surface-200 dark:border-surface-200/50 shadow-[var(--shadow-card)] p-5 md:p-6 transition-all hover:border-brand-400/40 group">
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-600 via-brand-400 to-transparent" />
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-xs font-bold text-surface-500 dark:text-surface-400 uppercase tracking-wider">{label}</h3>
                   {trend && (

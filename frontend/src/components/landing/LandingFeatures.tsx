@@ -1,231 +1,146 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   LayoutDashboard,
   Receipt,
   FileSpreadsheet,
-  Brain,
   TrendingUp,
-  Sliders,
+  HelpCircle,
+  MessageSquare,
+  Target,
+  Users,
   FileText,
-  ArrowRight,
-  Sparkles,
-  Zap,
+  UploadCloud,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function LandingFeatures() {
-  const [activeCategory, setActiveCategory] = useState<'all' | 'ai' | 'finance' | 'strategy'>('all');
-
-  const features = [
+  const tools = [
     {
-      id: 'dashboard',
-      category: 'finance',
-      title: 'Executive Financial Dashboard',
-      badge: 'Core Command',
+      num: 1,
+      name: 'My Money Dashboard',
       icon: LayoutDashboard,
-      iconColor: 'text-violet-400 bg-violet-500/10 border-violet-500/30',
-      description:
-        'A single pane of glass uniting monthly revenue velocity, operating burn limits, net realization margins, and cash flight runway.',
-      highlights: ['Real-time revenue & expense curves', 'Profit margin health benchmark', 'Instant 6-card KPI snapshot'],
-      appRoute: '/app',
+      desc: 'This month’s money in, money out, and kept. Includes a 0–100 health score with plain-English tips and an alerts bell.',
+      highlight: 'Health score & upcoming bills',
     },
     {
-      id: 'transactions',
-      category: 'finance',
-      title: 'Transaction Tracking & Ledger',
-      badge: 'Ledger Engine',
+      num: 2,
+      name: 'Income & Spending Tracker',
       icon: Receipt,
-      iconColor: 'text-sky-400 bg-sky-500/10 border-sky-500/30',
-      description:
-        'Searchable, filterable ledger covering income streams, operating costs, salaries, and vendor tools. Instant categorization to detect where capital is deployed.',
-      highlights: ['Multi-category breakdown', 'Status tracking (Completed, Pending)', 'Instant live ledger recomputation'],
-      appRoute: '/app/transactions',
+      desc: 'Add what comes in and goes out with 1 click. Notes auto-guess your category. Monthly repeats, search, and CSV export.',
+      highlight: 'Smart category auto-guess',
     },
     {
-      id: 'invoices',
-      category: 'finance',
-      title: 'Invoicing & Receivables Management',
-      badge: 'Cash Inflow',
+      num: 3,
+      name: 'Bills & Invoices',
       icon: FileSpreadsheet,
-      iconColor: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30',
-      description:
-        'Track pending and overdue client receivables. Automated subtotal and tax calculation with rapid status updates to prevent cash flow droughts.',
-      highlights: ['Overdue invoice alerts', 'Automated tax calculations', 'Direct cash position updates'],
-      appRoute: '/app/invoices',
+      desc: 'Two clear tabs: money owed to you with 1-click WhatsApp reminders and PDF downloads, plus bills you must pay.',
+      highlight: 'WhatsApp polite reminder button',
     },
     {
-      id: 'insights',
-      category: 'ai',
-      title: 'AI-Powered Insights & Anomaly Detection',
-      badge: 'Proactive AI',
-      icon: Brain,
-      iconColor: 'text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/30',
-      description:
-        'Autonomous detection of unexpected expense spikes, divergent growth rates, and recurring leakages. Synthesizes trends before they impact your balance sheet.',
-      highlights: ['Severity-ranked risk alerts', 'Grounded empirical evidence', 'Direct remedial action directives'],
-      appRoute: '/app/intelligence',
-    },
-    {
-      id: 'forecast',
-      category: 'ai',
-      title: 'Cash-Flow & Revenue Forecasting',
-      badge: 'Predictive Model',
+      num: 4,
+      name: 'Future Forecast',
       icon: TrendingUp,
-      iconColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-      description:
-        'Forward-looking 3-to-6 month projections comparing historical trends with predictive trajectory lines. Anticipate cash lows weeks before they occur.',
-      highlights: ['Dashed projection visualization', 'Confidence boundary modeling', 'Multi-metric forecast (Rev, Exp, Net)'],
-      appRoute: '/app/forecast',
+      desc: 'See the next 3 or 6 months based on your real habits. Plain sentences tell you if cash will grow or run low.',
+      highlight: '3 & 6-month projection line',
     },
     {
-      id: 'scenarios',
-      category: 'strategy',
-      title: 'What-If Scenario Simulator',
-      badge: 'Decision Sandbox',
-      icon: Sliders,
-      iconColor: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
-      description:
-        'Model pivotal business decisions before committing funds. Test hiring a new full-time employee, adjusting client pricing, or absorbing a 20% revenue drop.',
-      highlights: ['Instant delta calculations', 'Impact on Business Health Score', 'One-click quick presets'],
-      appRoute: '/app/scenarios',
+      num: 5,
+      name: '“Can I Afford It?”',
+      icon: HelpCircle,
+      desc: 'Test a big decision before spending: purchases, new rent, weeks without income, or drops. Clear Yes / Be careful / Not now verdict.',
+      highlight: 'Clear verdict with months of cash runway',
     },
     {
-      id: 'reports',
-      category: 'strategy',
-      title: 'Executive Financial Reports',
-      badge: 'Reporting Suite',
+      num: 6,
+      name: 'Ask ACCORA (AI Chat)',
+      icon: MessageSquare,
+      desc: 'Ask questions in everyday words. Every single number is calculated strictly from your own data with zero hallucinations.',
+      highlight: 'Answers grounded in your numbers',
+    },
+    {
+      num: 7,
+      name: 'Budget & Savings Goals',
+      icon: Target,
+      desc: 'Set limits per category with progress bars that warn you at 80%. Track target savings with monthly contribution targets.',
+      highlight: 'Visual alerts at 80% and 100%',
+    },
+    {
+      num: 8,
+      name: 'Committee (BC) Tracker',
+      icon: Users,
+      desc: 'Track traditional Pakistani kameti / committees. Shows what you pay and when you receive your payout turn.',
+      highlight: 'Auto-built monthly schedule',
+    },
+    {
+      num: 9,
+      name: 'Tax Helper',
       icon: FileText,
-      iconColor: 'text-rose-400 bg-rose-500/10 border-rose-500/30',
-      description:
-        'Comprehensive Profit & Loss statements, categorical expense distributions, cash flow statements, and AI-authored executive summaries.',
-      highlights: ['Multi-period P&L view', 'Expense percentage breakdowns', 'Automated AI business narrative'],
-      appRoute: '/app/reports',
+      desc: 'Track Pakistani tax year (July–June) totals with an editable set-aside %. Freelancer bank remittance progress bar and CSV summary.',
+      highlight: 'PKR tax year set-aside tracker',
+    },
+    {
+      num: 10,
+      name: 'Easy Upload',
+      icon: UploadCloud,
+      desc: 'Upload a bank or wallet CSV statement, preview auto-categorized rows, flag duplicates, and import with one click.',
+      highlight: 'Statement preview & duplicate detection',
     },
   ];
 
-  const filteredFeatures = activeCategory === 'all'
-    ? features
-    : features.filter((f) => f.category === activeCategory);
-
   return (
-    <section id="features" className="py-24 bg-[#05091a] relative border-t border-indigo-950/80 overflow-hidden">
-      {/* Background galaxy lighting */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[550px] bg-gradient-to-r from-violet-900/15 via-indigo-900/15 to-transparent blur-[160px] pointer-events-none rounded-full" />
-      <div className="absolute inset-0 cosmic-starfield pointer-events-none opacity-30" />
-
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8">
+    <section id="tools" className="py-16 sm:py-24 bg-white border-t border-b border-[#E2E8F7]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        
         {/* Section Header */}
-        <div className="max-w-3xl mx-auto text-center space-y-4 mb-14 font-sans">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-violet-950/80 border border-violet-500/30 text-violet-300 text-xs font-semibold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-            <span>Complete Financial Intelligence</span>
+        <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16 space-y-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e8f0fe] text-[#0B5CE6] text-xs font-bold uppercase tracking-wider">
+            <span>Complete Suite</span>
           </div>
-
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-            Seven Pillars of Modern Fintech Operations
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1D2839] tracking-tight">
+            10 simple tools in one app
           </h2>
-
-          <p className="text-slate-400 text-base sm:text-lg leading-relaxed">
-            Every capability in Accora is engineered to replace fragmented spreadsheets 
-            with an unified, forward-looking financial operating system.
+          <p className="text-sm sm:text-base text-[#5B6785]">
+            No missing pieces. Everything listed here works today with real calculations and zero fake numbers.
           </p>
-
-          {/* Filter Pills */}
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-2 font-sans">
-            {[
-              { id: 'all', label: 'All 7 Capabilities' },
-              { id: 'ai', label: 'AI Intelligence & Forecasts' },
-              { id: 'finance', label: 'Core Finance & Ledger' },
-              { id: 'strategy', label: 'Decision Strategy & Reports' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveCategory(tab.id as typeof activeCategory)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  activeCategory === tab.id
-                    ? 'bg-violet-500/20 text-violet-200 border border-violet-400/40 shadow-sm shadow-violet-500/20'
-                    : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* Feature Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 font-sans">
-          {filteredFeatures.map((feat) => {
-            const Icon = feat.icon;
+        {/* 10 Tools Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {tools.map((t) => {
+            const Icon = t.icon;
             return (
               <div
-                key={feat.id}
-                className="group relative rounded-2xl bg-[#090e24]/90 border border-violet-500/20 p-6 sm:p-7 hover:border-violet-400/50 hover:bg-[#0c1330] transition-all duration-300 flex flex-col justify-between shadow-lg shadow-black/40 hover:shadow-violet-950/30 overflow-hidden"
+                key={t.num}
+                className="accora-card flex flex-col justify-between border-[#E2E8F7] hover:border-[#0B5CE6] hover:shadow-md transition-all group"
               >
-                {/* Subtle top starlight hover beam */}
-                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-400/0 to-transparent group-hover:via-violet-400/60 transition-all pointer-events-none" />
-
-                <div>
-                  {/* Top Bar of card */}
-                  <div className="flex items-center justify-between mb-5">
-                    <div className={`w-11 h-11 rounded-xl border flex items-center justify-center ${feat.iconColor} group-hover:scale-105 transition-transform`}>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-xl bg-[#F4F7FC] text-[#0B5CE6] flex items-center justify-center font-bold text-sm border border-[#E2E8F7] group-hover:bg-[#0B5CE6] group-hover:text-white transition-colors">
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-900/90 border border-slate-800 text-slate-400">
-                      {feat.badge}
+                    <span className="text-xs font-mono font-bold text-[#5B6785] bg-[#F4F7FC] px-2.5 py-1 rounded-md">
+                      Tool #{t.num}
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-white mb-2 group-hover:text-violet-200 transition-colors">
-                    {feat.title}
-                  </h3>
-
-                  <p className="text-xs sm:text-sm text-slate-400 leading-relaxed mb-5">
-                    {feat.description}
-                  </p>
-
-                  {/* Highlights list */}
-                  <div className="space-y-2 mb-6 pt-3 border-t border-slate-800/60">
-                    {feat.highlights.map((h, i) => (
-                      <div key={i} className="flex items-center gap-2.5 text-xs text-slate-300">
-                        <span className="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0" />
-                        <span>{h}</span>
-                      </div>
-                    ))}
+                  <div>
+                    <h3 className="font-bold text-[#1D2839] text-base group-hover:text-[#0B5CE6] transition-colors">
+                      {t.name}
+                    </h3>
+                    <p className="text-xs text-[#5B6785] mt-1.5 leading-relaxed">
+                      {t.desc}
+                    </p>
                   </div>
                 </div>
 
-                {/* Bottom link to view in app */}
-                <div className="pt-4 border-t border-slate-800/60 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-500 font-sans">Live in Accora App</span>
-                  <Link
-                    to={feat.appRoute}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-violet-300 hover:text-white group-hover:translate-x-0.5 transition-all font-sans"
-                  >
-                    <span>Experience Feature</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+                <div className="mt-4 pt-3 border-t border-[#E2E8F7] flex items-center text-xs text-[#0B5CE6] font-semibold">
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-[#A3D508]" />
+                  <span>{t.highlight}</span>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Bottom Banner Note */}
-        <div className="mt-12 p-6 rounded-2xl bg-gradient-to-r from-violet-950/40 via-slate-900/60 to-indigo-950/40 border border-violet-500/20 flex flex-col sm:flex-row items-center justify-between gap-4 font-sans">
-          <div className="flex items-center gap-3">
-            <Zap className="w-5 h-5 text-amber-400 shrink-0" />
-            <p className="text-xs sm:text-sm text-slate-300">
-              All 7 modules communicate through a unified data bus. An invoice update instantly re-calculates cash flow forecasts and health scores.
-            </p>
-          </div>
-          <Link
-            to="/app"
-            className="shrink-0 px-4 py-2 rounded-xl bg-violet-900/40 hover:bg-violet-800/60 border border-violet-500/30 text-xs font-semibold text-white transition-colors"
-          >
-            Open Unified App
-          </Link>
-        </div>
       </div>
     </section>
   );

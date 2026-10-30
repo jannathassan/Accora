@@ -14,14 +14,15 @@ interface ThemeContextValue {
   setTheme: (t: ThemeMode) => void;
 }
 
-const STORAGE_KEY = 'accora-theme';
+const STORAGE_KEY = 'accora-core-theme';
+const LEGACY_STORAGE_KEY = 'accora-theme';
 const DEFAULT_THEME: ThemeMode = 'light';
 
 const Ctx = createContext<ThemeContextValue | null>(null);
 
 function getInitialTheme(): ThemeMode {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
     if (stored === 'light' || stored === 'dark' || stored === 'high-contrast') return stored;
   } catch { /* SSR or blocked storage */ }
   return DEFAULT_THEME;
@@ -32,12 +33,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const applyTheme = useCallback((t: ThemeMode) => {
     document.documentElement.setAttribute('data-theme', t);
+    document.documentElement.classList.remove('light', 'dark', 'high-contrast');
+    document.documentElement.classList.add(t);
   }, []);
 
   const setTheme = useCallback((t: ThemeMode) => {
     setThemeState(t);
     applyTheme(t);
-    try { localStorage.setItem(STORAGE_KEY, t); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(STORAGE_KEY, t);
+      localStorage.setItem(LEGACY_STORAGE_KEY, t);
+    } catch { /* ignore */ }
   }, [applyTheme]);
 
   // Apply on mount

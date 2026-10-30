@@ -3,8 +3,7 @@ import LandingNavbar from '../components/landing/LandingNavbar';
 import LandingHero from '../components/landing/LandingHero';
 import LandingFeatures from '../components/landing/LandingFeatures';
 import LandingHowItWorks from '../components/landing/LandingHowItWorks';
-import LandingProductPreview from '../components/landing/LandingProductPreview';
-import LandingSecurity from '../components/landing/LandingSecurity';
+import LandingYourData from '../components/landing/LandingYourData';
 import LandingCTA from '../components/landing/LandingCTA';
 import LandingFooter from '../components/landing/LandingFooter';
 import LandingModal, { type ModalType } from '../components/landing/LandingModal';
@@ -12,33 +11,38 @@ import LandingModal, { type ModalType } from '../components/landing/LandingModal
 export default function LandingPage() {
   const [modalType, setModalType] = useState<ModalType>(null);
 
+  const handleSelectPersona = (personaKey: string) => {
+    // Navigates to app with demo persona selected
+    window.location.hash = `#/app?demo=${personaKey}`;
+  };
+
   return (
-    <div className="min-h-screen bg-[#030712] text-slate-100 selection:bg-violet-500/30 selection:text-violet-200 font-sans antialiased overflow-x-hidden relative">
-      {/* Navigation */}
-      <LandingNavbar onOpenModal={setModalType} />
+    <div className="min-h-screen bg-[#F4F7FC] text-[#1D2839] font-sans antialiased overflow-x-hidden relative">
+      {/* 1. Navbar: Home, Tools, How it works, Try demo, Log in, Sign up */}
+      <LandingNavbar
+        onOpenModal={setModalType}
+        onSelectPersona={handleSelectPersona}
+      />
 
       {/* Main Content Sections */}
       <main>
-        {/* 1. Hero Section with Live Dashboard Mockup Preview */}
-        <LandingHero />
+        {/* 2. Hero: "Where did your money go this month?" + "Who it is for" (4 cards) */}
+        <LandingHero onSelectPersona={handleSelectPersona} />
 
-        {/* 2. Seven Core Product Capabilities */}
+        {/* 3. "10 simple tools in one app" */}
         <LandingFeatures />
 
-        {/* 3. How It Works (Methodology) */}
+        {/* 4. "How it works": 3 steps */}
         <LandingHowItWorks />
 
-        {/* 4. Interactive Product Sandbox (AI Copilot, Health Score, Next Move, What-If) */}
-        <LandingProductPreview />
+        {/* 5. Honest "Your data" privacy section */}
+        <LandingYourData />
 
-        {/* 5. Security & Privacy Architecture */}
-        <LandingSecurity />
-
-        {/* 6. High-Impact Call to Action Banner */}
-        <LandingCTA />
+        {/* 6. Friendly Call to Action */}
+        <LandingCTA onTryDemo={() => handleSelectPersona('shop')} />
       </main>
 
-      {/* Footer */}
+      {/* 7. Footer: config/links placeholders */}
       <LandingFooter onOpenModal={setModalType} />
 
       {/* Interactive Modal for About, Privacy, Terms, and Contact */}

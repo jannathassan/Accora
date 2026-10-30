@@ -16,7 +16,8 @@ export default function BusinessSnapshot() {
   const topOpportunity = insights.find((i) => i.type === 'opportunity');
 
   return (
-    <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-6 transition-all hover:border-surface-300 font-sans">
+    <div className="relative overflow-hidden bg-surface-card rounded-[var(--radius-card)] border border-surface-200 dark:border-surface-200/50 shadow-[var(--shadow-card)] p-6 transition-all hover:border-brand-400/40 font-sans group">
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-600 via-brand-400 to-transparent opacity-60" />
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xs font-bold text-surface-500 uppercase tracking-wider flex items-center gap-2">
           <Shield className="w-4 h-4 text-brand-600" />

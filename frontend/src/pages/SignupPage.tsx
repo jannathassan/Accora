@@ -158,7 +158,7 @@ export default function SignupPage() {
               <Sparkles className="w-4 h-4 text-purple-300 group-hover:scale-110 transition-transform" />
             </div>
           </div>
-          <span className="text-xl font-bold tracking-tight text-white font-sans">Accora</span>
+          <span className="text-xl font-bold tracking-tight text-white font-sans">Accora Core</span>
           <span className="hidden sm:inline-flex items-center gap-1 text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300">
             Copilot
           </span>
@@ -480,7 +480,7 @@ export default function SignupPage() {
 
       {/* Footer */}
       <footer className="relative z-10 py-6 text-center text-xs text-slate-500 border-t border-slate-800/80">
-        <p>&copy; {getCurrentYear()} Accora Financial Technologies. Bank-grade 256-bit encryption.</p>
+        <p>&copy; {getCurrentYear()} Accora Core Financial Technologies. Bank-grade 256-bit encryption.</p>
       </footer>
 
       {/* Modals for Terms & Privacy */}

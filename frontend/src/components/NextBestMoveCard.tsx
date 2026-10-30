@@ -8,9 +8,11 @@ export default function NextBestMoveCard() {
   if (!nextBestMove) return null;
 
   return (
-    <div className="relative overflow-hidden rounded-[var(--radius-card)] bg-surface-card border border-brand-200 shadow-[var(--shadow-card)] p-5 md:p-6 transition-all hover:border-brand-300 font-sans">
+    <div className="relative overflow-hidden rounded-[var(--radius-card)] bg-surface-card border border-brand-200 dark:border-brand-500/30 shadow-[var(--shadow-card)] p-5 md:p-6 transition-all hover:border-brand-300 dark:hover:border-brand-400/60 font-sans group">
+      {/* Telemetry top glow */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-600 via-brand-400 to-transparent" />
       {/* Subtle ambient corner warmth */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-brand-200/20 blur-3xl pointer-events-none rounded-full" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-brand-200/20 dark:bg-brand-500/10 blur-3xl pointer-events-none rounded-full" />
 
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-4">

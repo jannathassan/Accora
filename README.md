@@ -1,8 +1,8 @@
-# Accora
+# Accora Core
 
 **Your Business, With Intelligence.**
 
-Accora is an AI-powered financial intelligence platform that transforms raw business data into understanding, predictions, alerts, and recommendations — helping small business owners, freelancers, and solo entrepreneurs make smarter decisions without a financial analyst.
+Accora Core is an AI-powered financial intelligence platform that transforms raw business data into understanding, predictions, alerts, and recommendations — helping small business owners, freelancers, and solo entrepreneurs make smarter decisions without a financial analyst.
 
 ## Tech Stack
 
@@ -17,7 +17,7 @@ Accora is an AI-powered financial intelligence platform that transforms raw busi
 ## Project Structure
 
 ```
-accora/
+accora-core/
 ├── frontend/                 # React + Vite + TypeScript
 │   └── src/
 │       ├── components/       # Reusable UI components

@@ -1,5 +1,5 @@
 /**
- * electron-builder configuration for Accora.
+ * electron-builder configuration for Accora Core.
  *
  * Generates a Windows desktop installer (.exe) from the existing
  * Vite build output and the Python backend source.
@@ -9,8 +9,8 @@
 
 /** @type {import('electron-builder').Configuration} */
 const config = {
-  appId: 'com.accora.app',
-  productName: 'Accora',
+  appId: 'com.accoracore.app',
+  productName: 'Accora Core',
 
   directories: {
     output: 'release',
@@ -49,11 +49,11 @@ const config = {
     allowToChangeInstallationDirectory: true,
     createDesktopShortcut: true,
     createStartMenuShortcut: true,
-    shortcutName: 'Accora',
+    shortcutName: 'Accora Core',
   },
 
   portable: {
-    artifactFileName: 'Accora-Portable.exe',
+    artifactFileName: 'Accora-Core-Portable.exe',
   },
 };
 

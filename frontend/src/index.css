@@ -1,299 +1,204 @@
 @import "tailwindcss";
 
-/* ─── Accora Design System: Aurora Themes (Light Aurora, Dark Aurora, High Contrast Aurora) ─── */
+@variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, .dark, .dark *));
+
+/* ─── Accora Brand Design System ─────────────────────────────────── */
+/* Colors:
+   - Primary blue: #0B5CE6
+   - Navy: #1D2839
+   - Lime: #A3D508 (Always NAVY text on lime, never white)
+   - Coral: #FD614F (spending, warnings, overdue)
+   - Slate navy: #3B4C6B (secondary)
+   - Background: #F4F7FC
+   - Cards: #FFFFFF
+   - Border: #E2E8F7
+   - Muted: #5B6785
+*/
 
 @theme {
-  /* Brand palette: Lavender, Lilac, and Soft to Deep Violet */
-  --color-brand-50: #f5f3ff;
-  --color-brand-100: #ede9fe;
-  --color-brand-200: #ddd6fe;
-  --color-brand-300: #c4b5fd;
-  --color-brand-400: #a78bfa;
-  --color-brand-500: #8b5cf6;
-  --color-brand-600: #7c3aed;
-  --color-brand-700: #6d28d9;
-  --color-brand-800: #5b21b6;
-  --color-brand-900: #4c1d95;
-  --color-brand-950: #2e1065;
+  --color-primary: #0B5CE6;
+  --color-primary-hover: #094bbd;
+  --color-primary-light: #e8f0fe;
+  
+  --color-navy: #1D2839;
+  --color-slate-navy: #3B4C6B;
+  
+  --color-lime: #A3D508;
+  --color-lime-light: #f3fbd9;
+  
+  --color-coral: #FD614F;
+  --color-coral-light: #ffefed;
+  
+  --color-bg-main: #F4F7FC;
+  --color-surface-card: #FFFFFF;
+  --color-border-subtle: #E2E8F7;
+  --color-text-muted: #5B6785;
 
-  /* Galaxy Space Palette (Preserved for Outer Public Homepage) */
-  --color-galaxy-void: #030712;
-  --color-galaxy-space: #060919;
-  --color-galaxy-navy: #0b1026;
-  --color-galaxy-violet: #7c3aed;
-  --color-galaxy-lavender: #c084fc;
-  --color-galaxy-cyan: #38bdf8;
-  --color-galaxy-magenta: #e879f9;
-
-  /* Neutral palette — LIGHT MODE (Luminous pearl-white, soft lavender & subtle lilac) */
-  --color-surface-50: #fbf9fd;
-  --color-surface-100: #f4f0f9;
-  --color-surface-200: #e8e2f2;
-  --color-surface-300: #d6ccdf;
-  --color-surface-400: #a395b3;
-  --color-surface-500: #736484;
-  --color-surface-600: #554766;
-  --color-surface-700: #3c304d;
-  --color-surface-800: #261e33;
-  --color-surface-900: #161122;
-  --color-surface-950: #0d0a14;
-
-  /* Card surface — Crisp Pure White */
-  --color-surface-card: #ffffff;
-
-  /* Semantic Financial Colors (Clean, vibrant, high-readability) */
-  --color-positive: #12b76a;
-  --color-positive-light: #d1fadf;
-  --color-warning: #f79009;
-  --color-warning-light: #fef0c7;
-  --color-risk: #f04438;
-  --color-risk-light: #fee4e2;
-  --color-ai: #7c3aed;
-  --color-ai-light: #ede9fe;
-
-  /* Typography: Original Accora fonts */
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-serif: "Playfair Display", Georgia, Cambria, serif;
+  /* Typography */
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-heading: "Plus Jakarta Sans", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Spacing scale */
-  --spacing-18: 4.5rem;
-  --spacing-88: 22rem;
-  --spacing-128: 32rem;
-
-  /* Border radius */
-  --radius-card: 0.75rem;
-
-  /* Shadows: Soft, clean elevation with restrained lavender tint */
-  --shadow-card: 0 1px 3px rgba(22, 17, 34, 0.05), 0 1px 2px rgba(22, 17, 34, 0.03);
-  --shadow-card-hover: 0 6px 14px -3px rgba(124, 58, 237, 0.08), 0 2px 4px -2px rgba(22, 17, 34, 0.04);
-
-  /* Chart tokens for Light Mode */
-  --color-chart-grid: #e8e2f2;
-  --color-chart-text: #736484;
-  --color-chart-tooltip-bg: #ffffff;
-  --color-chart-tooltip-border: #e8e2f2;
+  /* Radius & Shadows */
+  --radius-card: 14px;
+  --shadow-soft: 0 2px 10px rgba(29, 40, 57, 0.05);
+  --shadow-card-hover: 0 6px 18px rgba(11, 92, 230, 0.08);
 }
 
-/* ─── Theme Overrides (highest cascade priority) ──────── */
+:root {
+  --b: #0B5CE6;
+  --n: #1D2839;
+  --l: #A3D508;
+  --c: #FD614F;
+  --sl: #3B4C6B;
+  --bg: #F4F7FC;
+  --cd: #FFFFFF;
+  --bd: #E2E8F7;
+  --mu: #5B6785;
+}
 
-/* ── DARK MODE (Deep Plum, Charcoal & Violet-Tinted Atmospheres) ───────────── */
 [data-theme="dark"] {
-  --color-surface-50: #0f0d17;
-  --color-surface-100: #171324;
-  --color-surface-200: #28213b;
-  --color-surface-300: #3b3156;
-  --color-surface-400: #675887;
-  --color-surface-500: #9687b8;
-  --color-surface-600: #b9adcf;
-  --color-surface-700: #d6cee4;
-  --color-surface-800: #ece7f5;
-  --color-surface-900: #f6f3fa;
-  --color-surface-950: #ffffff;
-
-  --color-surface-card: #161224;
-
-  --color-brand-400: #c4b5fd;
-  --color-brand-500: #a78bfa;
-  --color-brand-600: #8b5cf6;
-  --color-brand-700: #7c3aed;
-
-  --color-positive: #12b76a;
-  --color-positive-light: #0d3320;
-  --color-warning: #f79009;
-  --color-warning-light: #332808;
-  --color-risk: #f04438;
-  --color-risk-light: #331210;
-  --color-ai: #a78bfa;
-  --color-ai-light: #251842;
-
-  --color-chart-grid: #28213b;
-  --color-chart-text: #9687b8;
-  --color-chart-tooltip-bg: #1d182e;
-  --color-chart-tooltip-border: #3b3156;
-
-  --shadow-card: 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 1px rgba(167, 139, 250, 0.15);
-  --shadow-card-hover: 0 8px 20px -4px rgba(0, 0, 0, 0.5), 0 0 12px rgba(139, 92, 246, 0.15);
+  --bg: #0F1726;
+  --cd: #1D2839;
+  --bd: #2A3A55;
+  --mu: #9FB0D0;
+  --color-bg-main: #0F1726;
+  --color-surface-card: #1D2839;
+  --color-border-subtle: #2A3A55;
+  --color-text-muted: #9FB0D0;
 }
-
-/* ── HIGH CONTRAST MODE (Stark Black/White, Maximum Accessibility) ──────────────────── */
-[data-theme="high-contrast"] {
-  --color-surface-50: #ffffff;
-  --color-surface-100: #f2f2f4;
-  --color-surface-200: #b4b4c4;
-  --color-surface-300: #7c7c90;
-  --color-surface-400: #555566;
-  --color-surface-500: #333344;
-  --color-surface-600: #222233;
-  --color-surface-700: #111122;
-  --color-surface-800: #090910;
-  --color-surface-900: #000000;
-  --color-surface-950: #000000;
-
-  --color-surface-card: #ffffff;
-
-  --color-brand-600: #5b21b6;
-  --color-brand-700: #4c1d95;
-
-  --color-positive: #007a3d;
-  --color-positive-light: #d1fadf;
-  --color-warning: #b86e00;
-  --color-warning-light: #fef0c7;
-  --color-risk: #cc0000;
-  --color-risk-light: #fee4e2;
-  --color-ai: #5b21b6;
-  --color-ai-light: #ede9fe;
-
-  --color-chart-grid: #7c7c90;
-  --color-chart-text: #000000;
-  --color-chart-tooltip-bg: #ffffff;
-  --color-chart-tooltip-border: #000000;
-
-  --shadow-card: 0 0 0 2px #000000;
-  --shadow-card-hover: 0 0 0 3px #5b21b6;
-}
-
-/* ─── Base styles ──────────────────────────────────────────────────── */
 
 html {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg);
+  color: var(--n);
 }
 
 body {
-  background-color: var(--color-surface-50);
-  color: var(--color-surface-900);
-  transition: background-color 0.2s ease, color 0.2s ease;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--n);
+  font-size: 16px;
+  line-height: 1.5;
+  min-height: 100vh;
 }
 
-/* Force theme backgrounds on body/main */
-[data-theme="dark"] body,
-[data-theme="dark"] body > #root,
-[data-theme="dark"] .bg-surface-50 {
-  background-color: #0f0d17;
-  color: #f6f3fa;
+/* Ensure mobile-friendly tap targets */
+button, 
+a, 
+input, 
+select, 
+textarea {
+  touch-action: manipulation;
 }
 
-[data-theme="high-contrast"] body,
-[data-theme="high-contrast"] body > #root,
-[data-theme="high-contrast"] .bg-surface-50 {
-  background-color: #ffffff;
-  color: #000000;
-}
-
-[data-theme="light"] body,
-[data-theme="light"] body > #root,
-[data-theme="light"] .bg-surface-50 {
-  background-color: #fbf9fd;
-  color: #161122;
-}
-
-/* Smooth theme transitions */
-@media (prefers-reduced-motion: no-preference) {
-  *,
-  *::before,
-  *::after {
-    transition-property: background-color, border-color, color, box-shadow;
-    transition-duration: 0.15s;
-    transition-timing-function: ease;
-  }
-}
-
-/* Focus-visible ring for accessibility */
+/* Focus ring for high accessibility */
 :focus-visible {
-  outline: 2px solid var(--color-brand-600);
+  outline: 2px solid var(--b);
   outline-offset: 2px;
 }
 
-/* High-contrast: stronger borders on all cards */
-[data-theme="high-contrast"] .shadow-\[var\(--shadow-card\)\] {
-  border: 2px solid #000000;
+/* Accora Button styles */
+.btn-primary {
+  background-color: #0B5CE6;
+  color: #FFFFFF;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 10px 20px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+.btn-primary:hover {
+  background-color: #094bbd;
 }
 
-/* Dark mode: subtle border on cards with restrained violet glow */
-[data-theme="dark"] .shadow-\[var\(--shadow-card\)\] {
-  border: 1px solid rgba(167, 139, 250, 0.18);
+/* LIME buttons must always have NAVY text, never white */
+.btn-lime {
+  background-color: #A3D508;
+  color: #1D2839 !important;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 10px 20px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+.btn-lime:hover {
+  filter: brightness(0.95);
 }
 
-/* Light mode: subtle delicate lavender border on cards */
-[data-theme="light"] .shadow-\[var\(--shadow-card\)\] {
-  border: 1px solid #e8e2f2;
+.btn-outline {
+  background-color: transparent;
+  color: #1D2839;
+  border: 1.5px solid #E2E8F7;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 10px 20px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.btn-outline:hover {
+  background-color: #F4F7FC;
+  border-color: #0B5CE6;
+  color: #0B5CE6;
 }
 
-/* Toast slide-in animation */
-@keyframes toast-in {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
+.btn-coral {
+  background-color: #ffefed;
+  color: #FD614F;
+  border: 1px solid #ffd4cf;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 10px 16px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
 }
-.toast-enter {
-  animation: toast-in 0.2s ease-out;
+.btn-coral:hover {
+  background-color: #FD614F;
+  color: #FFFFFF;
 }
 
-/* Tabular figures for financial accuracy and alignment */
-.tabular-nums,
-.font-tabular {
+/* Card classes */
+.accora-card {
+  background-color: var(--cd);
+  border: 1px solid var(--bd);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(29, 40, 57, 0.04);
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+.accora-card:hover {
+  box-shadow: 0 4px 14px rgba(29, 40, 57, 0.07);
+}
+
+/* Numeric tabular alignment */
+.tabular-nums {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
 
-/* ─── THEME 1: GALAXY SPACE (Public Homepage & Decorative Cosmic Layer) ─ */
-
-/* Realistic, multi-layered cosmic starfield */
-.cosmic-starfield {
-  background-image: 
-    radial-gradient(1px 1px at 25px 35px, rgba(255, 255, 255, 0.75), rgba(0, 0, 0, 0)),
-    radial-gradient(1.5px 1.5px at 140px 90px, rgba(192, 132, 252, 0.7), rgba(0, 0, 0, 0)),
-    radial-gradient(1px 1px at 260px 190px, rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0)),
-    radial-gradient(2px 2px at 380px 70px, rgba(129, 140, 248, 0.65), rgba(0, 0, 0, 0)),
-    radial-gradient(1px 1px at 490px 240px, rgba(56, 189, 248, 0.55), rgba(0, 0, 0, 0)),
-    radial-gradient(1.5px 1.5px at 620px 160px, rgba(232, 121, 249, 0.5), rgba(0, 0, 0, 0)),
-    radial-gradient(1px 1px at 730px 40px, rgba(255, 255, 255, 0.6), rgba(0, 0, 0, 0));
-  background-repeat: repeat;
-  background-size: 750px 400px;
+/* Toast animations */
+@keyframes slideDownToast {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
 
-/* Cosmic Nebula Atmospheric Gradients */
-.galaxy-nebula-blue {
-  background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.14) 0%, rgba(99, 102, 241, 0.08) 50%, transparent 75%);
-}
-.galaxy-nebula-violet {
-  background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.15) 0%, rgba(192, 132, 252, 0.08) 50%, transparent 75%);
-}
-.galaxy-nebula-magenta {
-  background: radial-gradient(circle at 50% 50%, rgba(232, 121, 249, 0.12) 0%, rgba(124, 58, 237, 0.07) 50%, transparent 75%);
-}
-
-/* Tasteful Planetary Horizon Arc */
-.planetary-horizon {
-  position: relative;
-}
-.planetary-horizon::before {
-  content: "";
-  position: absolute;
-  top: -120px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 140%;
-  height: 240px;
-  background: radial-gradient(ellipse at top, rgba(139, 92, 246, 0.18) 0%, rgba(56, 189, 248, 0.10) 35%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(32px);
-}
-
-/* Cosmic Translucent Surface */
-.cosmic-panel {
-  background: rgba(11, 16, 38, 0.82);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(192, 132, 252, 0.2);
-}
-
-/* Cosmic Glows */
-.glow-galaxy-sm {
-  box-shadow: 0 0 16px -2px rgba(139, 92, 246, 0.3);
-}
-.glow-galaxy-md {
-  box-shadow: 0 0 30px -4px rgba(139, 92, 246, 0.4), 0 0 12px rgba(56, 189, 248, 0.2);
+.toast-box {
+  animation: slideDownToast 0.2s ease-out;
 }

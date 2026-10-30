@@ -1,4 +1,4 @@
-/** Core TypeScript types for Accora frontend. Mirrors backend models. */
+/** Core TypeScript types for Accora Core frontend. Mirrors backend models. */
 
 export type TransactionType = 'income' | 'expense';
 export type TransactionStatus = 'completed' | 'pending' | 'cancelled';

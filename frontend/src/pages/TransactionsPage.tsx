@@ -253,7 +253,7 @@ export default function TransactionsPage() {
       )}
 
       {/* Transaction List */}
-      <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] overflow-hidden">
+      <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 dark:border-surface-200/50 shadow-[var(--shadow-card)] overflow-hidden transition-colors">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="w-6 h-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
@@ -265,7 +265,7 @@ export default function TransactionsPage() {
             <p className="text-xs text-surface-400 mt-1">Try adjusting your filters or add a new transaction.</p>
           </div>
         ) : (
-          <div className="divide-y divide-surface-100">
+          <div className="divide-y divide-surface-100 dark:divide-surface-200/30">
             {filtered.slice(0, 100).map((t) => (
               <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-50 transition-colors group">
                 <div className={clsx(

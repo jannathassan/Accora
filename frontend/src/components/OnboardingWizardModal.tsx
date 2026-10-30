@@ -105,7 +105,7 @@ export default function OnboardingWizardModal() {
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-surface-900">Welcome to Accora</h2>
+              <h2 className="text-base font-bold text-surface-900">Welcome to Accora Core</h2>
               <p className="text-xs text-surface-500">
                 Let's set up your business profile & financial baseline in 3 quick steps.
               </p>
@@ -257,7 +257,7 @@ export default function OnboardingWizardModal() {
               <div className="p-3 bg-brand-50/50 border border-brand-200/50 rounded-xl text-xs text-brand-900 flex items-center gap-2.5">
                 <Wallet className="w-4 h-4 text-brand-600 shrink-0" />
                 <span>
-                  Baseline averages help Accora project runway and cash status before you import transactions.
+                  Baseline averages help Accora Core project runway and cash status before you import transactions.
                 </span>
               </div>
 
@@ -346,7 +346,7 @@ export default function OnboardingWizardModal() {
               <div className="p-3 bg-brand-50/50 border border-brand-200/50 rounded-xl text-xs text-brand-900 flex items-center gap-2.5">
                 <Target className="w-4 h-4 text-brand-600 shrink-0" />
                 <span>
-                  Financing information allows Accora to distinguish cash flow from accounting profit.
+                  Financing information allows Accora Core to distinguish cash flow from accounting profit.
                 </span>
               </div>
 

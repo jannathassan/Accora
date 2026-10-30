@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
+import { BRAND_LOGO, BRAND_MASCOT } from '../../assets/brand';
+import { SOCIAL_LINKS } from '../../config/links';
 import type { ModalType } from './LandingModal';
 
 interface LandingFooterProps {
@@ -7,108 +8,102 @@ interface LandingFooterProps {
 }
 
 export default function LandingFooter({ onOpenModal }: LandingFooterProps) {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="bg-[#02050e] border-t border-indigo-950/80 text-slate-400 py-16 text-xs font-sans">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8">
+    <footer className="bg-white border-t border-[#E2E8F7] text-[#5B6785] py-12 text-sm">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         
-        {/* Top Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 pb-12 border-b border-indigo-950/80">
-          
-          {/* Brand Info */}
-          <div className="col-span-2 space-y-4">
-            <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-950 via-slate-900 to-indigo-950 border border-violet-500/40 flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.2)]">
-                <Sparkles className="w-4 h-4 text-violet-400" />
-              </div>
-              <span className="text-lg font-bold text-white tracking-tight font-sans">Accora</span>
-              <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-300">
-                Copilot
-              </span>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-[#E2E8F7]">
+          {/* Brand Column */}
+          <div className="md:col-span-2 space-y-4">
+            <Link to="/" className="inline-block">
+              <img src={BRAND_LOGO} alt="ACCORA" className="h-9 w-auto object-contain" />
             </Link>
-
-            <p className="text-xs text-slate-400 leading-relaxed max-w-sm font-sans">
-              Your Business, With Intelligence. Accora transforms financial transactions into 
-              forward-looking forecasts, health diagnostics, and prioritized strategic directives.
+            <p className="text-xs text-[#5B6785] max-w-sm leading-relaxed">
+              ACCORA is an AI money helper that transforms income, spending, and bill records into clear answers, forecasts, and savings peace of mind for people across Pakistan.
             </p>
-
-            <div className="pt-2 text-[11px] text-slate-500 font-sans flex items-center gap-2">
-              <Sparkles className="w-3 h-3 text-violet-400" />
-              Deterministic Analytics Core • AI Financial Copilot
+            <div className="flex items-center gap-2 text-xs text-[#1D2839] font-medium">
+              <img src={BRAND_MASCOT} alt="Mascot" className="w-5 h-5 object-contain" />
+              <span>Simple, honest financial intelligence in PKR</span>
             </div>
           </div>
 
-          {/* Column 1: Platform */}
-          <div className="space-y-3 font-sans">
-            <h4 className="font-semibold text-white uppercase tracking-wider text-[11px]">Platform</h4>
-            <ul className="space-y-2 text-xs">
-              <li>
-                <Link to="/app" className="hover:text-violet-300 transition-colors">Executive Dashboard</Link>
-              </li>
-              <li>
-                <Link to="/app/transactions" className="hover:text-violet-300 transition-colors">Transaction Ledger</Link>
-              </li>
-              <li>
-                <Link to="/app/invoices" className="hover:text-violet-300 transition-colors">Invoicing & Receivables</Link>
-              </li>
-              <li>
-                <Link to="/app/reports" className="hover:text-violet-300 transition-colors">Financial Reports</Link>
-              </li>
+          {/* 10 Tools Links */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-[#1D2839] text-xs uppercase tracking-wider">
+              10 Simple Tools
+            </h4>
+            <ul className="space-y-1.5 text-xs text-[#5B6785]">
+              <li><Link to="/app" className="hover:text-[#0B5CE6]">My Money Dashboard</Link></li>
+              <li><Link to="/app/transactions" className="hover:text-[#0B5CE6]">Income & Spending</Link></li>
+              <li><Link to="/app/invoices" className="hover:text-[#0B5CE6]">Bills & Invoices</Link></li>
+              <li><Link to="/app/forecast" className="hover:text-[#0B5CE6]">Future Forecast</Link></li>
+              <li><Link to="/app/scenarios" className="hover:text-[#0B5CE6]">“Can I Afford It?”</Link></li>
+              <li><Link to="/app/ask" className="hover:text-[#0B5CE6]">Ask ACCORA AI</Link></li>
             </ul>
           </div>
 
-          {/* Column 2: Intelligence */}
-          <div className="space-y-3 font-sans">
-            <h4 className="font-semibold text-white uppercase tracking-wider text-[11px]">Intelligence</h4>
-            <ul className="space-y-2 text-xs">
+          {/* Social Links from ONE config file (Section 4) */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-[#1D2839] text-xs uppercase tracking-wider">
+              Connect & Legal
+            </h4>
+            <ul className="space-y-2 text-xs text-[#5B6785]">
               <li>
-                <Link to="/app/intelligence" className="hover:text-violet-300 transition-colors">AI Copilot Insights</Link>
-              </li>
-              <li>
-                <Link to="/app/forecast" className="hover:text-violet-300 transition-colors">Cash Flow Forecast</Link>
-              </li>
-              <li>
-                <Link to="/app/scenarios" className="hover:text-violet-300 transition-colors">What-If Scenarios</Link>
-              </li>
-              <li>
-                <Link to="/app" className="hover:text-violet-300 transition-colors">Health Diagnostics</Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column 3: Company & Legal */}
-          <div className="space-y-3 font-sans">
-            <h4 className="font-semibold text-white uppercase tracking-wider text-[11px]">Company & Legal</h4>
-            <ul className="space-y-2 text-xs">
-              <li>
-                <button
-                  onClick={() => onOpenModal('about')}
-                  className="hover:text-violet-300 transition-colors cursor-pointer text-left"
+                <a
+                  href={SOCIAL_LINKS.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#0B5CE6] transition-colors"
                 >
-                  About Accora
-                </button>
+                  Website (accora-theta.vercel.app)
+                </a>
               </li>
               <li>
+                <a
+                  href={SOCIAL_LINKS.linkedIn}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#0B5CE6] transition-colors"
+                >
+                  LinkedIn
+                </a>
+              </li>
+              <li>
+                <a
+                  href={SOCIAL_LINKS.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#0B5CE6] transition-colors"
+                >
+                  Instagram
+                </a>
+              </li>
+              <li>
+                <a
+                  href={SOCIAL_LINKS.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#0B5CE6] transition-colors"
+                >
+                  Facebook
+                </a>
+              </li>
+              <li className="pt-2">
                 <button
                   onClick={() => onOpenModal('privacy')}
-                  className="hover:text-violet-300 transition-colors cursor-pointer text-left"
+                  className="hover:text-[#0B5CE6] cursor-pointer"
                 >
-                  Security & Privacy
+                  Privacy & Data Policy
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onOpenModal('terms')}
-                  className="hover:text-violet-300 transition-colors cursor-pointer text-left"
+                  className="hover:text-[#0B5CE6] cursor-pointer"
                 >
-                  Terms of Service
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onOpenModal('contact')}
-                  className="hover:text-violet-300 transition-colors cursor-pointer text-left"
-                >
-                  Contact & Support
+                  Terms & FBR Disclaimer
                 </button>
               </li>
             </ul>
@@ -116,14 +111,13 @@ export default function LandingFooter({ onOpenModal }: LandingFooterProps) {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500 font-sans">
-          <p>© 2026 Accora Inc. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <span>Built for growing businesses</span>
-            <span>•</span>
-            <span>Deterministic financial intelligence</span>
-          </div>
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#5B6785]">
+          <p>© {currentYear} ACCORA. Working Prototype for Startup Incubation.</p>
+          <p className="text-[11px] text-center sm:text-right">
+            All amounts in Pakistani Rupee (PKR). Tax estimates are for planning only.
+          </p>
         </div>
+
       </div>
     </footer>
   );

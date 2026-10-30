@@ -159,7 +159,7 @@ export default function CopilotResponse({ data, onFollowUp }: Props) {
       <div className="flex items-center gap-1.5 pt-1">
         <Info className="w-3 h-3 text-surface-300" />
         <span className="text-[10px] text-surface-400">
-          Based on the data currently available in Accora
+          Based on the data currently available in Accora Core
         </span>
       </div>
     </div>

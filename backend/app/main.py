@@ -1,4 +1,4 @@
-"""Accora API — main application entry point."""
+"""Accora Core API — main application entry point."""
 
 from contextlib import asynccontextmanager
 

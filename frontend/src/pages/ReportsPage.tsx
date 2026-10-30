@@ -55,7 +55,7 @@ function exportCSV(tab: string, data: unknown) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `accora-${tab}-report.csv`;
+  a.download = `accora-core-${tab}-report.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -131,8 +131,8 @@ export default function ReportsPage() {
             <div className="flex items-center gap-1">
               {PERIOD_OPTIONS.map((p) => (
                 <button key={p.value} onClick={() => setMonths(p.value)}
-                  className={clsx('px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer',
-                    months === p.value ? 'bg-surface-800 text-white' : 'bg-surface-100 text-surface-500 hover:bg-surface-200')}>
+                  className={clsx('px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer',
+                    months === p.value ? 'bg-brand-600 text-white shadow-2xs' : 'bg-surface-100 text-surface-600 dark:text-surface-300 hover:bg-surface-200')}>
                   {p.label}
                 </button>
               ))}

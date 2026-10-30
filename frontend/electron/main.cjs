@@ -1,5 +1,5 @@
 /**
- * Accora — Electron main process.
+ * Accora Core — Electron main process.
  *
  * Responsibilities:
  *   1. Create and manage the application window.
@@ -50,7 +50,7 @@ function createWindow() {
     height: 900,
     minWidth: 800,
     minHeight: 600,
-    title: 'Accora',
+    title: 'Accora Core',
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),

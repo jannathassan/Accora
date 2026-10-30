@@ -13,14 +13,15 @@ export default function ForecastSection() {
   const { theme } = useTheme();
   if (!forecast.length) return null;
 
-  const chartGrid = theme === 'dark' ? '#252a36' : theme === 'high-contrast' ? '#cccccc' : '#e4e7ec';
-  const chartText = theme === 'dark' ? '#8892a6' : theme === 'high-contrast' ? '#333333' : '#667085';
-  const tooltipBg = theme === 'dark' ? '#1a1e28' : '#ffffff';
-  const tooltipBorder = theme === 'dark' ? '#252a36' : theme === 'high-contrast' ? '#000000' : '#e4e7ec';
+  const chartGrid = theme === 'dark' ? '#28213b' : theme === 'high-contrast' ? '#cccccc' : '#e8e2f2';
+  const chartText = theme === 'dark' ? '#9687b8' : theme === 'high-contrast' ? '#333333' : '#736484';
+  const tooltipBg = theme === 'dark' ? '#1d182e' : '#ffffff';
+  const tooltipBorder = theme === 'dark' ? '#3b3156' : theme === 'high-contrast' ? '#000000' : '#e8e2f2';
   const strokeColor = '#7c3aed';
 
   return (
-    <div className="bg-surface-card rounded-[var(--radius-card)] border border-surface-200 shadow-[var(--shadow-card)] p-6 transition-all hover:border-surface-300 font-sans">
+    <div className="relative overflow-hidden bg-surface-card rounded-[var(--radius-card)] border border-surface-200 dark:border-surface-200/50 shadow-[var(--shadow-card)] p-6 transition-all hover:border-brand-400/40 font-sans group">
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-600 via-brand-400 to-transparent opacity-60" />
       <div className="flex items-center justify-between mb-5 pb-3 border-b border-surface-200/80">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-brand-100 border border-brand-200 text-brand-600 flex items-center justify-center">

@@ -24,7 +24,7 @@ export default function LandingSecurity() {
       icon: Database,
       title: 'Private Ledger Ownership & Custody',
       description:
-        'Accora is architected for isolated multi-tenant vaults. User databases and financial records are strictly isolated; one organization cannot access another organization’s data.',
+        'Accora Core is architected for isolated multi-tenant vaults. User databases and financial records are strictly isolated; one organization cannot access another organization’s data.',
     },
     {
       icon: FileLock2,
@@ -54,7 +54,7 @@ export default function LandingSecurity() {
           </h2>
 
           <p className="text-slate-400 text-base sm:text-lg leading-relaxed">
-            Financial intelligence demands uncompromising discretion. Accora enforces 
+            Financial intelligence demands uncompromising discretion. Accora Core enforces 
             strict boundaries between your company books, client browsers, and external AI providers.
           </p>
         </div>

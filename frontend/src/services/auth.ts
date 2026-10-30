@@ -1,5 +1,5 @@
 /**
- * Authentication Service for Accora.
+ * Authentication Service for Accora Core.
  * 
  * Handles user input validation, credential transmission to the FastAPI backend,
  * secure token storage, and session state.
@@ -76,12 +76,14 @@ export function validatePassword(password: string): PasswordValidationResult {
   };
 }
 
-const STORAGE_KEY_USER = 'accora_auth_user';
-const STORAGE_KEY_TOKEN = 'accora_auth_token';
+const STORAGE_KEY_USER = 'accora_core_auth_user';
+const STORAGE_KEY_TOKEN = 'accora_core_auth_token';
+const LEGACY_STORAGE_KEY_USER = 'accora_auth_user';
+const LEGACY_STORAGE_KEY_TOKEN = 'accora_auth_token';
 
 export function getStoredUser(): User | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_USER);
+    const raw = localStorage.getItem(STORAGE_KEY_USER) || localStorage.getItem(LEGACY_STORAGE_KEY_USER);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -90,7 +92,7 @@ export function getStoredUser(): User | null {
 
 export function getStoredToken(): string | null {
   try {
-    return localStorage.getItem(STORAGE_KEY_TOKEN);
+    return localStorage.getItem(STORAGE_KEY_TOKEN) || localStorage.getItem(LEGACY_STORAGE_KEY_TOKEN);
   } catch {
     return null;
   }
@@ -104,6 +106,8 @@ export function clearSession(): void {
   try {
     localStorage.removeItem(STORAGE_KEY_USER);
     localStorage.removeItem(STORAGE_KEY_TOKEN);
+    localStorage.removeItem(LEGACY_STORAGE_KEY_USER);
+    localStorage.removeItem(LEGACY_STORAGE_KEY_TOKEN);
   } catch {
     // ignore
   }
@@ -113,6 +117,8 @@ export function setSession(token: string, user: User): void {
   try {
     localStorage.setItem(STORAGE_KEY_TOKEN, token);
     localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+    localStorage.setItem(LEGACY_STORAGE_KEY_TOKEN, token);
+    localStorage.setItem(LEGACY_STORAGE_KEY_USER, JSON.stringify(user));
   } catch {
     // ignore
   }

@@ -1,8 +1,8 @@
 <#
-  Accora — One-click development / demo startup.
+  Accora Core — One-click development / demo startup.
 
   Starts both the Python backend (FastAPI on port 8000) and the
-  Vite frontend dev server (port 5173), then opens Accora in the
+  Vite frontend dev server (port 5173), then opens Accora Core in the
   default browser.
 
   Usage:
@@ -18,7 +18,7 @@ $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 
 Write-Host ''
-Write-Host '  Accora — Starting...' -ForegroundColor Cyan
+Write-Host '  Accora Core — Starting...' -ForegroundColor Cyan
 Write-Host ''
 
 # ── 1. Start backend ──────────────────────────────────────────────
@@ -73,13 +73,13 @@ Write-Host '        Frontend is starting.' -ForegroundColor Green
 # ── 3. Open browser ───────────────────────────────────────────────
 if (-not $NoBrowser) {
     Write-Host ''
-    Write-Host '  Opening Accora in your browser...' -ForegroundColor Cyan
+    Write-Host '  Opening Accora Core in your browser...' -ForegroundColor Cyan
     Start-Sleep -Seconds 2
     Start-Process 'http://127.0.0.1:5173'
 }
 
 Write-Host ''
-Write-Host '  Accora is running!' -ForegroundColor Green
+Write-Host '  Accora Core is running!' -ForegroundColor Green
 Write-Host '  Frontend:  http://127.0.0.1:5173' -ForegroundColor White
 Write-Host '  Backend:   http://127.0.0.1:8000' -ForegroundColor White
 Write-Host ''
@@ -97,5 +97,5 @@ try {
     if (-not $frontend.HasExited) {
         Stop-Process -Id $frontend.Id -Force -ErrorAction SilentlyContinue
     }
-    Write-Host '  Accora stopped.' -ForegroundColor White
+    Write-Host '  Accora Core stopped.' -ForegroundColor White
 }
