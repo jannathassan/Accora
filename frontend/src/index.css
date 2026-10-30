@@ -193,6 +193,13 @@ textarea {
   font-feature-settings: "tnum" 1;
 }
 
+/* Prevent iOS Safari auto-zoom on input focus */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Toast animations */
 @keyframes slideDownToast {
   from { opacity: 0; transform: translate(-50%, -20px); }

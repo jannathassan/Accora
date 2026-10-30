@@ -1,0 +1,22 @@
+{
+  "short_name": "ACCORA",
+  "name": "ACCORA — AI Money Helper",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/mascot.png",
+      "type": "image/png",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/#/app",
+  "background_color": "#F4F7FC",
+  "theme_color": "#0B5CE6",
+  "display": "standalone",
+  "orientation": "portrait"
+}
