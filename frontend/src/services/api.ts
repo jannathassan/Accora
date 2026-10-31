@@ -162,6 +162,14 @@ export const getForecast = () => request<Forecast[]>('/forecast');
 export const getSmartActions = () => request<SmartAction[]>('/actions');
 
 // AI
+export interface AIStatusResponse {
+  status: string;
+  provider: string;
+  model: string;
+  configured: boolean;
+}
+
+export const getAIStatus = () => request<AIStatusResponse>('/ai/status');
 export const chatWithAI = (req: ChatRequest) =>
   request<ChatResponse>('/ai/chat', { method: 'POST', body: JSON.stringify(req) });
 export const getAIInsights = () => request<AIInsight[]>('/ai/insights');

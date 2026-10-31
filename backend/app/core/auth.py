@@ -53,3 +53,22 @@ async def get_current_user(
         )
 
     return user
+
+
+async def get_optional_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security_scheme),
+) -> User | None:
+    """Return the authenticated User if a valid Bearer session token is present; otherwise None."""
+    if not credentials or not credentials.credentials:
+        return None
+
+    token = credentials.credentials
+    session = db_get_session(token)
+    if not session:
+        return None
+
+    if is_expired(session["expires_at"]):
+        db_delete_session(token)
+        return None
+
+    return db_get_user_by_id(session["user_id"])

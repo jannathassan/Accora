@@ -265,6 +265,7 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     context: str = ""  # optional extra context
+    history: list[ChatMessage] = []
 
 
 class ChatResponse(BaseModel):

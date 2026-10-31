@@ -23,6 +23,8 @@ import {
   Undo2,
 } from 'lucide-react';
 import OnboardingWizardModal from '../components/OnboardingWizardModal';
+import CopilotPanel from '../components/CopilotPanel';
+import { Sparkles } from 'lucide-react';
 import { sanitizeCsvField } from '../utils/format';
 
 // Exact 10 Tools (Section 3)
@@ -59,6 +61,7 @@ export default function AppLayout() {
   const location = useLocation();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAlertsDropdown, setShowAlertsDropdown] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -300,6 +303,16 @@ export default function AppLayout() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* AI Co-Pilot drawer trigger */}
+            <button
+              onClick={() => setCopilotOpen(true)}
+              className="btn-outline text-xs py-1.5 px-3 flex items-center gap-1.5 cursor-pointer text-[#0B5CE6] border-[#0B5CE6]/30 hover:bg-[#e8f0fe] font-bold shadow-2xs"
+              title="Open Accora AI Co-Pilot"
+            >
+              <Sparkles className="w-4 h-4 text-[#0B5CE6]" />
+              <span className="hidden sm:inline">AI Co-Pilot</span>
+            </button>
+
             {/* Quick "+ Add" button */}
             <button
               onClick={() => setShowAddModal(true)}
@@ -664,6 +677,9 @@ export default function AppLayout() {
 
       {/* ── Onboarding Wizard Modal ── */}
       <OnboardingWizardModal isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
+
+      {/* ── Slide-out Copilot Panel ── */}
+      <CopilotPanel open={copilotOpen} onClose={() => setCopilotOpen(false)} />
 
     </div>
   );

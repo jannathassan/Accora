@@ -36,6 +36,7 @@ DEMO_BUSINESS = Business(
     currency="PKR",
     monthly_revenue_range="PKR 1,000,000 – 2,000,000",
 )
+DEMO_BUSINESS_ID = DEMO_BUSINESS.id
 
 DEMO_USER = User(
     id=uuid4(),

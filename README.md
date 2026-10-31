@@ -88,12 +88,29 @@ The Vite dev server proxies `/api` requests to the backend at `localhost:8000`.
 
 Copy `.env.example` to `.env` and configure:
 
-| Variable                | Default | Description                        |
-| ----------------------- | ------- | ---------------------------------- |
-| `ACCORA_DEBUG`          | `true`  | Enable debug mode                  |
-| `ACCORA_DEMO_MODE`      | `true`  | Use demo data                      |
-| `ACCORA_AI_PROVIDER`    | `mock`  | `mock` or `alibaba`                |
-| `ACCORA_ALIBABA_API_KEY`| —       | Alibaba Cloud API key              |
+| Variable                | Default          | Description                                  |
+| ----------------------- | ---------------- | -------------------------------------------- |
+| `ACCORA_DEBUG`          | `true`           | Enable debug mode                            |
+| `ACCORA_DEMO_MODE`      | `true`           | Use demo data                                |
+| `ACCORA_AI_PROVIDER`    | `gemini`         | `gemini` (Google AI) or `mock` (offline)     |
+| `ACCORA_GEMINI_API_KEY` | —                | Google Gemini API key (Free tier supported)  |
+| `ACCORA_GEMINI_MODEL`   | `gemini-1.5-flash` | Gemini model (`gemini-1.5-flash`, `gemini-2.5-flash`, etc.) |
+
+### Google Gemini AI Integration
+
+Accora AI Co-Pilot uses Google Gemini to provide conversational intelligence, context-aware reasoning, multi-turn follow-ups, and proactive financial insights.
+
+1. Obtain a free API key at **[Google AI Studio](https://aistudio.google.com/app/apikey)**.
+2. In your `.env` file, set:
+   ```bash
+   ACCORA_AI_PROVIDER=gemini
+   ACCORA_GEMINI_API_KEY=your_gemini_api_key_here
+   ACCORA_GEMINI_MODEL=gemini-1.5-flash
+   ```
+3. Test your connection:
+   ```bash
+   python test_gemini_connection.py
+   ```
 
 ## Current Status (Phase 1)
 

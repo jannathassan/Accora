@@ -74,7 +74,7 @@ interface FinancialActions {
   updateBusiness: (b: Partial<Business>) => Promise<Business>;
   importTransactionsBatch: (req: TransactionBatchImportRequest) => Promise<TransactionBatchImportResponse>;
   updateInsightStatus: (id: string, status: string) => Promise<void>;
-  askAI: (message: string) => Promise<ChatResponse>;
+  askAI: (message: string, history?: { role: 'user' | 'model' | 'assistant'; content: string }[]) => Promise<ChatResponse>;
 }
 
 type FinancialContext = FinancialState & FinancialActions;
@@ -228,9 +228,9 @@ export function FinancialProvider({ children }: { children: ReactNode }) {
     await api.updateInsightStatus(id, status);
   }, []);
 
-  const askAI = useCallback(async (message: string): Promise<ChatResponse> => {
+  const askAI = useCallback(async (message: string, history?: { role: 'user' | 'model' | 'assistant'; content: string }[]): Promise<ChatResponse> => {
     try {
-      return await api.chatWithAI({ message });
+      return await api.chatWithAI({ message, history });
     } catch (e) {
       return {
         answer: e instanceof Error

@@ -159,9 +159,15 @@ export interface Forecast {
   generated_at: string;
 }
 
+export interface ChatMessageItem {
+  role: 'user' | 'model' | 'assistant';
+  content: string;
+}
+
 export interface ChatRequest {
   message: string;
   context?: string;
+  history?: ChatMessageItem[];
 }
 
 export interface ChatResponse {

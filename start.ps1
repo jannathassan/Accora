@@ -61,7 +61,8 @@ if ($ready) {
 $frontendDir = Join-Path $root 'frontend'
 Write-Host '  [2/2] Starting frontend on http://127.0.0.1:5173' -ForegroundColor White
 
-$frontend = Start-Process -FilePath npx `
+$npxCmd = if (Get-Command 'npx.cmd' -ErrorAction SilentlyContinue) { 'npx.cmd' } else { 'npx' }
+$frontend = Start-Process -FilePath $npxCmd `
     -ArgumentList 'vite','--host','127.0.0.1','--port','5173' `
     -WorkingDirectory $frontendDir `
     -PassThru `

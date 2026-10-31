@@ -18,7 +18,8 @@ from app.analytics.engine import (
     generate_notifications,
     generate_pnl_report,
 )
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, get_optional_user
+from app.core.config import settings
 from app.core.database import (
     db_create_invoice,
     db_create_transaction,
@@ -31,6 +32,7 @@ from app.core.database import (
     db_get_notifications,
     db_get_settings,
     db_get_transactions,
+    db_get_user_by_email,
     db_mark_all_notifications_read,
     db_mark_notification_read,
     db_set_insight_status,
@@ -545,19 +547,57 @@ async def get_insight_statuses(current_user: User = Depends(get_current_user)):
 # AI Copilot & What-If
 # ---------------------------------------------------------------------------
 
+@router.get("/ai/status")
+async def ai_status():
+    """Return the active AI provider status and model configuration."""
+    provider = get_ai_provider()
+    is_gemini = type(provider).__name__ == "GeminiAIProvider"
+    provider_name = "gemini" if is_gemini else ("alibaba" if settings.ai_provider == "alibaba" else "mock")
+    return {
+        "status": "online",
+        "provider": provider_name,
+        "model": settings.gemini_model_id if is_gemini else "rule-based",
+        "configured": bool(settings.gemini_api_key),
+    }
+
+
 @router.post("/ai/chat", response_model=ChatResponse)
 async def ai_chat(
     request: ChatRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_optional_user),
 ):
-    txns = db_get_transactions(current_user.business_id)
-    biz = db_get_business(current_user.business_id)
-    metrics = compute_monthly_metrics(txns, business=biz)
-    invs = db_get_invoices(current_user.business_id)
+    biz = None
+    txns = []
+    invs = []
+    metrics = []
+
+    if current_user:
+        txns = db_get_transactions(current_user.business_id)
+        biz = db_get_business(current_user.business_id)
+        metrics = compute_monthly_metrics(txns, business=biz)
+        invs = db_get_invoices(current_user.business_id)
+    else:
+        # Check if demo business exists in DB
+        demo_user_row = db_get_user_by_email("ayesha@brightpixel.pk")
+        if demo_user_row and demo_user_row["business_id"]:
+            biz = db_get_business(demo_user_row["business_id"])
+        if not biz:
+            from app.data.demo import DEMO_BUSINESS_ID
+            biz = db_get_business(DEMO_BUSINESS_ID)
+        if biz:
+            txns = db_get_transactions(biz.id)
+            metrics = compute_monthly_metrics(txns, business=biz)
+            invs = db_get_invoices(biz.id)
 
     provider = get_ai_provider()
-    context = _build_financial_context(biz, metrics, invs)
-    return await provider.chat(request, context)
+    server_context = _build_financial_context(biz, metrics, invs, txns)
+
+    if request.context and request.context.strip():
+        full_context = f"{server_context}\n\nClient Session Context:\n{request.context.strip()}"
+    else:
+        full_context = server_context
+
+    return await provider.chat(request, full_context)
 
 
 @router.get("/ai/insights", response_model=list[AIInsight])
@@ -589,6 +629,7 @@ def _build_financial_context(
     business: Business | None,
     metrics: list[FinancialMetrics],
     invoices: list[Invoice],
+    transactions: list[Transaction] | None = None,
 ) -> str:
     """Build dynamic context for AI copilot based strictly on the user's data."""
     biz_name = business.name if business else "Business"
@@ -619,40 +660,53 @@ def _build_financial_context(
 
     if not metrics:
         lines.append("Status: No transactions recorded yet. Calculations reflect onboarding baseline profile.")
-        return "\n".join(lines)
-
-    latest = metrics[-1]
-    if latest.is_estimated:
-        lines.append("Data Mode: ESTIMATED BASELINE from Business Profile Setup (no actual transaction records imported yet).")
     else:
-        lines.append("Data Mode: ACTUAL HISTORICAL LEDGER based on recorded transactions.")
+        latest = metrics[-1]
+        if latest.is_estimated:
+            lines.append("Data Mode: ESTIMATED BASELINE from Business Profile Setup (no actual transaction records imported yet).")
+        else:
+            lines.append("Data Mode: ACTUAL HISTORICAL LEDGER based on recorded transactions.")
 
-    inv_summary = compute_invoice_summary(invoices)
-    lines.extend([
-        f"Latest period: {latest.period}",
-        f"Revenue: {biz_curr} {latest.revenue:,.0f}",
-        f"Expenses: {biz_curr} {latest.expenses:,.0f}",
-        f"Profit: {biz_curr} {latest.profit:,.0f}",
-        f"Margin: {latest.margin * 100:.1f}%",
-        f"Operating Cash Flow: {biz_curr} {latest.operating_cash_flow:,.0f}",
-        f"Financing Cash Flow (Debt Service): {biz_curr} {latest.financing_cash_flow:,.0f}",
-        f"Net Cash flow: {biz_curr} {latest.cash_flow:,.0f}",
-        f"Cash balance: {biz_curr} {latest.cash_balance:,.0f}",
-        f"Outstanding payments: {biz_curr} {latest.outstanding:,.0f}",
-        "",
-        f"Invoices: {inv_summary.count} total, {inv_summary.overdue_count} overdue ({biz_curr} {inv_summary.total_overdue:,.0f}), {inv_summary.pending_count} pending ({biz_curr} {inv_summary.total_pending:,.0f})",
-        "",
-        "Expense breakdown (latest):",
-    ])
-    for cat, amt in sorted(latest.expense_breakdown.items(), key=lambda x: -x[1]):
-        pct = (amt / latest.expenses * 100) if latest.expenses else 0
-        lines.append(f"  {cat}: {biz_curr} {amt:,.0f} ({pct:.0f}%)")
-    lines.append("")
-    lines.append("Monthly trend (last 6 months):")
-    for m in metrics[-6:]:
-        est_tag = " [ESTIMATED]" if m.is_estimated else ""
-        lines.append(
-            f"  {m.period}{est_tag}: Rev {biz_curr} {m.revenue:,.0f} | Exp {biz_curr} {m.expenses:,.0f} | "
-            f"Profit {biz_curr} {m.profit:,.0f} | Margin {m.margin * 100:.1f}% | Cash {biz_curr} {m.cash_balance:,.0f}"
-        )
+        inv_summary = compute_invoice_summary(invoices)
+        lines.extend([
+            f"Latest period: {latest.period}",
+            f"Revenue: {biz_curr} {latest.revenue:,.0f}",
+            f"Expenses: {biz_curr} {latest.expenses:,.0f}",
+            f"Profit: {biz_curr} {latest.profit:,.0f}",
+            f"Margin: {latest.margin * 100:.1f}%",
+            f"Operating Cash Flow: {biz_curr} {latest.operating_cash_flow:,.0f}",
+            f"Financing Cash Flow (Debt Service): {biz_curr} {latest.financing_cash_flow:,.0f}",
+            f"Net Cash flow: {biz_curr} {latest.cash_flow:,.0f}",
+            f"Cash balance: {biz_curr} {latest.cash_balance:,.0f}",
+            f"Outstanding payments: {biz_curr} {latest.outstanding:,.0f}",
+            "",
+            f"Invoices: {inv_summary.count} total, {inv_summary.overdue_count} overdue ({biz_curr} {inv_summary.total_overdue:,.0f}), {inv_summary.pending_count} pending ({biz_curr} {inv_summary.total_pending:,.0f})",
+            "",
+            "Expense breakdown (latest):",
+        ])
+        for cat, amt in sorted(latest.expense_breakdown.items(), key=lambda x: -x[1]):
+            pct = (amt / latest.expenses * 100) if latest.expenses else 0
+            lines.append(f"  {cat}: {biz_curr} {amt:,.0f} ({pct:.0f}%)")
+        lines.append("")
+        lines.append("Monthly trend (last 6 months):")
+        for m in metrics[-6:]:
+            est_tag = " [ESTIMATED]" if m.is_estimated else ""
+            lines.append(
+                f"  {m.period}{est_tag}: Rev {biz_curr} {m.revenue:,.0f} | Exp {biz_curr} {m.expenses:,.0f} | "
+                f"Profit {biz_curr} {m.profit:,.0f} | Margin {m.margin * 100:.1f}% | Cash {biz_curr} {m.cash_balance:,.0f}"
+            )
+
+    if invoices:
+        unpaid = [inv for inv in invoices if inv.status != InvoiceStatus.PAID]
+        if unpaid:
+            lines.append("\nUnpaid / Actionable Invoices:")
+            for inv in unpaid[:8]:
+                c_name = getattr(inv, "client_name", getattr(inv, "client", "Client"))
+                lines.append(f"  - {c_name}: {biz_curr} {inv.total:,.0f} (Status: {inv.status}, Due: {inv.due_date})")
+
+    if transactions:
+        lines.append("\nRecent Transaction History:")
+        for t in transactions[-8:]:
+            lines.append(f"  - {t.date}: {t.type.upper()} {biz_curr} {t.amount:,.0f} [{t.category}] {t.description}")
+
     return "\n".join(lines)

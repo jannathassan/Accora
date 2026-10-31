@@ -640,6 +640,10 @@ def db_get_business(business_id: str | UUID, db_path: str | None = None) -> Busi
         )
 
 
+# Alias for backward compatibility / API callers
+db_get_business_by_id = db_get_business
+
+
 def db_update_business(
     business_id: str | UUID,
     update: BusinessUpdate,

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { useFinancial } from '../store/FinancialStore';
+import { useMoneyStore } from '../store/moneyStore';
+import { chatWithAI, getAIStatus, type AIStatusResponse } from '../services/api';
 import type { ChatResponse } from '../types';
 import CopilotResponse from './CopilotResponse';
 import { X, Send, Sparkles, Loader2 } from 'lucide-react';
@@ -20,26 +21,84 @@ const SUGGESTED = [
 ];
 
 export default function CopilotPanel({ open, onClose }: Props) {
-  const { askAI } = useFinancial();
+  const moneyStore = useMoneyStore();
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string; data?: ChatResponse }[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [aiStatus, setAiStatus] = useState<AIStatusResponse | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (open) {
+      getAIStatus()
+        .then((s) => setAiStatus(s))
+        .catch(() => setAiStatus(null));
+    }
+  }, [open]);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, loading]);
+
+  const buildContext = () => {
+    const { userName, userRole, balance, monthIn, monthOut, taxRate, transactions, invoices, bills } = moneyStore;
+    const lines = [
+      `User Profile: ${userName} (${userRole})`,
+      `Currency: PKR`,
+      `Current Cash Balance: PKR ${balance.toLocaleString()}`,
+      `This Month Income: PKR ${monthIn.toLocaleString()}`,
+      `This Month Spending: PKR ${monthOut.toLocaleString()}`,
+      `Tax Rate: ${taxRate}%`,
+    ];
+    if (invoices && invoices.length > 0) {
+      const unpaidInvs = invoices.filter((i) => !i.paid);
+      lines.push(`Unpaid Invoices (${unpaidInvs.length}):`);
+      unpaidInvs.slice(0, 5).forEach((i) => {
+        lines.push(`  - ${i.client}: PKR ${i.amount.toLocaleString()} (Due: ${i.dueDate})`);
+      });
+    }
+    if (bills && bills.length > 0) {
+      const unpaidBills = bills.filter((b) => !b.paid);
+      lines.push(`Unpaid Bills (${unpaidBills.length}):`);
+      unpaidBills.slice(0, 5).forEach((b) => {
+        lines.push(`  - ${b.name}: PKR ${b.amount.toLocaleString()} (Due: ${b.dueDate})`);
+      });
+    }
+    if (transactions && transactions.length > 0) {
+      lines.push(`Recent Transactions:`);
+      transactions.slice(-5).forEach((t) => {
+        lines.push(`  - ${t.date}: ${t.type.toUpperCase()} PKR ${t.amount.toLocaleString()} [${t.category}] ${t.note}`);
+      });
+    }
+    return lines.join('\n');
+  };
 
   const send = async (text: string) => {
     if (!text.trim() || loading) return;
-    setMessages((m) => [...m, { role: 'user', text }]);
+    const userMsg = { role: 'user' as const, text };
+    setMessages((m) => [...m, userMsg]);
     setInput('');
     setLoading(true);
+
     try {
-      const res = await askAI(text);
+      // Build conversation history for multi-turn Gemini reasoning
+      const history = messages.map((m) => ({
+        role: (m.role === 'ai' ? 'model' : 'user') as 'user' | 'model',
+        content: m.text,
+      }));
+
+      const res = await chatWithAI({
+        message: text,
+        context: buildContext(),
+        history,
+      });
+
       setMessages((m) => [...m, { role: 'ai', text: res.answer, data: res }]);
     } catch {
-      setMessages((m) => [...m, { role: 'ai', text: 'I was unable to process your request. Please try again.' }]);
+      setMessages((m) => [
+        ...m,
+        { role: 'ai', text: 'I was unable to process your request at this moment. Please check your backend connection and try again.' },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -55,40 +114,48 @@ export default function CopilotPanel({ open, onClose }: Props) {
       {/* Panel */}
       <div
         className={clsx(
-          'fixed top-0 right-0 h-full w-full sm:w-[420px] bg-surface-card shadow-2xl z-50 flex flex-col transition-transform duration-300',
+          'fixed top-0 right-0 h-full w-full sm:w-[440px] bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 border-l border-[#E2E8F7]',
           open ? 'translate-x-0' : 'translate-x-full',
         )}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-5 h-14 border-b border-surface-200 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-ai flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
+        <div className="flex items-center gap-3 px-5 h-16 border-b border-[#E2E8F7] shrink-0 bg-[#F4F7FC]">
+          <div className="w-9 h-9 rounded-xl bg-[#0B5CE6] flex items-center justify-center shadow-xs">
+            <Sparkles className="w-4.5 h-4.5 text-white" />
           </div>
           <div className="flex-1">
-            <h2 className="text-sm font-semibold text-surface-900">Ask Accora Core</h2>
-            <p className="text-[10px] text-surface-400">AI Financial Copilot</p>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-bold text-[#1D2839]">Ask Accora AI Co-Pilot</h2>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            </div>
+            <p className="text-[11px] text-[#5B6785]">
+              {aiStatus?.provider === 'gemini' ? `Powered by Gemini (${aiStatus.model})` : 'AI Financial Intelligence'}
+            </p>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-surface-100 rounded-lg transition-colors">
-            <X className="w-4.5 h-4.5 text-surface-500" />
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-white rounded-lg transition-colors text-[#5B6785] hover:text-[#1D2839] cursor-pointer"
+          >
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#FAFBFF]">
           {messages.length === 0 && (
             <div className="text-center py-8">
-              <div className="w-12 h-12 rounded-2xl bg-ai-light flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-6 h-6 text-ai" />
+              <div className="w-12 h-12 rounded-2xl bg-[#e8f0fe] flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-6 h-6 text-[#0B5CE6]" />
               </div>
-              <h3 className="text-sm font-semibold text-surface-900 mb-1">Ask me anything about your finances</h3>
-              <p className="text-xs text-surface-400 mb-6">I analyze your data to give data-grounded answers.</p>
+              <h3 className="text-sm font-bold text-[#1D2839] mb-1">Ask me anything about your finances</h3>
+              <p className="text-xs text-[#5B6785] mb-6">Powered by Google Gemini and grounded in your active records.</p>
 
               <div className="space-y-2">
                 {SUGGESTED.map((q) => (
                   <button
                     key={q}
                     onClick={() => send(q)}
-                    className="block w-full text-left text-xs px-3 py-2.5 rounded-lg bg-surface-50 hover:bg-surface-100 text-surface-700 transition-colors"
+                    className="block w-full text-left text-xs px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#e8f0fe] text-[#1D2839] hover:text-[#0B5CE6] border border-[#E2E8F7] transition-colors shadow-2xs cursor-pointer font-medium"
                   >
                     {q}
                   </button>
@@ -101,10 +168,10 @@ export default function CopilotPanel({ open, onClose }: Props) {
             <div key={i} className={clsx('max-w-[90%]', msg.role === 'user' ? 'ml-auto' : '')}>
               <div
                 className={clsx(
-                  'px-3.5 py-2.5 rounded-xl text-sm leading-relaxed',
+                  'px-3.5 py-2.5 rounded-xl text-sm leading-relaxed shadow-2xs',
                   msg.role === 'user'
-                    ? 'bg-brand-600 text-white rounded-br-sm'
-                    : 'bg-surface-100 text-surface-800 rounded-bl-sm',
+                    ? 'bg-[#0B5CE6] text-white rounded-br-xs'
+                    : 'bg-white text-[#1D2839] border border-[#E2E8F7] rounded-bl-xs',
                 )}
               >
                 {msg.text}
@@ -118,33 +185,37 @@ export default function CopilotPanel({ open, onClose }: Props) {
           ))}
 
           {loading && (
-            <div className="flex items-center gap-2 text-xs text-surface-400">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              Analyzing your financial data...
+            <div className="flex items-center gap-2 text-xs text-[#5B6785] bg-white p-3 rounded-xl border border-[#E2E8F7] shadow-2xs w-fit">
+              <Loader2 className="w-3.5 h-3.5 text-[#0B5CE6] animate-spin" />
+              <span>Analyzing financial data with Gemini AI…</span>
             </div>
           )}
           <div ref={bottomRef} />
         </div>
 
         {/* Input */}
-        <div className="p-3 border-t border-surface-200 shrink-0">
+        <div className="p-3 border-t border-[#E2E8F7] bg-white shrink-0">
           <form
-            onSubmit={(e) => { e.preventDefault(); send(input); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              send(input);
+            }}
             className="flex items-center gap-2"
           >
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about your business..."
-              aria-label="Ask Accora Core a question"
-              className="flex-1 px-3.5 py-2.5 bg-surface-50 rounded-lg text-sm border border-surface-200 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-all"
+              placeholder="Ask about revenue, bills, or runway…"
+              aria-label="Ask Accora AI Co-Pilot"
+              disabled={loading}
+              className="flex-1 px-3.5 py-2.5 bg-[#F4F7FC] rounded-xl text-sm text-[#1D2839] border border-[#E2E8F7] focus:outline-none focus:border-[#0B5CE6] transition-all disabled:opacity-60"
             />
             <button
               type="submit"
               disabled={!input.trim() || loading}
-              className="w-9 h-9 rounded-lg bg-brand-600 text-white flex items-center justify-center hover:bg-brand-700 active:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="w-10 h-10 rounded-xl bg-[#0B5CE6] text-white flex items-center justify-center hover:bg-[#094bbd] active:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
             >
-              <Send className="w-4 h-4" />
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </button>
           </form>
         </div>

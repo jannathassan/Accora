@@ -582,10 +582,14 @@ DEMO_BUSINESS_NAME = "Bright Pixel Studios"
 
 def get_ai_provider() -> AIProvider:
     """Factory: returns the configured AI provider instance."""
+    if settings.ai_provider == "gemini" or (settings.ai_provider == "mock" and settings.gemini_api_key):
+        from app.ai.gemini import GeminiAIProvider
+        return GeminiAIProvider()
+
     if settings.ai_provider == "alibaba":
         # Future: from app.ai.alibaba import AlibabaProvider; return AlibabaProvider()
         raise NotImplementedError(
             "Alibaba Cloud AI provider is not yet configured. "
-            "Set ACCORA_AI_PROVIDER=mock for development."
+            "Set ACCORA_AI_PROVIDER=gemini or ACCORA_AI_PROVIDER=mock for development."
         )
     return MockAIProvider()
